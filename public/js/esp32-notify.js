@@ -9,7 +9,7 @@
  */
 
 (function () {
-    const ESP32_NOTIFY_URL = '/api/esp32/notify';
+    const ESP32_NOTIFY_URL = 'https://facerecognition.makelearners.com/api/esp32/notify';
     let   _lastEvent       = null;
     let   _debounceTimer   = null;
     const DEBOUNCE_MS      = 1000;   // minimum ms between server calls
