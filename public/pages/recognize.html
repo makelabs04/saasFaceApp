@@ -183,6 +183,7 @@
 
 <script src="/js/auth.js"></script>
 <script src="/js/navbar.js"></script>
+<script src="/js/esp32-notify.js"></script>
 <script>
 const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
 let labeledDescriptors = [];
@@ -338,6 +339,16 @@ function updateResultsPanel(recognized, totalCount) {
     const known = recognized.filter(r => !r.isUnknown);
     const unknown = recognized.filter(r => r.isUnknown);
 
+    if (known.length > 0) {
+        const top = known[0];
+        notifyESP32('known', top.person.name, top.confidence);
+    }
+    else if (unknown.length > 0) {
+        notifyESP32('unknown');
+    }
+    else {
+        notifyESP32('none');
+    }
     document.getElementById('totalDetected').textContent = totalCount;
     document.getElementById('totalKnown').textContent = known.length;
     document.getElementById('totalUnknown').textContent = unknown.length;
