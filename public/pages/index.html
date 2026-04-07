@@ -5,243 +5,531 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>FaceID SaaS — Face Recognition Platform</title>
 <link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-body { background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #f0fdf4 100%); }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-.auth-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+  :root {
+    --primary: #00adee;
+    --primary-dark: #0078ba;
+    --primary-deeper: #00adee;
+    --white: #ffffff;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-700: #334155;
+    --gray-900: #0f172a;
+    --danger: #ef4444;
+    --success: #22c55e;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+    --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,.14);
+    --radius: 12px;
+    --radius-lg: 16px;
+  }
 
-.hero-side {
-    background: linear-gradient(135deg, #00adee 0%, #0078ba 60%, #004d8f 100%);
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    padding: 60px 50px; color: white; position: relative; overflow: hidden;
-}
+  html, body { height: 100%; font-family: 'Outfit', sans-serif; }
 
-.hero-side::before {
+  /* ── Full-page grid ───────────────────────────── */
+  .auth-page {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+  }
+
+  /* ── LEFT — hero panel ─────────────────────────── */
+  .hero-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 64px 56px;
+    background: linear-gradient(145deg, #00c6fb 0%, #005bea 100%);
+    overflow: hidden;
+    color: #fff;
+  }
+
+  /* decorative blobs */
+  .hero-panel::before,
+  .hero-panel::after {
     content: '';
-    position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,.08);
+  }
+  .hero-panel::before { width: 420px; height: 420px; top: -120px; right: -120px; }
+  .hero-panel::after  { width: 260px; height: 260px; bottom: -80px; left: -80px; }
 
-.hero-content { position: relative; z-index: 1; max-width: 440px; text-align: center; }
-
-.hero-logo {
-    width: 72px; height: 72px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 20px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 36px; margin: 0 auto 28px;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.3);
-}
-
-.hero-title { font-family: 'Outfit', sans-serif; font-size: 40px; font-weight: 800; margin-bottom: 16px; line-height: 1.2; color: white; }
-.hero-subtitle { font-size: 17px; opacity: 0.85; line-height: 1.6; margin-bottom: 40px; }
-
-.hero-features { display: grid; gap: 14px; text-align: left; }
-.hero-feature {
-    display: flex; align-items: center; gap: 12px;
-    background: rgba(255,255,255,0.12);
-    padding: 14px 18px;
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
-    font-size: 15px;
-}
-.feature-icon { font-size: 20px; flex-shrink: 0; }
-
-.auth-side {
-    display: flex; align-items: center; justify-content: center;
-    padding: 60px 50px;
-}
-
-.auth-card { width: 100%; max-width: 420px; }
-.auth-header { text-align: center; margin-bottom: 36px; }
-.auth-title { font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 800; margin-bottom: 8px; }
-.auth-subtitle { color: var(--gray-500); font-size: 15px; }
-
-.auth-tabs { display: flex; gap: 4px; background: var(--gray-100); padding: 4px; border-radius: 12px; margin-bottom: 28px; }
-.auth-tab {
-    flex: 1; padding: 11px; border: none; background: none; border-radius: 9px;
-    font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
-    color: var(--gray-500); font-family: 'Outfit', sans-serif;
-}
-.auth-tab.active { background: var(--white); color: var(--primary); box-shadow: var(--shadow-sm); }
-
-.auth-form-section { display: none; }
-.auth-form-section.active { display: block; }
-
-.divider { height: 1px; background: var(--gray-200); margin: 24px 0; }
-
-.powered { text-align: center; color: var(--gray-400); font-size: 12px; margin-top: 24px; }
-
-.floating-shapes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
-.shape {
+  .blob-mid {
     position: absolute; border-radius: 50%;
-    background: rgba(255,255,255,0.07);
-}
-.shape-1 { width: 300px; height: 300px; top: -100px; right: -100px; }
-.shape-2 { width: 200px; height: 200px; bottom: -60px; left: -60px; }
-.shape-3 { width: 100px; height: 100px; top: 40%; right: 10%; }
+    background: rgba(255,255,255,.05);
+    width: 180px; height: 180px; top: 44%; right: 8%;
+  }
 
-@media (max-width: 900px) {
+  .hero-inner { position: relative; z-index: 1; max-width: 460px; }
+
+  .brand-badge {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    border-radius: 50px;
+    padding: 8px 20px;
+    font-size: 13px; font-weight: 700; letter-spacing: .6px;
+    text-transform: uppercase; margin-bottom: 32px;
+    backdrop-filter: blur(8px);
+  }
+  .brand-dot { width: 8px; height: 8px; border-radius: 50%; background: #7effa0; box-shadow: 0 0 6px #7effa0; }
+
+  .hero-logo-wrap {
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,.18);
+    border: 2px solid rgba(255,255,255,.30);
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 40px; margin-bottom: 28px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 8px 32px rgba(0,0,0,.18);
+  }
+
+  .hero-heading {
+    font-size: 44px; font-weight: 800; line-height: 1.15;
+    margin-bottom: 16px; letter-spacing: -.5px;
+  }
+  .hero-heading span { color: #b3f0ff; }
+
+  .hero-desc {
+    font-size: 16px; opacity: .85; line-height: 1.7; margin-bottom: 40px;
+  }
+
+  .feature-grid { display: grid; gap: 12px; }
+  .feature-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(255,255,255,.15);
+    border-radius: 14px;
+    padding: 14px 18px;
+    backdrop-filter: blur(6px);
+    transition: background .2s;
+  }
+  .feature-item:hover { background: rgba(255,255,255,.16); }
+  .fi-icon { font-size: 22px; flex-shrink: 0; margin-top: 1px; }
+  .fi-text strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+  .fi-text span   { font-size: 12px; opacity: .75; }
+
+  /* ── RIGHT — auth panel ────────────────────────── */
+  .auth-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 56px 48px;
+    background: var(--gray-50);
+    overflow-y: auto;
+  }
+
+  .auth-box {
+    width: 100%;
+    max-width: 400px;
+  }
+
+  /* top mini brand for mobile */
+  .mobile-brand {
+    display: none;
+    align-items: center; gap: 10px;
+    margin-bottom: 28px;
+    font-size: 20px; font-weight: 800; color: var(--primary);
+  }
+  .mobile-brand span { font-size: 28px; }
+
+  .auth-heading {
+    font-size: 28px; font-weight: 800; color: var(--gray-900);
+    margin-bottom: 4px;
+  }
+  .auth-heading em { font-style: normal; color: var(--primary); }
+  .auth-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 28px; }
+
+  /* tab switcher */
+  .tab-bar {
+    display: flex; gap: 0;
+    border-bottom: 2px solid var(--gray-200);
+    margin-bottom: 28px;
+  }
+  .tab-btn {
+    flex: 1; border: none; background: none; cursor: pointer;
+    padding: 11px 0; font-size: 14px; font-weight: 700;
+    color: var(--gray-400); font-family: 'Outfit', sans-serif;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all .2s;
+  }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  /* form */
+  .form-section { display: none; }
+  .form-section.active { display: block; }
+
+  .field { margin-bottom: 18px; }
+  .field-label {
+    display: block; font-size: 13px; font-weight: 700;
+    color: var(--gray-700); margin-bottom: 7px;
+  }
+
+  .input-wrap { position: relative; }
+  .input-wrap input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--gray-200);
+    border-radius: var(--radius);
+    font-size: 14px; font-family: 'Outfit', sans-serif;
+    background: var(--white);
+    color: var(--gray-900);
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .input-wrap input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(0,173,238,.12);
+  }
+  .input-wrap input.has-toggle { padding-right: 44px; }
+
+  /* eye toggle button */
+  .eye-btn {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    color: var(--gray-400); display: flex; align-items: center;
+    padding: 4px; border-radius: 6px; transition: color .2s;
+  }
+  .eye-btn:hover { color: var(--primary); }
+  .eye-btn svg { width: 18px; height: 18px; display: block; }
+
+  /* input prefix icon */
+  .input-icon {
+    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
+    font-size: 16px; pointer-events: none;
+  }
+  .input-wrap input.with-icon { padding-left: 38px; }
+
+  /* submit button */
+  .submit-btn {
+    width: 100%; padding: 13px;
+    border: none; border-radius: var(--radius);
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff; font-family: 'Outfit', sans-serif;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    box-shadow: 0 4px 14px rgba(0,120,186,.30);
+    transition: opacity .2s, transform .15s;
+    margin-top: 4px;
+  }
+  .submit-btn:hover { opacity: .92; transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+  .submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+  /* spinner */
+  .spin {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: #fff;
+    animation: spin .7s linear infinite;
+    display: inline-block;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* alert */
+  .alert-box { margin-bottom: 18px; }
+  .alert {
+    padding: 11px 14px; border-radius: var(--radius);
+    font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
+  }
+  .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+  .alert-danger  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+  /* footer line */
+  .auth-footer { text-align: center; margin-top: 24px; font-size: 12px; color: var(--gray-400); }
+  .auth-footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
+
+  /* ── ESP32 status pill (subtle, bottom of form) ── */
+  .esp32-pill {
+    display: flex; align-items: center; gap: 7px;
+    margin-top: 20px; justify-content: center;
+    font-size: 11px; color: var(--gray-400); font-weight: 600;
+  }
+  .esp32-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; box-shadow: 0 0 5px #22c55e; }
+
+  /* ── Responsive ────────────────────────────────── */
+  @media (max-width: 860px) {
     .auth-page { grid-template-columns: 1fr; }
-    .hero-side { display: none; }
-}
+    .hero-panel { display: none; }
+    .auth-panel { padding: 40px 24px; }
+    .mobile-brand { display: flex; }
+  }
 </style>
 </head>
 <body>
 
 <div class="auth-page">
-    <!-- Hero Side -->
-    <div class="hero-side">
-        <div class="floating-shapes">
-            <div class="shape shape-1"></div>
-            <div class="shape shape-2"></div>
-            <div class="shape shape-3"></div>
+
+  <!-- ═══════════════ LEFT HERO PANEL ═══════════════ -->
+  <div class="hero-panel">
+    <div class="blob-mid"></div>
+    <div class="hero-inner">
+
+      <div class="brand-badge">
+        <span class="brand-dot"></span>
+        Live &amp; Active
+      </div>
+
+      <div class="hero-logo-wrap">👁️</div>
+
+      <h1 class="hero-heading">FaceID <span>SaaS</span></h1>
+      <p class="hero-desc">
+        AI-powered face recognition platform. Register people, train the model, and identify faces
+        in real-time — now with ESP32 LED &amp; buzzer integration.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-item">
+          <span class="fi-icon">📷</span>
+          <div class="fi-text">
+            <strong>Live Camera & Upload</strong>
+            <span>Register faces via webcam or image files</span>
+          </div>
         </div>
-        <div class="hero-content">
-            <div class="hero-logo">👁️</div>
-            <h1 class="hero-title">FaceID SaaS</h1>
-            <p class="hero-subtitle">AI-powered face recognition platform. Register, train, and recognize faces in real-time with high accuracy.</p>
-            <div class="hero-features">
-                <div class="hero-feature">
-                    <span class="feature-icon">📷</span>
-                    <span>Live camera & image upload registration</span>
-                </div>
-                <div class="hero-feature">
-                    <span class="feature-icon">🧠</span>
-                    <span>AI-powered face recognition engine</span>
-                </div>
-                <div class="hero-feature">
-                    <span class="feature-icon">⚡</span>
-                    <span>Real-time detection with labeled overlays</span>
-                </div>
-                <div class="hero-feature">
-                    <span class="feature-icon">🔒</span>
-                    <span>Secure multi-user SaaS platform</span>
-                </div>
-            </div>
+        <div class="feature-item">
+          <span class="fi-icon">🧠</span>
+          <div class="fi-text">
+            <strong>AI Recognition Engine</strong>
+            <span>Powered by face-api.js for high accuracy</span>
+          </div>
         </div>
+        <div class="feature-item">
+          <span class="fi-icon">🟢</span>
+          <div class="fi-text">
+            <strong>ESP32 LED + Buzzer</strong>
+            <span>Green for known · Red+buzz for unknown</span>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="fi-icon">🔒</span>
+          <div class="fi-text">
+            <strong>Secure Multi-user SaaS</strong>
+            <span>Each account has isolated face data</span>
+          </div>
+        </div>
+      </div>
+
     </div>
+  </div>
 
-    <!-- Auth Side -->
-    <div class="auth-side">
-        <div class="auth-card">
-            <div class="auth-header">
-                <h1 class="auth-title">Welcome <span style="color:var(--primary)">Back</span></h1>
-                <p class="auth-subtitle">Sign in to your account or create a new one</p>
-            </div>
+  <!-- ═══════════════ RIGHT AUTH PANEL ═══════════════ -->
+  <div class="auth-panel">
+    <div class="auth-box">
 
-            <div id="alertBox"></div>
+      <!-- mobile-only brand -->
+      <div class="mobile-brand"><span>👁️</span> FaceID SaaS</div>
 
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
-                <button class="auth-tab" onclick="switchTab('register')">Create Account</button>
-            </div>
+      <h1 class="auth-heading">Welcome <em>Back</em></h1>
+      <p class="auth-sub">Sign in to your account or create a new one below</p>
 
-            <!-- Login Form -->
-            <div class="auth-form-section active" id="loginSection">
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" id="loginEmail" class="form-control" placeholder="you@example.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="loginPassword" class="form-control" placeholder="Your password" onkeydown="if(event.key==='Enter') doLogin()">
-                </div>
-                <button class="btn btn-primary w-full btn-lg" onclick="doLogin()" id="loginBtn">
-                    Sign In →
-                </button>
-            </div>
+      <!-- Alert -->
+      <div class="alert-box" id="alertBox"></div>
 
-            <!-- Register Form -->
-            <div class="auth-form-section" id="registerSection">
-                <div class="form-group">
-                    <label class="form-label">Full Name</label>
-                    <input type="text" id="regName" class="form-control" placeholder="John Doe">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Email Address</label>
-                    <input type="email" id="regEmail" class="form-control" placeholder="you@example.com">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="regPassword" class="form-control" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter') doRegister()">
-                </div>
-                <button class="btn btn-primary w-full btn-lg" onclick="doRegister()" id="registerBtn">
-                    Create Account →
-                </button>
-            </div>
+      <!-- Tabs -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabLogin"    onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn"        id="tabRegister" onclick="switchTab('register')">Create Account</button>
+      </div>
 
-            <div class="powered">🔒 Secure · Fast · Reliable · Powered by face-api.js</div>
+      <!-- ── LOGIN ── -->
+      <div class="form-section active" id="loginSection">
+
+        <div class="field">
+          <label class="field-label" for="loginEmail">Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="loginEmail" class="with-icon" placeholder="you@example.com" autocomplete="email">
+          </div>
         </div>
+
+        <div class="field">
+          <label class="field-label" for="loginPassword">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="loginPassword" class="with-icon has-toggle"
+                   placeholder="Your password" autocomplete="current-password"
+                   onkeydown="if(event.key==='Enter') doLogin()">
+            <button class="eye-btn" type="button" onclick="toggleEye('loginPassword', this)" aria-label="Toggle password visibility">
+              <!-- eye closed (default — password hidden) -->
+              <svg id="eyeIcon_loginPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="submit-btn" id="loginBtn" onclick="doLogin()">
+          Sign In <span>→</span>
+        </button>
+      </div>
+
+      <!-- ── REGISTER ── -->
+      <div class="form-section" id="registerSection">
+
+        <div class="field">
+          <label class="field-label" for="regName">Full Name</label>
+          <div class="input-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="regName" class="with-icon" placeholder="John Doe" autocomplete="name">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="regEmail">Email Address</label>
+          <div class="input-wrap">
+            <span class="input-icon">✉️</span>
+            <input type="email" id="regEmail" class="with-icon" placeholder="you@example.com" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="field-label" for="regPassword">Password</label>
+          <div class="input-wrap">
+            <span class="input-icon">🔑</span>
+            <input type="password" id="regPassword" class="with-icon has-toggle"
+                   placeholder="Min. 6 characters" autocomplete="new-password"
+                   onkeydown="if(event.key==='Enter') doRegister()">
+            <button class="eye-btn" type="button" onclick="toggleEye('regPassword', this)" aria-label="Toggle password visibility">
+              <svg id="eyeIcon_regPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button class="submit-btn" id="registerBtn" onclick="doRegister()">
+          Create Account <span>→</span>
+        </button>
+      </div>
+
+      <!-- footer -->
+      <div class="auth-footer">
+        🔒 Secure &middot; Fast &middot; Reliable &middot; Powered by <a href="https://github.com/justadudewhohacks/face-api.js" target="_blank">face-api.js</a>
+      </div>
+
+      <div class="esp32-pill">
+        <span class="esp32-dot"></span> ESP32 Integration Active
+      </div>
+
     </div>
+  </div>
+
 </div>
 
+<!-- ══════════ SCRIPTS ══════════ -->
 <script>
-    // Check if already logged in
-    fetch('/api/auth/me').then(r => r.json()).then(d => {
-        if (d.loggedIn) window.location.href = '/dashboard';
-    });
+// ── Redirect if already logged in ────────────────────────────────────────
+fetch('/api/auth/me').then(r => r.json()).then(d => {
+    if (d.loggedIn) window.location.href = '/dashboard';
+});
 
-    function switchTab(tab) {
-        document.querySelectorAll('.auth-tab').forEach((t, i) => {
-            t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
-        });
-        document.getElementById('loginSection').classList.toggle('active', tab === 'login');
-        document.getElementById('registerSection').classList.toggle('active', tab === 'register');
-        document.getElementById('alertBox').innerHTML = '';
+// ── Tab switching ─────────────────────────────────────────────────────────
+function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+    document.getElementById('loginSection').classList.toggle('active', isLogin);
+    document.getElementById('registerSection').classList.toggle('active', !isLogin);
+    document.getElementById('alertBox').innerHTML = '';
+}
+
+// ── Alert helper ──────────────────────────────────────────────────────────
+function showMsg(msg, type) {
+    const icons = { success: '✅', danger: '❌' };
+    document.getElementById('alertBox').innerHTML =
+        `<div class="alert alert-${type}">${icons[type] || ''} ${msg}</div>`;
+}
+
+// ── Password eye toggle ───────────────────────────────────────────────────
+function toggleEye(inputId, btn) {
+    const input = document.getElementById(inputId);
+    const icon  = document.getElementById('eyeIcon_' + inputId);
+    const isHidden = input.type === 'password';
+
+    input.type = isHidden ? 'text' : 'password';
+
+    // Swap SVG: open eye when visible, slash eye when hidden
+    if (isHidden) {
+        // Show open eye (password now visible)
+        icon.innerHTML = `
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>`;
+    } else {
+        // Show slashed eye (password now hidden)
+        icon.innerHTML = `
+            <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
+            <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
+            <line x1="1" y1="1" x2="23" y2="23"/>`;
     }
+}
 
-    function showMsg(msg, type) {
-        const icons = { success: '✅', danger: '❌', info: 'ℹ️' };
-        document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${icons[type]||''} ${msg}</div>`;
-    }
+// ── Login ─────────────────────────────────────────────────────────────────
+async function doLogin() {
+    const btn      = document.getElementById('loginBtn');
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) return showMsg('Please fill all fields.', 'danger');
 
-    async function doLogin() {
-        const btn = document.getElementById('loginBtn');
-        const email = document.getElementById('loginEmail').value.trim();
-        const password = document.getElementById('loginPassword').value;
-        if (!email || !password) return showMsg('Please fill all fields.', 'danger');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Signing in…';
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Signing in...';
-
-        const res = await fetch('/api/auth/login', {
+    try {
+        const res  = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
         const data = await res.json();
-        btn.disabled = false;
-        btn.innerHTML = 'Sign In →';
 
         if (data.success) {
-            showMsg('Login successful! Redirecting...', 'success');
+            showMsg('Login successful! Redirecting…', 'success');
             setTimeout(() => window.location.href = '/dashboard', 800);
         } else {
             showMsg(data.message, 'danger');
         }
+    } catch (e) {
+        showMsg('Network error. Please try again.', 'danger');
     }
 
-    async function doRegister() {
-        const btn = document.getElementById('registerBtn');
-        const name = document.getElementById('regName').value.trim();
-        const email = document.getElementById('regEmail').value.trim();
-        const password = document.getElementById('regPassword').value;
-        if (!name || !email || !password) return showMsg('Please fill all fields.', 'danger');
-        if (password.length < 6) return showMsg('Password must be at least 6 characters.', 'danger');
+    btn.disabled = false;
+    btn.innerHTML = 'Sign In <span>→</span>';
+}
 
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner"></span> Creating account...';
+// ── Register ──────────────────────────────────────────────────────────────
+async function doRegister() {
+    const btn      = document.getElementById('registerBtn');
+    const name     = document.getElementById('regName').value.trim();
+    const email    = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPassword').value;
 
-        const res = await fetch('/api/auth/register', {
+    if (!name || !email || !password) return showMsg('Please fill all fields.', 'danger');
+    if (password.length < 6)          return showMsg('Password must be at least 6 characters.', 'danger');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Creating account…';
+
+    try {
+        const res  = await fetch('/api/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, email, password })
         });
         const data = await res.json();
-        btn.disabled = false;
-        btn.innerHTML = 'Create Account →';
 
         if (data.success) {
             showMsg('Account created! Please sign in.', 'success');
@@ -249,7 +537,13 @@ body { background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #f0fdf4 100%
         } else {
             showMsg(data.message, 'danger');
         }
+    } catch (e) {
+        showMsg('Network error. Please try again.', 'danger');
     }
+
+    btn.disabled = false;
+    btn.innerHTML = 'Create Account <span>→</span>';
+}
 </script>
 </body>
 </html>
