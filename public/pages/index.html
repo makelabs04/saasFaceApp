@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FaceID SaaS — Face Recognition Platform</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+body { background: linear-gradient(135deg, #f0f9ff 0%, #ffffff 50%, #f0fdf4 100%); }
+
+.auth-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+
+.hero-side {
+    background: linear-gradient(135deg, #00adee 0%, #0078ba 60%, #004d8f 100%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: 60px 50px; color: white; position: relative; overflow: hidden;
+}
+
+.hero-side::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Ccircle cx='30' cy='30' r='20'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.hero-content { position: relative; z-index: 1; max-width: 440px; text-align: center; }
+
+.hero-logo {
+    width: 72px; height: 72px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 20px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px; margin: 0 auto 28px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+.hero-title { font-family: 'Outfit', sans-serif; font-size: 40px; font-weight: 800; margin-bottom: 16px; line-height: 1.2; color: white; }
+.hero-subtitle { font-size: 17px; opacity: 0.85; line-height: 1.6; margin-bottom: 40px; }
+
+.hero-features { display: grid; gap: 14px; text-align: left; }
+.hero-feature {
+    display: flex; align-items: center; gap: 12px;
+    background: rgba(255,255,255,0.12);
+    padding: 14px 18px;
+    border-radius: 12px;
+    backdrop-filter: blur(4px);
+    font-size: 15px;
+}
+.feature-icon { font-size: 20px; flex-shrink: 0; }
+
+.auth-side {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px 50px;
+}
+
+.auth-card { width: 100%; max-width: 420px; }
+.auth-header { text-align: center; margin-bottom: 36px; }
+.auth-title { font-family: 'Outfit', sans-serif; font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+.auth-subtitle { color: var(--gray-500); font-size: 15px; }
+
+.auth-tabs { display: flex; gap: 4px; background: var(--gray-100); padding: 4px; border-radius: 12px; margin-bottom: 28px; }
+.auth-tab {
+    flex: 1; padding: 11px; border: none; background: none; border-radius: 9px;
+    font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+    color: var(--gray-500); font-family: 'Outfit', sans-serif;
+}
+.auth-tab.active { background: var(--white); color: var(--primary); box-shadow: var(--shadow-sm); }
+
+.auth-form-section { display: none; }
+.auth-form-section.active { display: block; }
+
+.divider { height: 1px; background: var(--gray-200); margin: 24px 0; }
+
+.powered { text-align: center; color: var(--gray-400); font-size: 12px; margin-top: 24px; }
+
+.floating-shapes { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.shape {
+    position: absolute; border-radius: 50%;
+    background: rgba(255,255,255,0.07);
+}
+.shape-1 { width: 300px; height: 300px; top: -100px; right: -100px; }
+.shape-2 { width: 200px; height: 200px; bottom: -60px; left: -60px; }
+.shape-3 { width: 100px; height: 100px; top: 40%; right: 10%; }
+
+@media (max-width: 900px) {
+    .auth-page { grid-template-columns: 1fr; }
+    .hero-side { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="auth-page">
+    <!-- Hero Side -->
+    <div class="hero-side">
+        <div class="floating-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-logo">👁️</div>
+            <h1 class="hero-title">FaceID SaaS</h1>
+            <p class="hero-subtitle">AI-powered face recognition platform. Register, train, and recognize faces in real-time with high accuracy.</p>
+            <div class="hero-features">
+                <div class="hero-feature">
+                    <span class="feature-icon">📷</span>
+                    <span>Live camera & image upload registration</span>
+                </div>
+                <div class="hero-feature">
+                    <span class="feature-icon">🧠</span>
+                    <span>AI-powered face recognition engine</span>
+                </div>
+                <div class="hero-feature">
+                    <span class="feature-icon">⚡</span>
+                    <span>Real-time detection with labeled overlays</span>
+                </div>
+                <div class="hero-feature">
+                    <span class="feature-icon">🔒</span>
+                    <span>Secure multi-user SaaS platform</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Auth Side -->
+    <div class="auth-side">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Welcome <span style="color:var(--primary)">Back</span></h1>
+                <p class="auth-subtitle">Sign in to your account or create a new one</p>
+            </div>
+
+            <div id="alertBox"></div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
+                <button class="auth-tab" onclick="switchTab('register')">Create Account</button>
+            </div>
+
+            <!-- Login Form -->
+            <div class="auth-form-section active" id="loginSection">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="loginEmail" class="form-control" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-control" placeholder="Your password" onkeydown="if(event.key==='Enter') doLogin()">
+                </div>
+                <button class="btn btn-primary w-full btn-lg" onclick="doLogin()" id="loginBtn">
+                    Sign In →
+                </button>
+            </div>
+
+            <!-- Register Form -->
+            <div class="auth-form-section" id="registerSection">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="regName" class="form-control" placeholder="John Doe">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="regEmail" class="form-control" placeholder="you@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="regPassword" class="form-control" placeholder="Min. 6 characters" onkeydown="if(event.key==='Enter') doRegister()">
+                </div>
+                <button class="btn btn-primary w-full btn-lg" onclick="doRegister()" id="registerBtn">
+                    Create Account →
+                </button>
+            </div>
+
+            <div class="powered">🔒 Secure · Fast · Reliable · Powered by face-api.js</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Check if already logged in
+    fetch('/api/auth/me').then(r => r.json()).then(d => {
+        if (d.loggedIn) window.location.href = '/dashboard';
+    });
+
+    function switchTab(tab) {
+        document.querySelectorAll('.auth-tab').forEach((t, i) => {
+            t.classList.toggle('active', (tab === 'login' && i === 0) || (tab === 'register' && i === 1));
+        });
+        document.getElementById('loginSection').classList.toggle('active', tab === 'login');
+        document.getElementById('registerSection').classList.toggle('active', tab === 'register');
+        document.getElementById('alertBox').innerHTML = '';
+    }
+
+    function showMsg(msg, type) {
+        const icons = { success: '✅', danger: '❌', info: 'ℹ️' };
+        document.getElementById('alertBox').innerHTML = `<div class="alert alert-${type}">${icons[type]||''} ${msg}</div>`;
+    }
+
+    async function doLogin() {
+        const btn = document.getElementById('loginBtn');
+        const email = document.getElementById('loginEmail').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        if (!email || !password) return showMsg('Please fill all fields.', 'danger');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Signing in...';
+
+        const res = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = 'Sign In →';
+
+        if (data.success) {
+            showMsg('Login successful! Redirecting...', 'success');
+            setTimeout(() => window.location.href = '/dashboard', 800);
+        } else {
+            showMsg(data.message, 'danger');
+        }
+    }
+
+    async function doRegister() {
+        const btn = document.getElementById('registerBtn');
+        const name = document.getElementById('regName').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const password = document.getElementById('regPassword').value;
+        if (!name || !email || !password) return showMsg('Please fill all fields.', 'danger');
+        if (password.length < 6) return showMsg('Password must be at least 6 characters.', 'danger');
+
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span> Creating account...';
+
+        const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+        const data = await res.json();
+        btn.disabled = false;
+        btn.innerHTML = 'Create Account →';
+
+        if (data.success) {
+            showMsg('Account created! Please sign in.', 'success');
+            setTimeout(() => switchTab('login'), 1500);
+        } else {
+            showMsg(data.message, 'danger');
+        }
+    }
+</script>
+</body>
+</html>

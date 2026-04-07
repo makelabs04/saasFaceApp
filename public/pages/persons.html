@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Persons — FaceID SaaS</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.persons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+
+.person-card {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.25s;
+}
+.person-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
+
+.person-card-top {
+    background: linear-gradient(135deg, var(--primary-light) 0%, #f0fdf4 100%);
+    padding: 28px 20px 20px;
+    text-align: center;
+    position: relative;
+}
+
+.pc-avatar {
+    width: 72px; height: 72px;
+    background: linear-gradient(135deg, var(--primary), #0078ba);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 800;
+    color: white; margin: 0 auto 12px;
+    border: 3px solid white;
+    box-shadow: var(--shadow-md);
+}
+
+.pc-name { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--gray-800); }
+.pc-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; font-family: monospace; }
+
+.person-card-body { padding: 16px 20px; }
+
+.pc-detail { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--gray-100); font-size: 14px; }
+.pc-detail:last-of-type { border-bottom: none; }
+.pc-detail-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
+.pc-detail-value { color: var(--gray-700); }
+.pc-detail-value.muted { color: var(--gray-400); }
+
+.person-card-footer {
+    padding: 12px 20px;
+    border-top: 1px solid var(--gray-100);
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--gray-50);
+}
+
+.empty-state { text-align: center; padding: 80px 20px; }
+.empty-icon { font-size: 72px; margin-bottom: 16px; }
+
+.search-bar { position: relative; max-width: 320px; }
+.search-bar input { padding-left: 40px; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
+
+.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+
+/* Delete confirm modal */
+#deleteModal .modal { max-width: 420px; }
+</style>
+</head>
+<body>
+<div id="mainNav"></div>
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">👥 Registered Persons</h1>
+        <p class="page-subtitle">Manage all persons registered in your face recognition database</p>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <div class="toolbar">
+        <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" class="form-control" placeholder="Search persons..." id="searchInput" oninput="filterPersons()">
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <span id="personCount" class="badge badge-primary">0 persons</span>
+            <a href="/register-face" class="btn btn-primary">➕ Register New Face</a>
+        </div>
+    </div>
+
+    <div id="personsContainer">
+        <div class="empty-state">
+            <div class="empty-icon">⏳</div>
+            <p>Loading persons...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal">
+        <div class="modal-header">
+            <span class="modal-title">🗑️ Delete Person</span>
+            <button class="modal-close" onclick="closeDeleteModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:15px; color:var(--gray-700); margin-bottom:8px;">Are you sure you want to delete <strong id="deletePersonName"></strong>?</p>
+            <p style="font-size:13px; color:var(--gray-500); margin-bottom:24px;">This will permanently remove all their face samples and data. This cannot be undone.</p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-secondary flex-1" onclick="closeDeleteModal()">Cancel</button>
+                <button class="btn btn-danger flex-1" onclick="confirmDelete()" id="confirmDeleteBtn">Delete Person</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/navbar.js"></script>
+<script>
+let allPersons = [];
+let deleteTargetId = null;
+
+async function loadPersons() {
+    const res = await fetch('/api/persons/list');
+    const data = await res.json();
+    if (!data.success) return showAlert('Failed to load persons.', 'danger');
+
+    allPersons = data.persons;
+    renderPersons(allPersons);
+}
+
+function renderPersons(persons) {
+    document.getElementById('personCount').textContent = `${persons.length} person${persons.length !== 1 ? 's' : ''}`;
+    const container = document.getElementById('personsContainer');
+
+    if (persons.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-icon">👤</div>
+                <h3 style="font-family:'Outfit',sans-serif; font-size:24px; margin-bottom:10px;">No persons registered yet</h3>
+                <p style="color:var(--gray-500); margin-bottom:28px;">Start by registering your first person with their face samples.</p>
+                <a href="/register-face" class="btn btn-primary btn-lg">➕ Register First Person</a>
+            </div>`;
+        return;
+    }
+
+    container.innerHTML = `<div class="persons-grid">${persons.map(p => personCard(p)).join('')}</div>`;
+}
+
+function personCard(p) {
+    const initial = p.name.charAt(0).toUpperCase();
+    const sampleStatus = p.sample_count === 0
+        ? `<span class="badge badge-danger">No samples</span>`
+        : p.sample_count < 3
+        ? `<span class="badge badge-warning">${p.sample_count} samples</span>`
+        : `<span class="badge badge-success">${p.sample_count} samples ✓</span>`;
+
+    const registeredDate = new Date(p.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+
+    return `
+    <div class="person-card" id="pc_${p.id}">
+        <div class="person-card-top">
+            <div class="pc-avatar">${initial}</div>
+            <div class="pc-name">${escHtml(p.name)}</div>
+            <div class="pc-label">ID: ${p.id} · ${registeredDate}</div>
+        </div>
+        <div class="person-card-body">
+            <div class="pc-detail">
+                <span class="pc-detail-icon">🎂</span>
+                <span class="pc-detail-value ${!p.age ? 'muted' : ''}">${p.age ? p.age + ' years old' : 'Age not provided'}</span>
+            </div>
+            <div class="pc-detail">
+                <span class="pc-detail-icon">📧</span>
+                <span class="pc-detail-value ${!p.email ? 'muted' : ''}">${p.email ? escHtml(p.email) : 'No email'}</span>
+            </div>
+            <div class="pc-detail">
+                <span class="pc-detail-icon">📱</span>
+                <span class="pc-detail-value ${!p.mobile ? 'muted' : ''}">${p.mobile ? escHtml(p.mobile) : 'No mobile'}</span>
+            </div>
+        </div>
+        <div class="person-card-footer">
+            ${sampleStatus}
+            <div style="display:flex; gap:8px;">
+                <a href="/register-face" class="btn btn-secondary btn-sm" title="Add more samples">➕ Add Samples</a>
+                <button class="btn btn-danger btn-sm" onclick="deletePerson(${p.id}, '${escHtml(p.name)}')">🗑️</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function filterPersons() {
+    const q = document.getElementById('searchInput').value.toLowerCase();
+    const filtered = allPersons.filter(p =>
+        p.name.toLowerCase().includes(q) ||
+        (p.email || '').toLowerCase().includes(q) ||
+        (p.mobile || '').includes(q)
+    );
+    renderPersons(filtered);
+}
+
+function deletePerson(id, name) {
+    deleteTargetId = id;
+    document.getElementById('deletePersonName').textContent = name;
+    document.getElementById('deleteModal').classList.add('open');
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('open');
+    deleteTargetId = null;
+}
+
+async function confirmDelete() {
+    if (!deleteTargetId) return;
+    const btn = document.getElementById('confirmDeleteBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Deleting...';
+
+    const res = await fetch(`/api/persons/${deleteTargetId}`, { method: 'DELETE' });
+    const data = await res.json();
+    btn.disabled = false; btn.innerHTML = 'Delete Person';
+    closeDeleteModal();
+
+    if (data.success) {
+        showAlert('Person deleted successfully.', 'success');
+        await loadPersons();
+    } else {
+        showAlert('Failed to delete person.', 'danger');
+    }
+}
+
+function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// Close modal on overlay click
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
+
+Auth.setupNav().then(() => {});
+loadPersons();
+</script>
+</body>
+</html>

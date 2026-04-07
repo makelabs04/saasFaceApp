@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Register Face — FaceID SaaS</title>
+<link rel="stylesheet" href="/css/style.css">
+<!-- face-api.js CDN -->
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+<style>
+.reg-layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
+.step-indicator { display: flex; gap: 0; margin-bottom: 28px; }
+.step {
+    flex: 1; display: flex; align-items: center;
+    gap: 8px; font-size: 13px; font-weight: 600;
+    color: var(--gray-400);
+    position: relative;
+}
+.step::after {
+    content: '';
+    flex: 1; height: 2px;
+    background: var(--gray-200);
+    margin: 0 8px;
+}
+.step:last-child::after { display: none; }
+.step.done { color: var(--success); }
+.step.active { color: var(--primary); }
+.step.done::after, .step.active::after { background: var(--primary); }
+.step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--gray-200);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; flex-shrink: 0;
+}
+.step.active .step-num { background: var(--primary); color: white; }
+.step.done .step-num { background: var(--success); color: white; }
+
+.section-card { display: none; }
+.section-card.active { display: block; }
+
+.capture-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
+.capture-slot {
+    aspect-ratio: 1; border-radius: 8px;
+    background: var(--gray-100);
+    border: 2px dashed var(--gray-300);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; color: var(--gray-300);
+    overflow: hidden; transition: all 0.2s;
+}
+.capture-slot.filled { border-style: solid; border-color: var(--primary); }
+.capture-slot img { width: 100%; height: 100%; object-fit: cover; }
+
+.upload-preview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+.upload-thumb {
+    aspect-ratio: 1; border-radius: 8px;
+    border: 2px solid var(--gray-200);
+    overflow: hidden; position: relative;
+}
+.upload-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.upload-thumb .remove {
+    position: absolute; top: 3px; right: 3px;
+    background: rgba(239,68,68,0.9); color: white;
+    width: 18px; height: 18px; border-radius: 50%;
+    border: none; cursor: pointer;
+    font-size: 10px; display: flex; align-items: center; justify-content: center;
+}
+
+.model-loading {
+    background: var(--primary-light);
+    border: 1px solid #bae6fd;
+    border-radius: 12px; padding: 16px;
+    text-align: center; margin-bottom: 16px;
+}
+.face-status { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 8px; }
+.face-status.detected { background: #f0fdf4; color: var(--success); }
+.face-status.none { background: #fef2f2; color: var(--danger); }
+
+@media (max-width: 900px) { .reg-layout { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="mainNav"></div>
+<div class="page-container">
+    <div class="page-header">
+        <h1 class="page-title">Register New Face</h1>
+        <p class="page-subtitle">Follow the steps to register a person and capture their face samples</p>
+    </div>
+
+    <!-- Step Indicator -->
+    <div class="step-indicator">
+        <div class="step active" id="step1"><div class="step-num">1</div> Person Info</div>
+        <div class="step" id="step2"><div class="step-num">2</div> Capture Faces</div>
+        <div class="step" id="step3"><div class="step-num">3</div> Done</div>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <!-- Step 1: Person Info -->
+    <div class="section-card active" id="sec1">
+        <div class="card" style="max-width: 520px; margin: 0 auto;">
+            <div class="card-header"><span class="card-title">👤 Person Details</span></div>
+            <div class="card-body">
+                <div class="two-col">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" id="pName" class="form-control" placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Age</label>
+                        <input type="number" id="pAge" class="form-control" placeholder="25" min="1" max="120">
+                    </div>
+                </div>
+                <div class="two-col">
+                    <div class="form-group">
+                        <label class="form-label">Email</label>
+                        <input type="email" id="pEmail" class="form-control" placeholder="john@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mobile</label>
+                        <input type="tel" id="pMobile" class="form-control" placeholder="+91 9999999999">
+                    </div>
+                </div>
+                <button class="btn btn-primary w-full btn-lg" onclick="registerPerson()" id="regPersonBtn">
+                    Continue to Face Capture →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2: Capture -->
+    <div class="section-card" id="sec2">
+        <div id="modelStatus" class="model-loading">
+            <div class="spinner" style="border-top-color:var(--primary); border-color:rgba(0,173,238,0.3);"></div>
+            <p style="margin-top:8px; color:var(--primary); font-weight:600;">Loading AI models... Please wait</p>
+        </div>
+
+        <div class="reg-layout">
+            <!-- Camera / Upload -->
+            <div>
+                <div class="tabs">
+                    <button class="tab-btn active" onclick="switchCaptureTab('camera')" id="tabCam">📷 Live Camera</button>
+                    <button class="tab-btn" onclick="switchCaptureTab('upload')" id="tabUpload">📁 Upload Images</button>
+                </div>
+
+                <!-- Camera -->
+                <div id="camSection">
+                    <div class="camera-container" id="cameraBox" style="aspect-ratio: 4/3; background: #1a1a2e; display:flex; align-items:center; justify-content:center;">
+                        <p style="color:#666; text-align:center;">📷<br>Camera not started</p>
+                        <video id="regVideo" class="camera-video" style="display:none;" autoplay muted playsinline></video>
+                        <canvas id="regCanvas" class="camera-canvas"></canvas>
+                        <div class="camera-overlay">
+                            <span class="camera-badge live" id="liveBadge" style="display:none;">🔴 LIVE</span>
+                        </div>
+                    </div>
+                    <div id="faceStatus" class="face-status none" style="display:none;">No face detected</div>
+                    <div style="margin-top:14px; display:flex; gap:10px;">
+                        <button class="btn btn-primary flex-1" onclick="startCamera()" id="startCamBtn">▶ Start Camera</button>
+                        <button class="btn btn-success flex-1" onclick="captureNow()" id="captureBtn" disabled>📸 Capture Sample</button>
+                    </div>
+                    <div style="margin-top:12px;">
+                        <button class="btn btn-secondary w-full" onclick="startAutoCapture()" id="autoBtn" disabled>⚡ Auto Capture 10 Samples</button>
+                    </div>
+                </div>
+
+                <!-- Upload -->
+                <div id="uploadSection" style="display:none;">
+                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('imgInput').click()">
+                        <div style="font-size:40px; margin-bottom:12px;">📁</div>
+                        <p style="font-weight:600; color:var(--gray-700);">Click to upload images</p>
+                        <p style="font-size:13px; color:var(--gray-400); margin-top:6px;">JPG, PNG, WEBP · Max 5MB each · Multiple allowed</p>
+                        <input type="file" id="imgInput" accept="image/*" multiple style="display:none" onchange="handleUpload(this)">
+                    </div>
+                    <div class="upload-preview" id="uploadPreview"></div>
+                    <button class="btn btn-primary w-full" style="margin-top:16px;" onclick="processUploadedImages()" id="processUploadBtn" disabled>
+                        🧠 Process & Save Images
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Panel -->
+            <div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title">📊 Capture Progress</span></div>
+                    <div class="card-body">
+                        <div style="margin-bottom:16px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
+                                <span style="font-size:14px; font-weight:600; color:var(--gray-600);">Samples Captured</span>
+                                <span style="font-size:14px; font-weight:700; color:var(--primary);" id="captureCount">0 / 10</span>
+                            </div>
+                            <div class="progress"><div class="progress-bar" id="captureBar" style="width:0%"></div></div>
+                        </div>
+                        <div class="capture-grid" id="captureGrid">
+                            <!-- slots filled dynamically -->
+                        </div>
+                        <div style="margin-top:20px; background:var(--primary-light); border-radius:10px; padding:14px;">
+                            <p style="font-size:13px; font-weight:600; color:var(--primary); margin-bottom:8px;">💡 Tips for best results:</p>
+                            <ul style="font-size:12px; color:var(--gray-600); padding-left:16px; line-height:1.8;">
+                                <li>Face the camera directly</li>
+                                <li>Good lighting is important</li>
+                                <li>Capture different angles slightly</li>
+                                <li>Remove glasses/hats for better accuracy</li>
+                                <li>Minimum 5 samples recommended</li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-primary w-full" style="margin-top:20px;" onclick="finishRegistration()" id="finishBtn" disabled>
+                            ✅ Complete Registration
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3: Done -->
+    <div class="section-card" id="sec3">
+        <div style="text-align:center; padding:60px 20px;">
+            <div style="font-size:80px; margin-bottom:20px; animation: bounce 1s ease;">✅</div>
+            <h2 style="font-family:'Outfit',sans-serif; font-size:32px; font-weight:800; margin-bottom:10px;">Registration Complete!</h2>
+            <p style="color:var(--gray-500); font-size:16px; margin-bottom:32px;" id="doneMsg">Face registered successfully!</p>
+            <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
+                <a href="/register-face" class="btn btn-primary btn-lg">➕ Register Another</a>
+                <a href="/recognize" class="btn btn-secondary btn-lg">🔍 Start Recognizing</a>
+                <a href="/persons" class="btn btn-secondary btn-lg">👥 View All Persons</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/navbar.js"></script>
+<script>
+let personId = null, personName = '';
+let stream = null, capturedSamples = 0;
+let detectionInterval = null, autoCapturing = false;
+let modelsLoaded = false;
+let uploadedFiles = [], processedDescriptors = [];
+
+const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+
+async function loadModels() {
+    try {
+        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+        modelsLoaded = true;
+        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--success); font-weight:700;">✅ AI Models loaded successfully!</span>';
+        setTimeout(() => document.getElementById('modelStatus').style.display = 'none', 2000);
+    } catch (e) {
+        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--danger);">❌ Failed to load models. Check internet connection.</span>';
+    }
+}
+
+function initCaptureGrid() {
+    const grid = document.getElementById('captureGrid');
+    grid.innerHTML = Array.from({length: 10}, (_, i) => `
+        <div class="capture-slot" id="slot${i}">+</div>
+    `).join('');
+}
+
+async function registerPerson() {
+    const name = document.getElementById('pName').value.trim();
+    const age = document.getElementById('pAge').value;
+    const email = document.getElementById('pEmail').value.trim();
+    const mobile = document.getElementById('pMobile').value.trim();
+    if (!name) return showAlert('Name is required.', 'danger');
+
+    const btn = document.getElementById('regPersonBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
+
+    const res = await fetch('/api/persons/register', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ name, age, email, mobile })
+    });
+    const data = await res.json();
+    btn.disabled = false; btn.innerHTML = 'Continue to Face Capture →';
+
+    if (!data.success) return showAlert(data.message, 'danger');
+    personId = data.personId;
+    personName = name;
+
+    // Go to step 2
+    document.getElementById('sec1').classList.remove('active');
+    document.getElementById('sec2').classList.add('active');
+    document.getElementById('step1').classList.remove('active'); document.getElementById('step1').classList.add('done');
+    document.getElementById('step2').classList.add('active');
+    initCaptureGrid();
+    loadModels();
+}
+
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+        const video = document.getElementById('regVideo');
+        video.srcObject = stream;
+        video.style.display = 'block';
+        document.querySelector('#cameraBox p')?.remove();
+        document.getElementById('liveBadge').style.display = '';
+        document.getElementById('startCamBtn').disabled = true;
+        document.getElementById('captureBtn').disabled = false;
+        document.getElementById('autoBtn').disabled = false;
+        document.getElementById('faceStatus').style.display = '';
+        startDetectionLoop();
+    } catch (e) {
+        showAlert('Camera access denied. Please allow camera permission.', 'danger');
+    }
+}
+
+function startDetectionLoop() {
+    const video = document.getElementById('regVideo');
+    const canvas = document.getElementById('regCanvas');
+    const statusEl = document.getElementById('faceStatus');
+
+    detectionInterval = setInterval(async () => {
+        if (!modelsLoaded || video.readyState < 2) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        try {
+            const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+                .withFaceLandmarks();
+
+            if (det) {
+                const dims = faceapi.matchDimensions(canvas, video, true);
+                const resized = faceapi.resizeResults(det, dims);
+                faceapi.draw.drawDetections(canvas, [resized]);
+                faceapi.draw.drawFaceLandmarks(canvas, [resized]);
+                statusEl.className = 'face-status detected';
+                statusEl.textContent = '✅ Face detected - Ready to capture';
+            } else {
+                statusEl.className = 'face-status none';
+                statusEl.textContent = '❌ No face detected - Position your face';
+            }
+        } catch(e) {}
+    }, 300);
+}
+
+async function captureNow() {
+    if (!modelsLoaded) return showAlert('Models still loading...', 'warning');
+    if (capturedSamples >= 10) return showAlert('10 samples already captured!', 'info');
+
+    const video = document.getElementById('regVideo');
+    const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+        .withFaceLandmarks().withFaceDescriptor();
+
+    if (!det) return showAlert('No face detected. Please position your face clearly.', 'warning');
+
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = 120; tempCanvas.height = 120;
+    const ctx = tempCanvas.getContext('2d');
+    const box = det.detection.box;
+    ctx.drawImage(video, box.x, box.y, box.width, box.height, 0, 0, 120, 120);
+    const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
+
+    await saveSample(imageData, Array.from(det.descriptor), capturedSamples);
+}
+
+async function saveSample(imageData, descriptor, slotIdx) {
+    try {
+        const res = await fetch('/api/persons/sample', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ personId, imageData, descriptor })
+        });
+        const data = await res.json();
+        if (!data.success) return;
+
+        const slot = document.getElementById(`slot${slotIdx}`);
+        slot.innerHTML = `<img src="${imageData}">`;
+        slot.classList.add('filled');
+        capturedSamples++;
+        updateProgress();
+    } catch(e) { console.error(e); }
+}
+
+async function startAutoCapture() {
+    if (autoCapturing) return;
+    autoCapturing = true;
+    const btn = document.getElementById('autoBtn');
+    btn.disabled = true;
+    document.getElementById('captureBtn').disabled = true;
+
+    let done = capturedSamples;
+    while (capturedSamples < 10) {
+        if (capturedSamples >= 10) break;
+        const video = document.getElementById('regVideo');
+        const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+            .withFaceLandmarks().withFaceDescriptor();
+
+        if (det) {
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = 120; tempCanvas.height = 120;
+            const ctx = tempCanvas.getContext('2d');
+            const box = det.detection.box;
+            ctx.drawImage(video, box.x, box.y, box.width, box.height, 0, 0, 120, 120);
+            const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
+            await saveSample(imageData, Array.from(det.descriptor), capturedSamples);
+            await new Promise(r => setTimeout(r, 500));
+        }
+        await new Promise(r => setTimeout(r, 200));
+    }
+
+    autoCapturing = false;
+    btn.disabled = false;
+    document.getElementById('captureBtn').disabled = false;
+    if (capturedSamples >= 10) showAlert('All 10 samples captured! Click Complete Registration.', 'success');
+}
+
+function updateProgress() {
+    const pct = (capturedSamples / 10) * 100;
+    document.getElementById('captureCount').textContent = `${capturedSamples} / 10`;
+    document.getElementById('captureBar').style.width = pct + '%';
+    if (capturedSamples >= 3) {
+        document.getElementById('finishBtn').disabled = false;
+        document.getElementById('finishBtn').textContent = `✅ Complete Registration (${capturedSamples} samples)`;
+    }
+}
+
+// Upload tab
+function switchCaptureTab(tab) {
+    const isCamera = tab === 'camera';
+    document.getElementById('tabCam').classList.toggle('active', isCamera);
+    document.getElementById('tabUpload').classList.toggle('active', !isCamera);
+    document.getElementById('camSection').style.display = isCamera ? '' : 'none';
+    document.getElementById('uploadSection').style.display = isCamera ? 'none' : '';
+}
+
+let uploadedImgFiles = [];
+
+function handleUpload(input) {
+    uploadedImgFiles = Array.from(input.files);
+    const preview = document.getElementById('uploadPreview');
+    preview.innerHTML = '';
+    uploadedImgFiles.forEach((f, i) => {
+        const url = URL.createObjectURL(f);
+        preview.innerHTML += `
+            <div class="upload-thumb" id="upthumb${i}">
+                <img src="${url}">
+                <button class="remove" onclick="removeUpload(${i})">✕</button>
+            </div>`;
+    });
+    document.getElementById('processUploadBtn').disabled = uploadedImgFiles.length === 0;
+}
+
+function removeUpload(i) {
+    uploadedImgFiles.splice(i, 1);
+    handleUpload({ files: uploadedImgFiles });
+}
+
+async function processUploadedImages() {
+    if (!modelsLoaded) return showAlert('Models still loading...', 'warning');
+    if (uploadedImgFiles.length === 0) return;
+
+    const btn = document.getElementById('processUploadBtn');
+    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Processing...';
+
+    let saved = 0;
+    for (const file of uploadedImgFiles) {
+        try {
+            const img = await faceapi.bufferToImage(file);
+            const det = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
+                .withFaceLandmarks().withFaceDescriptor();
+
+            if (det) {
+                const reader = new FileReader();
+                const imageData = await new Promise(res => { reader.onload = () => res(reader.result); reader.readAsDataURL(file); });
+                await saveSample(imageData, Array.from(det.descriptor), capturedSamples < 10 ? capturedSamples : 9);
+                saved++;
+            }
+        } catch(e) { console.error(e); }
+    }
+
+    btn.disabled = false; btn.innerHTML = '🧠 Process & Save Images';
+    showAlert(`✅ Processed ${saved} of ${uploadedImgFiles.length} images successfully.`, 'success');
+}
+
+function finishRegistration() {
+    if (stream) { stream.getTracks().forEach(t => t.stop()); }
+    if (detectionInterval) clearInterval(detectionInterval);
+
+    document.getElementById('sec2').classList.remove('active');
+    document.getElementById('sec3').classList.add('active');
+    document.getElementById('step2').classList.remove('active'); document.getElementById('step2').classList.add('done');
+    document.getElementById('step3').classList.add('active');
+    document.getElementById('doneMsg').textContent = `${personName} registered with ${capturedSamples} face samples!`;
+}
+
+Auth.setupNav().then(() => {});
+</script>
+</body>
+</html>
