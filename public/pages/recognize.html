@@ -339,6 +339,10 @@ function updateResultsPanel(recognized, totalCount) {
     const known = recognized.filter(r => !r.isUnknown);
     const unknown = recognized.filter(r => r.isUnknown);
 
+    // FIXED: Only call notifyESP32 based on actual totalCount (faces in frame).
+    // Previously, 'none' fired every frame when confidence was low — cancelling
+    // the pending GREEN debounce before it could send. Now 'none' only fires
+    // when there are truly zero faces detected by the camera.
     if (known.length > 0) {
         const top = known[0];
         notifyESP32('known', top.person.name, top.confidence);
@@ -346,9 +350,12 @@ function updateResultsPanel(recognized, totalCount) {
     else if (unknown.length > 0) {
         notifyESP32('unknown');
     }
-    else {
+    else if (totalCount === 0) {
+        // Only send 'none' when camera sees zero faces — not just low confidence
         notifyESP32('none');
     }
+    // If totalCount > 0 but no known/unknown passed threshold, do nothing.
+    // The priority guard in esp32-notify.js will protect the last sent command.
     document.getElementById('totalDetected').textContent = totalCount;
     document.getElementById('totalKnown').textContent = known.length;
     document.getElementById('totalUnknown').textContent = unknown.length;
