@@ -149,6 +149,23 @@
         </div>
     </div>
 
+    <!-- Arduino Code Section -->
+    <div class="card" id="arduinoCodeCard" style="margin-bottom:20px;">
+        <div class="card-header" style="cursor:pointer;" onclick="toggleArduinoCode()">
+            <span class="card-title">⚙️ Arduino Sketch</span>
+            <button id="arduinoToggleBtn" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:5px 14px; font-size:13px; cursor:pointer;">▼ Show Code</button>
+        </div>
+        <div id="arduinoCodeBody" style="display:none; padding:16px;">
+            <p style="font-size:13px; color:var(--gray-500); margin-bottom:12px;">
+                Copy this sketch into Arduino IDE. Your <strong>User Token</strong> is already filled in below.
+            </p>
+            <div style="position:relative;">
+                <button onclick="copyArduinoCode()" style="position:absolute; top:10px; right:10px; background:var(--primary); color:white; border:none; border-radius:8px; padding:5px 12px; font-size:12px; cursor:pointer; z-index:1;">📋 Copy</button>
+                <pre id="arduinoCodePre" style="background:#0f0f1a; color:#e2e8f0; border-radius:10px; padding:20px 16px; font-size:12.5px; line-height:1.7; overflow-x:auto; white-space:pre; margin:0; font-family:'Courier New',monospace;"><code id="arduinoCodeContent">// Loading...</code></pre>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Persons -->
     <div class="card">
         <div class="card-header">
@@ -176,6 +193,8 @@
         if (td.success) {
             document.getElementById('esp32Token').textContent = td.token;
             document.getElementById('esp32TokenInline').textContent = td.token;
+            // Populate Arduino sketch with real token
+            document.getElementById('arduinoCodeContent').textContent = buildArduinoSketch(td.token);
         }
     } catch(e) {}
 
@@ -210,6 +229,234 @@ function copyToken() {
     const token = document.getElementById('esp32Token').textContent;
     navigator.clipboard.writeText(token).then(() => {
         showAlert('Token copied to clipboard!', 'success');
+    });
+}
+
+function toggleArduinoCode() {
+    const body = document.getElementById('arduinoCodeBody');
+    const btn  = document.getElementById('arduinoToggleBtn');
+    const hidden = body.style.display === 'none';
+    body.style.display = hidden ? 'block' : 'none';
+    btn.textContent = hidden ? '▲ Hide Code' : '▼ Show Code';
+}
+
+function buildArduinoSketch(token) {
+    return `#include <Arduino.h>
+#include <WiFi.h>
+#include <WiFiClientSecure.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+// ════════════════════════════════════════════
+//  USER CONFIG  ← change WiFi credentials
+//  USER_TOKEN is your account ID (pre-filled)
+// ════════════════════════════════════════════
+const char* WIFI_SSID     = "YOUR_WIFI_SSID";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const int   USER_TOKEN    = ${token};   // ← Your User ID (auto-filled)
+
+// ════════════════════════════════════════════
+//  Server  (no need to change)
+// ════════════════════════════════════════════
+const char* SERVER_BASE = "https://facerecognition.makelearners.com";
+const bool  SKIP_TLS    = true;
+
+// ════════════════════════════════════════════
+//  GPIO
+// ════════════════════════════════════════════
+const int PIN_GREEN  = 26;
+const int PIN_RED    = 27;
+const int PIN_BUZZER = 25;
+
+// ════════════════════════════════════════════
+//  Timing
+// ════════════════════════════════════════════
+const unsigned long POLL_MS   = 700;
+const unsigned long LED_ON_MS = 5000;
+const int BEEP_HZ    = 2000;
+const int BEEP_MS    = 200;
+const int BEEP_GAP   = 100;
+const int BEEP_COUNT = 3;
+
+// ════════════════════════════════════════════
+//  Derived URLs  (built at runtime from token)
+// ════════════════════════════════════════════
+String STATUS_URL;
+String CLEAR_URL;
+
+// ════════════════════════════════════════════
+//  LEDC shim  (Arduino core 2.x vs 3.x)
+// ════════════════════════════════════════════
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  void buzzerInit()     { ledcAttach(PIN_BUZZER, BEEP_HZ, 8); }
+  void buzzerOn(int hz) { ledcWriteTone(PIN_BUZZER, hz); }
+  void buzzerOff()      { ledcWriteTone(PIN_BUZZER, 0); }
+#else
+  #define BUZZ_CH 0
+  void buzzerInit()     { ledcSetup(BUZZ_CH, BEEP_HZ, 8); ledcAttachPin(PIN_BUZZER, BUZZ_CH); }
+  void buzzerOn(int hz) { ledcWriteTone(BUZZ_CH, hz); }
+  void buzzerOff()      { ledcWriteTone(BUZZ_CH, 0); }
+#endif
+
+// ════════════════════════════════════════════
+//  State
+// ════════════════════════════════════════════
+unsigned long lastPoll  = 0;
+unsigned long ledOffAt  = 0;
+bool          ledActive = false;
+String        lastCmd   = "";
+
+// ════════════════════════════════════════════
+//  Helpers
+// ════════════════════════════════════════════
+void allOff() {
+    digitalWrite(PIN_GREEN, LOW);
+    digitalWrite(PIN_RED,   LOW);
+    buzzerOff();
+    ledActive = false;
+    lastCmd   = "OFF";
+}
+
+void doGreen(const String& personName, int confidence) {
+    Serial.printf("[ESP32] GREEN — Known: %s (%d%%)\\n", personName.c_str(), confidence);
+    allOff();
+    for (int i = 0; i < 2; i++) {
+        digitalWrite(PIN_GREEN, HIGH); delay(120);
+        digitalWrite(PIN_GREEN, LOW);  delay(80);
+    }
+    digitalWrite(PIN_GREEN, HIGH);
+    ledActive = true;
+    ledOffAt  = millis() + LED_ON_MS;
+    lastCmd   = "GREEN";
+}
+
+void doRedBuzz() {
+    Serial.println("[ESP32] RED_BUZZ — Unknown person");
+    allOff();
+    for (int i = 0; i < BEEP_COUNT; i++) {
+        digitalWrite(PIN_RED, HIGH);
+        buzzerOn(BEEP_HZ);
+        delay(BEEP_MS);
+        digitalWrite(PIN_RED, LOW);
+        buzzerOff();
+        delay(BEEP_GAP);
+    }
+    digitalWrite(PIN_RED, HIGH);
+    ledActive = true;
+    ledOffAt  = millis() + LED_ON_MS;
+    lastCmd   = "RED_BUZZ";
+}
+
+void clearServerCmd() {
+    WiFiClientSecure cl;
+    if (SKIP_TLS) cl.setInsecure();
+    HTTPClient h;
+    if (h.begin(cl, CLEAR_URL)) {
+        h.addHeader("Content-Type", "application/json");
+        h.POST("{}");
+        h.end();
+    }
+}
+
+// ════════════════════════════════════════════
+//  Setup
+// ════════════════════════════════════════════
+void setup() {
+    Serial.begin(115200);
+    delay(400);
+
+    STATUS_URL = String(SERVER_BASE) + "/api/esp32/status?token=" + String(USER_TOKEN);
+    CLEAR_URL  = String(SERVER_BASE) + "/api/esp32/clear?token="  + String(USER_TOKEN);
+
+    pinMode(PIN_GREEN,  OUTPUT);
+    pinMode(PIN_RED,    OUTPUT);
+    pinMode(PIN_BUZZER, OUTPUT);
+    allOff();
+    buzzerInit();
+
+    Serial.printf("\\n[ESP32] User Token : %d\\n", USER_TOKEN);
+    Serial.printf("[ESP32] Connecting to WiFi: %s\\n", WIFI_SSID);
+
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+    int n = 0;
+    while (WiFi.status() != WL_CONNECTED) {
+        digitalWrite(PIN_GREEN, n % 2 == 0);
+        digitalWrite(PIN_RED,   n % 2 != 0);
+        delay(400); n++;
+        Serial.print(".");
+    }
+    allOff();
+
+    Serial.printf("\\n[ESP32] WiFi OK  IP=%s\\n", WiFi.localIP().toString().c_str());
+    for (int i = 0; i < 2; i++) {
+        digitalWrite(PIN_GREEN, HIGH); delay(150);
+        digitalWrite(PIN_GREEN, LOW);  delay(100);
+    }
+    Serial.println("[ESP32] Ready — polling started");
+}
+
+// ════════════════════════════════════════════
+//  Loop
+// ════════════════════════════════════════════
+void loop() {
+    if (ledActive && millis() >= ledOffAt) {
+        Serial.println("[ESP32] LED timeout -> OFF");
+        allOff();
+    }
+
+    if (millis() - lastPoll < POLL_MS) return;
+    lastPoll = millis();
+
+    if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("[ESP32] WiFi lost - reconnecting...");
+        WiFi.reconnect();
+        delay(1000);
+        return;
+    }
+
+    WiFiClientSecure client;
+    if (SKIP_TLS) client.setInsecure();
+    client.setTimeout(4);
+
+    HTTPClient http;
+    if (!http.begin(client, STATUS_URL)) {
+        Serial.println("[ESP32] http.begin() failed");
+        return;
+    }
+    http.setTimeout(4000);
+
+    int code = http.GET();
+    if (code == HTTP_CODE_OK) {
+        String body = http.getString();
+        Serial.println("[ESP32] << " + body);
+
+        StaticJsonDocument<256> doc;
+        if (!deserializeJson(doc, body)) {
+            String cmd        = doc["command"]    | "OFF";
+            String personName = doc["personName"] | "";
+            int    confidence = doc["confidence"] | 0;
+
+            if (cmd != "OFF" && (cmd != lastCmd || !ledActive)) {
+                if (cmd == "GREEN") {
+                    doGreen(personName, confidence);
+                    clearServerCmd();
+                } else if (cmd == "RED_BUZZ") {
+                    doRedBuzz();
+                    clearServerCmd();
+                }
+            }
+        }
+    } else {
+        Serial.printf("[ESP32] HTTP error: %d\\n", code);
+    }
+    http.end();
+}`;
+}
+
+function copyArduinoCode() {
+    const code = document.getElementById('arduinoCodeContent').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+        showAlert('Arduino sketch copied to clipboard!', 'success');
     });
 }
 </script>
