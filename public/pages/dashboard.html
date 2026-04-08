@@ -129,6 +129,26 @@
         </a>
     </div>
 
+    <!-- ESP32 Token Card -->
+    <div class="card" id="esp32TokenCard" style="margin-bottom:20px;">
+        <div class="card-header">
+            <span class="card-title">🔌 ESP32 Device Token</span>
+        </div>
+        <div class="card-body" style="padding:16px;">
+            <p style="font-size:13px; color:var(--gray-500); margin-bottom:12px;">
+                Copy this token into your Arduino sketch so your ESP32 only receives commands from <strong>your</strong> account.
+            </p>
+            <div style="display:flex; align-items:center; gap:10px; background:var(--gray-50); border:1px solid var(--gray-200); border-radius:10px; padding:12px 16px;">
+                <span style="font-size:13px; color:var(--gray-500); white-space:nowrap;">Your Token (User ID):</span>
+                <span id="esp32Token" style="font-family:monospace; font-size:20px; font-weight:800; color:var(--primary); letter-spacing:2px;">...</span>
+                <button onclick="copyToken()" style="margin-left:auto; background:var(--primary); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer;">📋 Copy</button>
+            </div>
+            <p style="font-size:12px; color:var(--gray-400); margin-top:10px;">
+                In your Arduino sketch set: <code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;">const int USER_TOKEN = <span id="esp32TokenInline">...</span>;</code>
+            </p>
+        </div>
+    </div>
+
     <!-- Recent Persons -->
     <div class="card">
         <div class="card-header">
@@ -148,6 +168,16 @@
     const user = await Auth.setupNav();
     if (!user) return;
     document.getElementById('welcomeName').textContent = user.name.split(' ')[0];
+
+    // Load ESP32 token
+    try {
+        const tr = await fetch('/api/esp32/token');
+        const td = await tr.json();
+        if (td.success) {
+            document.getElementById('esp32Token').textContent = td.token;
+            document.getElementById('esp32TokenInline').textContent = td.token;
+        }
+    } catch(e) {}
 
     // Load stats
     const res = await fetch('/api/persons/list');
@@ -175,6 +205,13 @@
         </div>
     `).join('');
 })();
+
+function copyToken() {
+    const token = document.getElementById('esp32Token').textContent;
+    navigator.clipboard.writeText(token).then(() => {
+        showAlert('Token copied to clipboard!', 'success');
+    });
+}
 </script>
 </body>
 </html>
