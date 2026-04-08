@@ -18,7 +18,7 @@
 
 (function () {
     const NOTIFY_URL  = '/api/esp32/notify';   // session-authenticated, no token needed
-    const DEBOUNCE_MS = 400;
+    const DEBOUNCE_MS = 100;    // reduced: faster LED response
     const COOLDOWN_MS = 6000;  // don't re-send same event for this many ms
 
     const PRIORITY = { known: 2, unknown: 1, none: 0 };
