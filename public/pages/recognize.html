@@ -260,6 +260,8 @@ async function startRecogCamera() {
 function stopCamera() {
     if (stream) stream.getTracks().forEach(t => t.stop());
     if (detectionLoop) clearInterval(detectionLoop);
+    stream = null;
+    detectionLoop = null;
     document.getElementById('recogVideo').style.display = 'none';
     const canvas = document.getElementById('recogCanvas');
     const ctx = canvas.getContext('2d');
@@ -268,6 +270,8 @@ function stopCamera() {
     document.getElementById('stopBtn').disabled = true;
     document.getElementById('liveBadge').style.display = 'none';
     document.getElementById('fpsBadge').style.display = 'none';
+    // Cancel any pending ESP32 commands and clear the server slot
+    if (typeof stopESP32Notify === 'function') stopESP32Notify();
 }
 
 function startRecognitionLoop() {
