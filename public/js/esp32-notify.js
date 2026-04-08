@@ -1,52 +1,51 @@
 /**
- * esp32-notify.js  — paste this into recognize.html (or include as a <script>)
+ * esp32-notify.js
  *
- * Call notifyESP32('known', personName, confidence)  when a face is recognised.
- * Call notifyESP32('unknown')                        when an unregistered face appears.
- * Call notifyESP32('none')                           when no face is in frame.
+ * FIX 1: Removed the "same event skip" guard — it was blocking re-sends
+ *         when the same person stayed in frame across debounce windows.
+ * FIX 2: Debounce now fires every DEBOUNCE_MS regardless of same/different,
+ *         so the server TTL is always refreshed while a face is present.
  *
- * The function is debounced: it won't flood the server faster than once per second.
+ * Usage (already in recognize.html updateResultsPanel):
+ *   notifyESP32('known',   personName, confidence)
+ *   notifyESP32('unknown')
+ *   notifyESP32('none')
  */
 
 (function () {
-    const ESP32_NOTIFY_URL = '/api/esp32/notify';
-    let   _lastEvent       = null;
-    let   _debounceTimer   = null;
-    const DEBOUNCE_MS      = 1000;   // minimum ms between server calls
+    const NOTIFY_URL   = '/api/esp32/notify';
+    const DEBOUNCE_MS  = 1200;   // ms between server calls (< TTL of 6000ms)
+
+    let _timer     = null;
+    let _lastSent  = 0;
 
     window.notifyESP32 = function (event, personName, confidence) {
-        const key = event + (personName || '');
-        if (key === _lastEvent) return;  // same event — skip
+        clearTimeout(_timer);
 
-        clearTimeout(_debounceTimer);
-        _debounceTimer = setTimeout(async () => {
-            _lastEvent = key;
+        _timer = setTimeout(async () => {
+            _lastSent = Date.now();
             try {
-                await fetch(ESP32_NOTIFY_URL, {
+                const res = await fetch(NOTIFY_URL, {
                     method:  'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body:    JSON.stringify({ event, personName: personName || null, confidence: confidence || 0 })
+                    body:    JSON.stringify({
+                        event,
+                        personName: personName || null,
+                        confidence: confidence || 0
+                    })
                 });
+                const data = await res.json();
+                console.log(`[ESP32] notified → ${data.command}`);
             } catch (e) {
-                console.warn('[ESP32] notify failed:', e.message);
+                console.warn('[ESP32] notify error:', e.message);
+            }
+
+            // If still detecting something, schedule next refresh before TTL expires
+            if (event !== 'none') {
+                _timer = setTimeout(() => {
+                    window.notifyESP32(event, personName, confidence);
+                }, 3000);   // re-ping every 3s to keep TTL alive
             }
         }, DEBOUNCE_MS);
     };
 })();
-
-/* ─── Integration points in recognize.html ───────────────────────────────
- *
- * 1. In updateResultsPanel(), after computing known/unknown:
- *
- *    if (known.length > 0) {
- *        const top = known[0];
- *        notifyESP32('known', top.person.name, top.confidence);
- *    } else if (unknown.length > 0) {
- *        notifyESP32('unknown');
- *    } else {
- *        notifyESP32('none');
- *    }
- *
- * 2. The function already debounces, so safe to call inside the
- *    live-camera detection loop (runs every ~200 ms).
- */
