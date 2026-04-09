@@ -5,490 +5,665 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Register Face — FaceID SaaS</title>
 <link rel="stylesheet" href="/css/style.css">
-<!-- face-api.js CDN -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
-.reg-layout { display: grid; grid-template-columns: 380px 1fr; gap: 24px; align-items: start; }
-.step-indicator { display: flex; gap: 0; margin-bottom: 28px; }
-.step {
-    flex: 1; display: flex; align-items: center;
-    gap: 8px; font-size: 13px; font-weight: 600;
-    color: var(--gray-400);
-    position: relative;
-}
-.step::after {
-    content: '';
-    flex: 1; height: 2px;
-    background: var(--gray-200);
-    margin: 0 8px;
-}
-.step:last-child::after { display: none; }
-.step.done { color: var(--success); }
-.step.active { color: var(--primary); }
-.step.done::after, .step.active::after { background: var(--primary); }
-.step-num {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: var(--gray-200);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; flex-shrink: 0;
-}
-.step.active .step-num { background: var(--primary); color: white; }
-.step.done .step-num { background: var(--success); color: white; }
+  :root{
+    --primary:#00adee;--primary-dark:#0078ba;--primary-light:#e0f5fd;
+    --white:#fff;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;
+    --gray-700:#374151;--gray-800:#1f2937;
+    --success:#22c55e;--warning:#f59e0b;--danger:#ef4444;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+    --radius:12px;--radius-lg:20px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Outfit',sans-serif;background:var(--gray-50);color:var(--gray-700);min-height:100vh;}
 
-.section-card { display: none; }
-.section-card.active { display: block; }
+  /* HERO */
+  .page-hero{background:linear-gradient(135deg,#00c6fb 0%,#005bea 100%);padding:36px 0 0;position:relative;overflow:hidden;}
+  .page-hero-inner{max-width:1200px;margin:0 auto;padding:0 28px;position:relative;z-index:2;}
+  .ph-title{font-size:28px;font-weight:800;color:#fff;display:flex;align-items:center;gap:12px;margin-bottom:4px;}
+  .ph-sub{font-size:14px;color:rgba(255,255,255,.76);margin-bottom:24px;}
+  .ph-icon-wrap{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .hero-wave{display:block;width:100%;height:40px;}
 
-.capture-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 12px; }
-.capture-slot {
-    aspect-ratio: 1; border-radius: 8px;
-    background: var(--gray-100);
-    border: 2px dashed var(--gray-300);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; color: var(--gray-300);
-    overflow: hidden; transition: all 0.2s;
-}
-.capture-slot.filled { border-style: solid; border-color: var(--primary); }
-.capture-slot img { width: 100%; height: 100%; object-fit: cover; }
+  .main-wrap{max-width:1200px;margin:0 auto;padding:28px 28px 48px;}
 
-.upload-preview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
-.upload-thumb {
-    aspect-ratio: 1; border-radius: 8px;
-    border: 2px solid var(--gray-200);
-    overflow: hidden; position: relative;
-}
-.upload-thumb img { width: 100%; height: 100%; object-fit: cover; }
-.upload-thumb .remove {
-    position: absolute; top: 3px; right: 3px;
-    background: rgba(239,68,68,0.9); color: white;
-    width: 18px; height: 18px; border-radius: 50%;
-    border: none; cursor: pointer;
-    font-size: 10px; display: flex; align-items: center; justify-content: center;
-}
+  /* STEP INDICATOR */
+  .step-track{display:flex;align-items:center;margin-bottom:36px;gap:0;}
+  .step-item{display:flex;align-items:center;flex:1;}
+  .step-item:last-child{flex:none;}
+  .step-node{
+    width:36px;height:36px;border-radius:50%;border:2px solid var(--gray-300);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;
+    color:var(--gray-400);background:var(--white);flex-shrink:0;transition:all .3s;
+  }
+  .step-node svg{width:16px;height:16px;display:none;}
+  .step-label{font-size:13px;font-weight:700;color:var(--gray-400);margin-left:8px;white-space:nowrap;transition:color .3s;}
+  .step-line{flex:1;height:2px;background:var(--gray-200);margin:0 12px;transition:background .3s;}
+  .step-item.active .step-node{background:var(--primary);border-color:var(--primary);color:#fff;}
+  .step-item.active .step-label{color:var(--primary);}
+  .step-item.done .step-node{background:var(--success);border-color:var(--success);color:#fff;}
+  .step-item.done .step-node span{display:none;}
+  .step-item.done .step-node svg{display:block;}
+  .step-item.done .step-label{color:var(--success);}
+  .step-item.done .step-line{background:var(--success);}
+  .step-item.active .step-line{background:linear-gradient(90deg,var(--primary),var(--gray-200));}
 
-.model-loading {
-    background: var(--primary-light);
-    border: 1px solid #bae6fd;
-    border-radius: 12px; padding: 16px;
-    text-align: center; margin-bottom: 16px;
-}
-.face-status { padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 8px; }
-.face-status.detected { background: #f0fdf4; color: var(--success); }
-.face-status.none { background: #fef2f2; color: var(--danger); }
+  /* SECTION CARDS */
+  .section-card{display:none;}
+  .section-card.active{display:block;}
 
-@media (max-width: 900px) { .reg-layout { grid-template-columns: 1fr; } }
+  /* FORM CARD */
+  .form-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-md);max-width:560px;margin:0 auto;}
+  .form-card-header{
+    padding:24px 28px;border-bottom:1px solid var(--gray-100);
+    background:linear-gradient(135deg,var(--primary-light),#f0f9ff);
+    display:flex;align-items:center;gap:14px;
+  }
+  .fc-icon{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;}
+  .fc-icon svg{width:22px;height:22px;color:#fff;}
+  .fc-title{font-size:20px;font-weight:800;color:var(--gray-800);}
+  .fc-sub{font-size:13px;color:var(--gray-500);margin-top:2px;}
+  .form-card-body{padding:28px;}
+  .two-col{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+  @media(max-width:600px){.two-col{grid-template-columns:1fr;}}
+  .field{margin-bottom:18px;}
+  .field-label{display:block;font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:7px;}
+  .input-wrap{position:relative;}
+  .input-wrap input{width:100%;padding:11px 14px 11px 42px;border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:14px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--gray-800);outline:none;transition:all .2s;}
+  .input-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,173,238,.12);}
+  .input-svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--gray-400);pointer-events:none;}
+  .btn-continue{width:100%;padding:13px;border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(0,120,186,.28);transition:all .2s;}
+  .btn-continue:hover{transform:translateY(-1px);opacity:.92;}
+  .btn-continue:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .btn-continue svg{width:17px;height:17px;}
+
+  /* MODEL LOADING */
+  .model-banner{background:var(--primary-light);border:1.5px solid #bae6fd;border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:14px;margin-bottom:20px;font-size:14px;font-weight:700;color:var(--primary);}
+  .mb-icon{width:36px;height:36px;border-radius:50%;background:rgba(0,173,238,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .mb-icon svg{width:18px;height:18px;}
+  .spin-svg{animation:svgSpin 1s linear infinite;transform-origin:center;}
+  @keyframes svgSpin{to{transform:rotate(360deg);}}
+
+  /* CAPTURE LAYOUT */
+  .capture-layout{display:grid;grid-template-columns:380px 1fr;gap:24px;align-items:start;}
+  @media(max-width:900px){.capture-layout{grid-template-columns:1fr;}}
+
+  /* TABS */
+  .tab-row{display:flex;gap:4px;background:var(--gray-100);padding:4px;border-radius:13px;margin-bottom:20px;}
+  .tab-pill{flex:1;padding:10px;border:none;background:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;color:var(--gray-500);font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .tab-pill svg{width:15px;height:15px;}
+  .tab-pill.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow-sm);}
+
+  /* CAMERA BOX */
+  .cam-box{
+    position:relative;border-radius:var(--radius-lg);overflow:hidden;
+    background:linear-gradient(135deg,#0f0f23,#1a1a40);aspect-ratio:4/3;
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+  }
+  .cam-placeholder{text-align:center;color:rgba(255,255,255,.35);pointer-events:none;}
+  .cam-placeholder svg{width:46px;height:46px;display:block;margin:0 auto 10px;opacity:.5;}
+  .cam-placeholder p{font-size:13px;font-weight:600;}
+  .camera-video{width:100%;height:100%;object-fit:cover;display:none;}
+  .camera-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+  .cam-overlay{position:absolute;top:12px;left:12px;display:flex;gap:8px;}
+  .cam-badge{background:rgba(0,0,0,.6);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;backdrop-filter:blur(4px);display:none;align-items:center;gap:5px;}
+  .cam-badge.live{background:rgba(239,68,68,.85);}
+  .cam-badge svg{width:10px;height:10px;}
+
+  /* FACE STATUS */
+  .face-status{padding:9px 14px;border-radius:9px;font-size:13px;font-weight:700;margin-top:10px;display:none;align-items:center;gap:8px;}
+  .face-status svg{width:15px;height:15px;}
+  .face-status.detected{background:#f0fdf4;color:var(--success);display:flex;}
+  .face-status.none{background:#fef2f2;color:var(--danger);display:flex;}
+
+  /* CAMERA CONTROLS */
+  .cam-controls{display:flex;gap:10px;margin-top:12px;}
+  .ctrl-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px;border:none;border-radius:var(--radius);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;}
+  .ctrl-btn svg{width:15px;height:15px;}
+  .ctrl-btn.start{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 14px rgba(0,120,186,.25);}
+  .ctrl-btn.start:hover{transform:translateY(-1px);opacity:.9;}
+  .ctrl-btn.capture{background:linear-gradient(135deg,var(--success),#16a34a);color:#fff;box-shadow:0 4px 14px rgba(34,197,94,.25);}
+  .ctrl-btn.capture:hover{transform:translateY(-1px);opacity:.9;}
+  .ctrl-btn.auto-cap{width:100%;margin-top:10px;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;box-shadow:0 4px 12px rgba(245,158,11,.22);}
+  .ctrl-btn.auto-cap:hover{transform:translateY(-1px);opacity:.9;}
+  .ctrl-btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important;}
+
+  /* UPLOAD AREA */
+  .upload-area{border:2px dashed var(--gray-300);border-radius:var(--radius-lg);padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;}
+  .upload-area:hover{border-color:var(--primary);background:var(--primary-light);}
+  .upload-area svg{width:44px;height:44px;color:var(--gray-400);margin:0 auto 12px;display:block;}
+  .upload-area p{font-weight:700;color:var(--gray-700);font-size:14px;}
+  .upload-area small{font-size:12px;color:var(--gray-400);display:block;margin-top:5px;}
+
+  .upload-preview{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+  .upload-thumb{aspect-ratio:1;border-radius:9px;border:2px solid var(--gray-200);overflow:hidden;position:relative;}
+  .upload-thumb img{width:100%;height:100%;object-fit:cover;}
+  .upload-thumb .remove-btn{position:absolute;top:3px;right:3px;background:rgba(239,68,68,.9);color:#fff;width:18px;height:18px;border-radius:50%;border:none;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;}
+  .process-btn{width:100%;margin-top:14px;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;}
+  .process-btn:disabled{opacity:.4;cursor:not-allowed;}
+
+  /* PROGRESS PANEL */
+  .progress-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);}
+  .progress-card-header{padding:20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;gap:10px;}
+  .pch-icon{width:36px;height:36px;border-radius:11px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;}
+  .pch-icon svg{width:18px;height:18px;color:var(--primary);}
+  .pch-title{font-size:16px;font-weight:800;color:var(--gray-800);}
+  .progress-card-body{padding:20px;}
+  .prog-bar-wrap{margin-bottom:18px;}
+  .prog-label{display:flex;justify-content:space-between;margin-bottom:7px;font-size:13px;font-weight:700;}
+  .prog-track{height:8px;background:var(--gray-100);border-radius:20px;overflow:hidden;}
+  .prog-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--success));border-radius:20px;transition:width .4s ease;}
+
+  /* CAPTURE GRID */
+  .capture-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:14px;}
+  .capture-slot{aspect-ratio:1;border-radius:9px;background:var(--gray-100);border:2px dashed var(--gray-300);display:flex;align-items:center;justify-content:center;color:var(--gray-300);font-size:18px;overflow:hidden;transition:all .2s;}
+  .capture-slot.filled{border-style:solid;border-color:var(--primary);animation:slotPop .3s ease;}
+  @keyframes slotPop{from{transform:scale(.8);}to{transform:scale(1);}}
+  .capture-slot img{width:100%;height:100%;object-fit:cover;}
+  .capture-slot svg{width:22px;height:22px;color:var(--gray-300);}
+
+  /* TIPS */
+  .tips-box{background:var(--primary-light);border-radius:var(--radius);padding:14px;margin-top:18px;}
+  .tips-title{font-size:13px;font-weight:800;color:var(--primary);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  .tips-title svg{width:14px;height:14px;}
+  .tips-list{list-style:none;display:flex;flex-direction:column;gap:5px;}
+  .tips-list li{font-size:12px;color:var(--gray-600);display:flex;align-items:center;gap:7px;}
+  .tips-list li::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--primary);flex-shrink:0;}
+
+  .finish-btn{width:100%;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:linear-gradient(135deg,var(--success),#16a34a);color:#fff;border:none;border-radius:var(--radius);font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(34,197,94,.28);transition:all .2s;}
+  .finish-btn:hover{transform:translateY(-1px);opacity:.9;}
+  .finish-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+  .finish-btn svg{width:18px;height:18px;}
+
+  /* SUCCESS PAGE */
+  .success-page{text-align:center;padding:64px 20px;}
+  .success-anim{width:120px;height:120px;margin:0 auto 28px;position:relative;}
+  .success-ring{animation:successRing 1s ease both;}
+  @keyframes successRing{from{opacity:0;transform:scale(.5);}to{opacity:1;transform:scale(1);}}
+  .done-title{font-size:32px;font-weight:800;color:var(--gray-800);margin-bottom:8px;}
+  .done-sub{color:var(--gray-500);font-size:15px;margin-bottom:32px;}
+  .done-actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+  .done-btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;text-decoration:none;transition:all .2s;}
+  .done-btn.primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 14px rgba(0,120,186,.28);}
+  .done-btn.primary:hover{transform:translateY(-1px);opacity:.92;}
+  .done-btn.secondary{background:var(--gray-100);color:var(--gray-700);}
+  .done-btn.secondary:hover{background:var(--gray-200);}
+  .done-btn svg{width:16px;height:16px;}
+
+  /* ALERTS */
+  #alertBox .alert{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+  .alert-danger{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+  .alert-warning{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
+  .alert-info{background:var(--primary-light);border:1px solid #bae6fd;color:#0369a1;}
+  .spinner-sm{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
 </style>
 </head>
 <body>
 <div id="mainNav"></div>
-<div class="page-container">
-    <div class="page-header">
-        <h1 class="page-title">Register New Face</h1>
-        <p class="page-subtitle">Follow the steps to register a person and capture their face samples</p>
+
+<!-- HERO -->
+<div class="page-hero">
+  <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.07;pointer-events:none;" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="pg3" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#pg3)"/>
+    <circle cx="1100" cy="30" r="100" fill="rgba(255,255,255,.08)"/>
+    <circle cx="100" cy="130" r="70" fill="rgba(255,255,255,.06)"/>
+  </svg>
+  <div class="page-hero-inner">
+    <div class="ph-title">
+      <div class="ph-icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+      </div>
+      Register New Face
     </div>
+    <p class="ph-sub">Follow the steps to register a person and capture their face samples</p>
+  </div>
+  <svg class="hero-wave" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,40 C300,0 900,0 1200,40 L1200,40 L0,40Z" fill="#f9fafb"/>
+  </svg>
+</div>
 
-    <!-- Step Indicator -->
-    <div class="step-indicator">
-        <div class="step active" id="step1"><div class="step-num">1</div> Person Info</div>
-        <div class="step" id="step2"><div class="step-num">2</div> Capture Faces</div>
-        <div class="step" id="step3"><div class="step-num">3</div> Done</div>
+<div class="main-wrap">
+  <!-- STEP INDICATOR -->
+  <div class="step-track">
+    <div class="step-item active" id="stepEl1">
+      <div class="step-node"><span>1</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="step-label">Person Info</div>
+      <div class="step-line"></div>
     </div>
+    <div class="step-item" id="stepEl2">
+      <div class="step-node"><span>2</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="step-label">Capture Faces</div>
+      <div class="step-line"></div>
+    </div>
+    <div class="step-item" id="stepEl3">
+      <div class="step-node"><span>3</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+      <div class="step-label">Done</div>
+    </div>
+  </div>
 
-    <div id="alertBox"></div>
+  <div id="alertBox"></div>
 
-    <!-- Step 1: Person Info -->
-    <div class="section-card active" id="sec1">
-        <div class="card" style="max-width: 520px; margin: 0 auto;">
-            <div class="card-header"><span class="card-title">👤 Person Details</span></div>
-            <div class="card-body">
-                <div class="two-col">
-                    <div class="form-group">
-                        <label class="form-label">Full Name *</label>
-                        <input type="text" id="pName" class="form-control" placeholder="John Doe">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Age</label>
-                        <input type="number" id="pAge" class="form-control" placeholder="25" min="1" max="120">
-                    </div>
-                </div>
-                <div class="two-col">
-                    <div class="form-group">
-                        <label class="form-label">Email</label>
-                        <input type="email" id="pEmail" class="form-control" placeholder="john@email.com">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">Mobile</label>
-                        <input type="tel" id="pMobile" class="form-control" placeholder="+91 9999999999">
-                    </div>
-                </div>
-                <button class="btn btn-primary w-full btn-lg" onclick="registerPerson()" id="regPersonBtn">
-                    Continue to Face Capture →
-                </button>
-            </div>
+  <!-- STEP 1: INFO -->
+  <div class="section-card active" id="sec1">
+    <div class="form-card">
+      <div class="form-card-header">
+        <div class="fc-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         </div>
+        <div>
+          <div class="fc-title">Person Details</div>
+          <div class="fc-sub">Enter the person's information to register them</div>
+        </div>
+      </div>
+      <div class="form-card-body">
+        <div class="two-col">
+          <div class="field">
+            <label class="field-label">Full Name *</label>
+            <div class="input-wrap">
+              <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              <input type="text" id="pName" placeholder="John Doe">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Age</label>
+            <div class="input-wrap">
+              <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              <input type="number" id="pAge" placeholder="25" min="1" max="120">
+            </div>
+          </div>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label class="field-label">Email</label>
+            <div class="input-wrap">
+              <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+              <input type="email" id="pEmail" placeholder="john@email.com">
+            </div>
+          </div>
+          <div class="field">
+            <label class="field-label">Mobile</label>
+            <div class="input-wrap">
+              <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+              <input type="tel" id="pMobile" placeholder="+91 9999999999">
+            </div>
+          </div>
+        </div>
+        <button class="btn-continue" onclick="registerPerson()" id="regPersonBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          Continue to Face Capture
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2: CAPTURE -->
+  <div class="section-card" id="sec2">
+    <div class="model-banner" id="modelStatus">
+      <div class="mb-icon">
+        <svg class="spin-svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      </div>
+      <div>
+        <div>Loading AI models… Please wait</div>
+        <div style="font-size:12px;font-weight:500;opacity:.7;margin-top:2px;">Required for face detection</div>
+      </div>
     </div>
 
-    <!-- Step 2: Capture -->
-    <div class="section-card" id="sec2">
-        <div id="modelStatus" class="model-loading">
-            <div class="spinner" style="border-top-color:var(--primary); border-color:rgba(0,173,238,0.3);"></div>
-            <p style="margin-top:8px; color:var(--primary); font-weight:600;">Loading AI models... Please wait</p>
+    <div class="capture-layout">
+      <!-- LEFT: Camera/Upload -->
+      <div>
+        <div class="tab-row">
+          <button class="tab-pill active" onclick="switchCaptureTab('camera')" id="tabCam">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            Live Camera
+          </button>
+          <button class="tab-pill" onclick="switchCaptureTab('upload')" id="tabUpload">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            Upload Images
+          </button>
         </div>
 
-        <div class="reg-layout">
-            <!-- Camera / Upload -->
-            <div>
-                <div class="tabs">
-                    <button class="tab-btn active" onclick="switchCaptureTab('camera')" id="tabCam">📷 Live Camera</button>
-                    <button class="tab-btn" onclick="switchCaptureTab('upload')" id="tabUpload">📁 Upload Images</button>
-                </div>
-
-                <!-- Camera -->
-                <div id="camSection">
-                    <div class="camera-container" id="cameraBox" style="aspect-ratio: 4/3; background: #1a1a2e; display:flex; align-items:center; justify-content:center;">
-                        <p style="color:#666; text-align:center;">📷<br>Camera not started</p>
-                        <video id="regVideo" class="camera-video" style="display:none;" autoplay muted playsinline></video>
-                        <canvas id="regCanvas" class="camera-canvas"></canvas>
-                        <div class="camera-overlay">
-                            <span class="camera-badge live" id="liveBadge" style="display:none;">🔴 LIVE</span>
-                        </div>
-                    </div>
-                    <div id="faceStatus" class="face-status none" style="display:none;">No face detected</div>
-                    <div style="margin-top:14px; display:flex; gap:10px;">
-                        <button class="btn btn-primary flex-1" onclick="startCamera()" id="startCamBtn">▶ Start Camera</button>
-                        <button class="btn btn-success flex-1" onclick="captureNow()" id="captureBtn" disabled>📸 Capture Sample</button>
-                    </div>
-                    <div style="margin-top:12px;">
-                        <button class="btn btn-secondary w-full" onclick="startAutoCapture()" id="autoBtn" disabled>⚡ Auto Capture 10 Samples</button>
-                    </div>
-                </div>
-
-                <!-- Upload -->
-                <div id="uploadSection" style="display:none;">
-                    <div class="upload-area" id="uploadArea" onclick="document.getElementById('imgInput').click()">
-                        <div style="font-size:40px; margin-bottom:12px;">📁</div>
-                        <p style="font-weight:600; color:var(--gray-700);">Click to upload images</p>
-                        <p style="font-size:13px; color:var(--gray-400); margin-top:6px;">JPG, PNG, WEBP · Max 5MB each · Multiple allowed</p>
-                        <input type="file" id="imgInput" accept="image/*" multiple style="display:none" onchange="handleUpload(this)">
-                    </div>
-                    <div class="upload-preview" id="uploadPreview"></div>
-                    <button class="btn btn-primary w-full" style="margin-top:16px;" onclick="processUploadedImages()" id="processUploadBtn" disabled>
-                        🧠 Process & Save Images
-                    </button>
-                </div>
+        <!-- CAMERA -->
+        <div id="camSection">
+          <div class="cam-box" id="cameraBox">
+            <div class="cam-placeholder" id="camPlaceholder">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+              <p>Camera not started</p>
             </div>
-
-            <!-- Progress Panel -->
-            <div>
-                <div class="card">
-                    <div class="card-header"><span class="card-title">📊 Capture Progress</span></div>
-                    <div class="card-body">
-                        <div style="margin-bottom:16px;">
-                            <div style="display:flex; justify-content:space-between; margin-bottom:6px;">
-                                <span style="font-size:14px; font-weight:600; color:var(--gray-600);">Samples Captured</span>
-                                <span style="font-size:14px; font-weight:700; color:var(--primary);" id="captureCount">0 / 10</span>
-                            </div>
-                            <div class="progress"><div class="progress-bar" id="captureBar" style="width:0%"></div></div>
-                        </div>
-                        <div class="capture-grid" id="captureGrid">
-                            <!-- slots filled dynamically -->
-                        </div>
-                        <div style="margin-top:20px; background:var(--primary-light); border-radius:10px; padding:14px;">
-                            <p style="font-size:13px; font-weight:600; color:var(--primary); margin-bottom:8px;">💡 Tips for best results:</p>
-                            <ul style="font-size:12px; color:var(--gray-600); padding-left:16px; line-height:1.8;">
-                                <li>Face the camera directly</li>
-                                <li>Good lighting is important</li>
-                                <li>Capture different angles slightly</li>
-                                <li>Remove glasses/hats for better accuracy</li>
-                                <li>Minimum 5 samples recommended</li>
-                            </ul>
-                        </div>
-                        <button class="btn btn-primary w-full" style="margin-top:20px;" onclick="finishRegistration()" id="finishBtn" disabled>
-                            ✅ Complete Registration
-                        </button>
-                    </div>
-                </div>
+            <video id="regVideo" class="camera-video" autoplay muted playsinline></video>
+            <canvas id="regCanvas" class="camera-canvas"></canvas>
+            <div class="cam-overlay">
+              <div class="cam-badge live" id="liveBadge">
+                <svg viewBox="0 0 10 10" fill="red"><circle cx="5" cy="5" r="5"/></svg>
+                LIVE
+              </div>
             </div>
+          </div>
+
+          <div class="face-status" id="faceStatus">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Face detected - Ready to capture
+          </div>
+
+          <div class="cam-controls">
+            <button class="ctrl-btn start" onclick="startCamera()" id="startCamBtn">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Start
+            </button>
+            <button class="ctrl-btn capture" onclick="captureNow()" id="captureBtn" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M20.94 11A9 9 0 1 1 12 3"/></svg>
+              Capture
+            </button>
+          </div>
+          <button class="ctrl-btn auto-cap" onclick="startAutoCapture()" id="autoBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Auto Capture 10 Samples
+          </button>
         </div>
+
+        <!-- UPLOAD -->
+        <div id="uploadSection" style="display:none">
+          <div class="upload-area" onclick="document.getElementById('imgInput').click()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+            <p>Click to upload images</p>
+            <small>JPG · PNG · WEBP · Max 5MB each · Multiple allowed</small>
+            <input type="file" id="imgInput" accept="image/*" multiple style="display:none" onchange="handleUpload(this)">
+          </div>
+          <div class="upload-preview" id="uploadPreview"></div>
+          <button class="process-btn" onclick="processUploadedImages()" id="processUploadBtn" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+            Process &amp; Save Images
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: Progress -->
+      <div>
+        <div class="progress-card">
+          <div class="progress-card-header">
+            <div class="pch-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            </div>
+            <div class="pch-title">Capture Progress</div>
+          </div>
+          <div class="progress-card-body">
+            <div class="prog-bar-wrap">
+              <div class="prog-label">
+                <span style="font-size:13px;font-weight:700;color:var(--gray-600)">Samples Captured</span>
+                <span style="color:var(--primary);font-weight:800;" id="captureCount">0 / 10</span>
+              </div>
+              <div class="prog-track"><div class="prog-fill" id="captureBar" style="width:0%"></div></div>
+            </div>
+            <div class="capture-grid" id="captureGrid"></div>
+
+            <div class="tips-box">
+              <div class="tips-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                Tips for best results
+              </div>
+              <ul class="tips-list">
+                <li>Face the camera directly</li>
+                <li>Good lighting is important</li>
+                <li>Capture slightly different angles</li>
+                <li>Remove glasses/hats for better accuracy</li>
+                <li>Minimum 5 samples recommended</li>
+              </ul>
+            </div>
+
+            <button class="finish-btn" onclick="finishRegistration()" id="finishBtn" disabled>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+              Complete Registration
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Step 3: Done -->
-    <div class="section-card" id="sec3">
-        <div style="text-align:center; padding:60px 20px;">
-            <div style="font-size:80px; margin-bottom:20px; animation: bounce 1s ease;">✅</div>
-            <h2 style="font-family:'Outfit',sans-serif; font-size:32px; font-weight:800; margin-bottom:10px;">Registration Complete!</h2>
-            <p style="color:var(--gray-500); font-size:16px; margin-bottom:32px;" id="doneMsg">Face registered successfully!</p>
-            <div style="display:flex; gap:14px; justify-content:center; flex-wrap:wrap;">
-                <a href="/register-face" class="btn btn-primary btn-lg">➕ Register Another</a>
-                <a href="/recognize" class="btn btn-secondary btn-lg">🔍 Start Recognizing</a>
-                <a href="/persons" class="btn btn-secondary btn-lg">👥 View All Persons</a>
-            </div>
-        </div>
+  <!-- STEP 3: DONE -->
+  <div class="section-card" id="sec3">
+    <div class="success-page">
+      <div class="success-anim">
+        <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+          <circle class="success-ring" cx="60" cy="60" r="54" fill="none" stroke="#f0fdf4" stroke-width="4"/>
+          <circle cx="60" cy="60" r="54" fill="none" stroke="var(--success)" stroke-width="4" stroke-dasharray="339" stroke-dashoffset="339" style="animation:drawCircle 1s ease .2s both;"/>
+          <polyline points="38,62 54,78 84,46" fill="none" stroke="var(--success)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="70" stroke-dashoffset="70" style="animation:drawCheck .5s ease .9s both;"/>
+          <style>
+            @keyframes drawCircle{to{stroke-dashoffset:0;}}
+            @keyframes drawCheck{to{stroke-dashoffset:0;}}
+          </style>
+        </svg>
+      </div>
+      <div class="done-title">Registration Complete!</div>
+      <div class="done-sub" id="doneMsg">Face registered successfully!</div>
+      <div class="done-actions">
+        <a href="/register-face" class="done-btn primary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Register Another
+        </a>
+        <a href="/recognize" class="done-btn secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Start Recognizing
+        </a>
+        <a href="/persons" class="done-btn secondary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          View All Persons
+        </a>
+      </div>
     </div>
+  </div>
 </div>
 
 <script src="/js/auth.js"></script>
 <script src="/js/navbar.js"></script>
 <script>
-let personId = null, personName = '';
-let stream = null, capturedSamples = 0;
-let detectionInterval = null, autoCapturing = false;
-let modelsLoaded = false;
-let uploadedFiles = [], processedDescriptors = [];
+let personId=null,personName='';
+let stream=null,capturedSamples=0;
+let detectionInterval=null,autoCapturing=false;
+let modelsLoaded=false;
+let uploadedImgFiles=[];
+const MODEL_URL='https://justadudewhohacks.github.io/face-api.js/models';
 
-const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
+async function loadModels(){
+  try{
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    modelsLoaded=true;
+    document.getElementById('modelStatus').innerHTML=`
+      <div class="mb-icon" style="background:#f0fdf4">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="color:var(--success);font-weight:800;">AI Models loaded successfully!</div>`;
+    setTimeout(()=>document.getElementById('modelStatus').style.display='none',2000);
+  }catch(e){
+    document.getElementById('modelStatus').innerHTML=`<span style="color:var(--danger);font-weight:700;">Failed to load models. Check internet connection.</span>`;
+  }
+}
 
-async function loadModels() {
-    try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        modelsLoaded = true;
-        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--success); font-weight:700;">✅ AI Models loaded successfully!</span>';
-        setTimeout(() => document.getElementById('modelStatus').style.display = 'none', 2000);
-    } catch (e) {
-        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--danger);">❌ Failed to load models. Check internet connection.</span>';
+function initCaptureGrid(){
+  const g=document.getElementById('captureGrid');
+  g.innerHTML=Array.from({length:10},(_,i)=>`<div class="capture-slot" id="slot${i}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></div>`).join('');
+}
+
+async function registerPerson(){
+  const name=document.getElementById('pName').value.trim();
+  const age=document.getElementById('pAge').value;
+  const email=document.getElementById('pEmail').value.trim();
+  const mobile=document.getElementById('pMobile').value.trim();
+  if(!name)return showAlert('Name is required.','danger');
+  const btn=document.getElementById('regPersonBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span> Saving…';
+  const res=await fetch('/api/persons/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,age,email,mobile})});
+  const data=await res.json();
+  btn.disabled=false;btn.innerHTML='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg> Continue to Face Capture';
+  if(!data.success)return showAlert(data.message,'danger');
+  personId=data.personId;personName=name;
+  document.getElementById('sec1').classList.remove('active');
+  document.getElementById('sec2').classList.add('active');
+  document.getElementById('stepEl1').classList.remove('active');document.getElementById('stepEl1').classList.add('done');
+  document.getElementById('stepEl2').classList.add('active');
+  initCaptureGrid();loadModels();
+}
+
+async function startCamera(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    const v=document.getElementById('regVideo');
+    v.srcObject=stream;v.style.display='block';
+    document.getElementById('camPlaceholder').style.display='none';
+    document.getElementById('liveBadge').style.display='flex';
+    document.getElementById('startCamBtn').disabled=true;
+    document.getElementById('captureBtn').disabled=false;
+    document.getElementById('autoBtn').disabled=false;
+    startDetectionLoop();
+  }catch(e){showAlert('Camera access denied.','danger');}
+}
+
+function startDetectionLoop(){
+  const v=document.getElementById('regVideo');
+  const canvas=document.getElementById('regCanvas');
+  const statusEl=document.getElementById('faceStatus');
+  detectionInterval=setInterval(async()=>{
+    if(!modelsLoaded||v.readyState<2)return;
+    canvas.width=v.videoWidth;canvas.height=v.videoHeight;
+    const ctx=canvas.getContext('2d');ctx.clearRect(0,0,canvas.width,canvas.height);
+    try{
+      const det=await faceapi.detectSingleFace(v,new faceapi.SsdMobilenetv1Options({minConfidence:0.5})).withFaceLandmarks();
+      if(det){
+        const dims=faceapi.matchDimensions(canvas,v,true);
+        const resized=faceapi.resizeResults(det,dims);
+        faceapi.draw.drawDetections(canvas,[resized]);
+        faceapi.draw.drawFaceLandmarks(canvas,[resized]);
+        statusEl.className='face-status detected';
+        statusEl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Face detected — Ready to capture';
+      }else{
+        statusEl.className='face-status none';
+        statusEl.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> No face detected — Position your face';
+      }
+    }catch(e){}
+  },300);
+}
+
+async function captureNow(){
+  if(!modelsLoaded)return showAlert('Models still loading…','warning');
+  if(capturedSamples>=10)return showAlert('10 samples already captured!','info');
+  const v=document.getElementById('regVideo');
+  const det=await faceapi.detectSingleFace(v,new faceapi.SsdMobilenetv1Options({minConfidence:0.5})).withFaceLandmarks().withFaceDescriptor();
+  if(!det)return showAlert('No face detected. Position your face clearly.','warning');
+  const tc=document.createElement('canvas');tc.width=120;tc.height=120;
+  const ctx=tc.getContext('2d');const box=det.detection.box;
+  ctx.drawImage(v,box.x,box.y,box.width,box.height,0,0,120,120);
+  await saveSample(tc.toDataURL('image/jpeg',0.8),Array.from(det.descriptor),capturedSamples);
+}
+
+async function saveSample(imageData,descriptor,slotIdx){
+  try{
+    const res=await fetch('/api/persons/sample',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({personId,imageData,descriptor})});
+    const data=await res.json();if(!data.success)return;
+    const slot=document.getElementById(`slot${slotIdx}`);
+    slot.innerHTML=`<img src="${imageData}">`;
+    slot.classList.add('filled');
+    capturedSamples++;updateProgress();
+  }catch(e){console.error(e);}
+}
+
+async function startAutoCapture(){
+  if(autoCapturing)return;
+  autoCapturing=true;
+  const btn=document.getElementById('autoBtn');
+  btn.disabled=true;document.getElementById('captureBtn').disabled=true;
+  while(capturedSamples<10){
+    const v=document.getElementById('regVideo');
+    const det=await faceapi.detectSingleFace(v,new faceapi.SsdMobilenetv1Options({minConfidence:0.5})).withFaceLandmarks().withFaceDescriptor();
+    if(det){
+      const tc=document.createElement('canvas');tc.width=120;tc.height=120;
+      const ctx=tc.getContext('2d');const box=det.detection.box;
+      ctx.drawImage(v,box.x,box.y,box.width,box.height,0,0,120,120);
+      await saveSample(tc.toDataURL('image/jpeg',0.8),Array.from(det.descriptor),capturedSamples);
+      await new Promise(r=>setTimeout(r,500));
     }
+    await new Promise(r=>setTimeout(r,200));
+  }
+  autoCapturing=false;btn.disabled=false;document.getElementById('captureBtn').disabled=false;
+  if(capturedSamples>=10)showAlert('All 10 samples captured! Click Complete Registration.','success');
 }
 
-function initCaptureGrid() {
-    const grid = document.getElementById('captureGrid');
-    grid.innerHTML = Array.from({length: 10}, (_, i) => `
-        <div class="capture-slot" id="slot${i}">+</div>
-    `).join('');
+function updateProgress(){
+  const pct=(capturedSamples/10)*100;
+  document.getElementById('captureCount').textContent=`${capturedSamples} / 10`;
+  document.getElementById('captureBar').style.width=pct+'%';
+  if(capturedSamples>=3){
+    document.getElementById('finishBtn').disabled=false;
+    document.getElementById('finishBtn').innerHTML=`<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg> Complete Registration (${capturedSamples} samples)`;
+  }
 }
 
-async function registerPerson() {
-    const name = document.getElementById('pName').value.trim();
-    const age = document.getElementById('pAge').value;
-    const email = document.getElementById('pEmail').value.trim();
-    const mobile = document.getElementById('pMobile').value.trim();
-    if (!name) return showAlert('Name is required.', 'danger');
-
-    const btn = document.getElementById('regPersonBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Saving...';
-
-    const res = await fetch('/api/persons/register', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ name, age, email, mobile })
-    });
-    const data = await res.json();
-    btn.disabled = false; btn.innerHTML = 'Continue to Face Capture →';
-
-    if (!data.success) return showAlert(data.message, 'danger');
-    personId = data.personId;
-    personName = name;
-
-    // Go to step 2
-    document.getElementById('sec1').classList.remove('active');
-    document.getElementById('sec2').classList.add('active');
-    document.getElementById('step1').classList.remove('active'); document.getElementById('step1').classList.add('done');
-    document.getElementById('step2').classList.add('active');
-    initCaptureGrid();
-    loadModels();
+function switchCaptureTab(tab){
+  const isCamera=tab==='camera';
+  document.getElementById('tabCam').classList.toggle('active',isCamera);
+  document.getElementById('tabUpload').classList.toggle('active',!isCamera);
+  document.getElementById('camSection').style.display=isCamera?'':'none';
+  document.getElementById('uploadSection').style.display=isCamera?'none':'';
 }
 
-async function startCamera() {
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
-        const video = document.getElementById('regVideo');
-        video.srcObject = stream;
-        video.style.display = 'block';
-        document.querySelector('#cameraBox p')?.remove();
-        document.getElementById('liveBadge').style.display = '';
-        document.getElementById('startCamBtn').disabled = true;
-        document.getElementById('captureBtn').disabled = false;
-        document.getElementById('autoBtn').disabled = false;
-        document.getElementById('faceStatus').style.display = '';
-        startDetectionLoop();
-    } catch (e) {
-        showAlert('Camera access denied. Please allow camera permission.', 'danger');
-    }
+function handleUpload(input){
+  uploadedImgFiles=Array.from(input.files);
+  const preview=document.getElementById('uploadPreview');
+  preview.innerHTML='';
+  uploadedImgFiles.forEach((f,i)=>{
+    const url=URL.createObjectURL(f);
+    preview.innerHTML+=`<div class="upload-thumb" id="upthumb${i}"><img src="${url}"><button class="remove-btn" onclick="removeUpload(${i})">✕</button></div>`;
+  });
+  document.getElementById('processUploadBtn').disabled=uploadedImgFiles.length===0;
 }
 
-function startDetectionLoop() {
-    const video = document.getElementById('regVideo');
-    const canvas = document.getElementById('regCanvas');
-    const statusEl = document.getElementById('faceStatus');
+function removeUpload(i){uploadedImgFiles.splice(i,1);handleUpload({files:uploadedImgFiles});}
 
-    detectionInterval = setInterval(async () => {
-        if (!modelsLoaded || video.readyState < 2) return;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        try {
-            const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-                .withFaceLandmarks();
-
-            if (det) {
-                const dims = faceapi.matchDimensions(canvas, video, true);
-                const resized = faceapi.resizeResults(det, dims);
-                faceapi.draw.drawDetections(canvas, [resized]);
-                faceapi.draw.drawFaceLandmarks(canvas, [resized]);
-                statusEl.className = 'face-status detected';
-                statusEl.textContent = '✅ Face detected - Ready to capture';
-            } else {
-                statusEl.className = 'face-status none';
-                statusEl.textContent = '❌ No face detected - Position your face';
-            }
-        } catch(e) {}
-    }, 300);
+async function processUploadedImages(){
+  if(!modelsLoaded)return showAlert('Models still loading…','warning');
+  if(uploadedImgFiles.length===0)return;
+  const btn=document.getElementById('processUploadBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span> Processing…';
+  let saved=0;
+  for(const file of uploadedImgFiles){
+    try{
+      const img=await faceapi.bufferToImage(file);
+      const det=await faceapi.detectSingleFace(img,new faceapi.SsdMobilenetv1Options({minConfidence:0.5})).withFaceLandmarks().withFaceDescriptor();
+      if(det){
+        const reader=new FileReader();
+        const imageData=await new Promise(res=>{reader.onload=()=>res(reader.result);reader.readAsDataURL(file);});
+        await saveSample(imageData,Array.from(det.descriptor),capturedSamples<10?capturedSamples:9);
+        saved++;
+      }
+    }catch(e){console.error(e);}
+  }
+  btn.disabled=false;btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg> Process & Save Images';
+  showAlert(`Processed ${saved} of ${uploadedImgFiles.length} images successfully.`,'success');
 }
 
-async function captureNow() {
-    if (!modelsLoaded) return showAlert('Models still loading...', 'warning');
-    if (capturedSamples >= 10) return showAlert('10 samples already captured!', 'info');
-
-    const video = document.getElementById('regVideo');
-    const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-        .withFaceLandmarks().withFaceDescriptor();
-
-    if (!det) return showAlert('No face detected. Please position your face clearly.', 'warning');
-
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = 120; tempCanvas.height = 120;
-    const ctx = tempCanvas.getContext('2d');
-    const box = det.detection.box;
-    ctx.drawImage(video, box.x, box.y, box.width, box.height, 0, 0, 120, 120);
-    const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
-
-    await saveSample(imageData, Array.from(det.descriptor), capturedSamples);
+function finishRegistration(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  if(detectionInterval)clearInterval(detectionInterval);
+  document.getElementById('sec2').classList.remove('active');
+  document.getElementById('sec3').classList.add('active');
+  document.getElementById('stepEl2').classList.remove('active');document.getElementById('stepEl2').classList.add('done');
+  document.getElementById('stepEl3').classList.add('active');document.getElementById('stepEl3').classList.add('done');
+  document.getElementById('doneMsg').textContent=`${personName} registered with ${capturedSamples} face samples!`;
 }
 
-async function saveSample(imageData, descriptor, slotIdx) {
-    try {
-        const res = await fetch('/api/persons/sample', {
-            method: 'POST',
-            headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ personId, imageData, descriptor })
-        });
-        const data = await res.json();
-        if (!data.success) return;
-
-        const slot = document.getElementById(`slot${slotIdx}`);
-        slot.innerHTML = `<img src="${imageData}">`;
-        slot.classList.add('filled');
-        capturedSamples++;
-        updateProgress();
-    } catch(e) { console.error(e); }
+function showAlert(m,t){
+  const icons={success:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',danger:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warning:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',info:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'};
+  document.getElementById('alertBox').innerHTML=`<div class="alert alert-${t}">${icons[t]||''} ${m}</div>`;
 }
 
-async function startAutoCapture() {
-    if (autoCapturing) return;
-    autoCapturing = true;
-    const btn = document.getElementById('autoBtn');
-    btn.disabled = true;
-    document.getElementById('captureBtn').disabled = true;
-
-    let done = capturedSamples;
-    while (capturedSamples < 10) {
-        if (capturedSamples >= 10) break;
-        const video = document.getElementById('regVideo');
-        const det = await faceapi.detectSingleFace(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-            .withFaceLandmarks().withFaceDescriptor();
-
-        if (det) {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = 120; tempCanvas.height = 120;
-            const ctx = tempCanvas.getContext('2d');
-            const box = det.detection.box;
-            ctx.drawImage(video, box.x, box.y, box.width, box.height, 0, 0, 120, 120);
-            const imageData = tempCanvas.toDataURL('image/jpeg', 0.8);
-            await saveSample(imageData, Array.from(det.descriptor), capturedSamples);
-            await new Promise(r => setTimeout(r, 500));
-        }
-        await new Promise(r => setTimeout(r, 200));
-    }
-
-    autoCapturing = false;
-    btn.disabled = false;
-    document.getElementById('captureBtn').disabled = false;
-    if (capturedSamples >= 10) showAlert('All 10 samples captured! Click Complete Registration.', 'success');
-}
-
-function updateProgress() {
-    const pct = (capturedSamples / 10) * 100;
-    document.getElementById('captureCount').textContent = `${capturedSamples} / 10`;
-    document.getElementById('captureBar').style.width = pct + '%';
-    if (capturedSamples >= 3) {
-        document.getElementById('finishBtn').disabled = false;
-        document.getElementById('finishBtn').textContent = `✅ Complete Registration (${capturedSamples} samples)`;
-    }
-}
-
-// Upload tab
-function switchCaptureTab(tab) {
-    const isCamera = tab === 'camera';
-    document.getElementById('tabCam').classList.toggle('active', isCamera);
-    document.getElementById('tabUpload').classList.toggle('active', !isCamera);
-    document.getElementById('camSection').style.display = isCamera ? '' : 'none';
-    document.getElementById('uploadSection').style.display = isCamera ? 'none' : '';
-}
-
-let uploadedImgFiles = [];
-
-function handleUpload(input) {
-    uploadedImgFiles = Array.from(input.files);
-    const preview = document.getElementById('uploadPreview');
-    preview.innerHTML = '';
-    uploadedImgFiles.forEach((f, i) => {
-        const url = URL.createObjectURL(f);
-        preview.innerHTML += `
-            <div class="upload-thumb" id="upthumb${i}">
-                <img src="${url}">
-                <button class="remove" onclick="removeUpload(${i})">✕</button>
-            </div>`;
-    });
-    document.getElementById('processUploadBtn').disabled = uploadedImgFiles.length === 0;
-}
-
-function removeUpload(i) {
-    uploadedImgFiles.splice(i, 1);
-    handleUpload({ files: uploadedImgFiles });
-}
-
-async function processUploadedImages() {
-    if (!modelsLoaded) return showAlert('Models still loading...', 'warning');
-    if (uploadedImgFiles.length === 0) return;
-
-    const btn = document.getElementById('processUploadBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Processing...';
-
-    let saved = 0;
-    for (const file of uploadedImgFiles) {
-        try {
-            const img = await faceapi.bufferToImage(file);
-            const det = await faceapi.detectSingleFace(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 }))
-                .withFaceLandmarks().withFaceDescriptor();
-
-            if (det) {
-                const reader = new FileReader();
-                const imageData = await new Promise(res => { reader.onload = () => res(reader.result); reader.readAsDataURL(file); });
-                await saveSample(imageData, Array.from(det.descriptor), capturedSamples < 10 ? capturedSamples : 9);
-                saved++;
-            }
-        } catch(e) { console.error(e); }
-    }
-
-    btn.disabled = false; btn.innerHTML = '🧠 Process & Save Images';
-    showAlert(`✅ Processed ${saved} of ${uploadedImgFiles.length} images successfully.`, 'success');
-}
-
-function finishRegistration() {
-    if (stream) { stream.getTracks().forEach(t => t.stop()); }
-    if (detectionInterval) clearInterval(detectionInterval);
-
-    document.getElementById('sec2').classList.remove('active');
-    document.getElementById('sec3').classList.add('active');
-    document.getElementById('step2').classList.remove('active'); document.getElementById('step2').classList.add('done');
-    document.getElementById('step3').classList.add('active');
-    document.getElementById('doneMsg').textContent = `${personName} registered with ${capturedSamples} face samples!`;
-}
-
-Auth.setupNav().then(() => {});
+Auth.setupNav().then(()=>{});
 </script>
 </body>
 </html>
