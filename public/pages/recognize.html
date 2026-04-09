@@ -5,478 +5,521 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Recognize Faces — FaceID SaaS</title>
 <link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
-.recog-layout { display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
+  :root{
+    --primary:#00adee;--primary-dark:#0078ba;--primary-light:#e0f5fd;
+    --white:#fff;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;
+    --gray-700:#374151;--gray-800:#1f2937;
+    --success:#22c55e;--warning:#f59e0b;--danger:#ef4444;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+    --radius:12px;--radius-lg:20px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Outfit',sans-serif;background:var(--gray-50);color:var(--gray-700);min-height:100vh;}
 
-.model-status {
-    background: var(--primary-light); border: 1px solid #bae6fd;
-    border-radius: 12px; padding: 14px 16px;
-    display: flex; align-items: center; gap: 12px;
-    margin-bottom: 16px;
-    font-size: 14px; font-weight: 600; color: var(--primary);
-}
+  /* HERO */
+  .page-hero{background:linear-gradient(135deg,#00c6fb 0%,#005bea 100%);padding:36px 0 0;position:relative;overflow:hidden;}
+  .page-hero-bg{position:absolute;inset:0;pointer-events:none;}
+  .page-hero-inner{max-width:1200px;margin:0 auto;padding:0 28px;position:relative;z-index:2;}
+  .ph-title{font-size:28px;font-weight:800;color:#fff;display:flex;align-items:center;gap:12px;margin-bottom:4px;}
+  .ph-sub{font-size:14px;color:rgba(255,255,255,.76);margin-bottom:24px;}
+  .ph-icon-wrap{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .hero-wave{display:block;width:100%;height:40px;}
 
-.recog-results { margin-top: 0; }
+  .main-wrap{max-width:1200px;margin:0 auto;padding:28px 28px 48px;}
 
-.no-results {
-    text-align: center; padding: 40px 20px;
-    color: var(--gray-400);
-}
-.no-results .icon { font-size: 48px; margin-bottom: 12px; }
+  /* MODEL STATUS */
+  .model-status{
+    display:flex;align-items:center;gap:14px;padding:16px 20px;
+    background:var(--primary-light);border:1.5px solid #bae6fd;border-radius:var(--radius);
+    margin-bottom:24px;font-size:14px;font-weight:700;color:var(--primary);
+    animation:fadeIn .4s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+  .model-status .status-icon-wrap{width:36px;height:36px;border-radius:50%;background:rgba(0,173,238,.14);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .model-status .status-icon-wrap svg{width:18px;height:18px;color:var(--primary);}
+  .spin-svg{animation:svgSpin 1s linear infinite;transform-origin:center;}
+  @keyframes svgSpin{to{transform:rotate(360deg);}}
 
-.detected-list { display: flex; flex-direction: column; gap: 12px; }
+  /* LAYOUT */
+  .recog-layout{display:grid;grid-template-columns:1fr 360px;gap:24px;align-items:start;}
+  @media(max-width:900px){.recog-layout{grid-template-columns:1fr;}}
 
-.detected-card {
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    padding: 16px;
-    box-shadow: var(--shadow-sm);
-    animation: slideIn 0.3s ease;
-    border-left: 4px solid var(--primary);
-}
+  /* TABS */
+  .tab-row{display:flex;gap:4px;background:var(--gray-100);padding:4px;border-radius:13px;margin-bottom:20px;}
+  .tab-pill{flex:1;padding:10px;border:none;background:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;color:var(--gray-500);font-family:'Outfit',sans-serif;display:flex;align-items:center;justify-content:center;gap:7px;}
+  .tab-pill svg{width:16px;height:16px;}
+  .tab-pill.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow-sm);}
 
-.detected-card.unknown { border-left-color: var(--warning); }
+  /* CAMERA CONTAINER */
+  .cam-box{
+    position:relative;border-radius:var(--radius-lg);overflow:hidden;
+    background:linear-gradient(135deg,#0f0f23 0%,#1a1a40 100%);
+    aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 8px 32px rgba(0,0,0,.18);
+  }
+  .cam-placeholder{text-align:center;color:rgba(255,255,255,.35);pointer-events:none;}
+  .cam-placeholder svg{width:52px;height:52px;display:block;margin:0 auto 10px;opacity:.5;}
+  .cam-placeholder p{font-size:13px;font-weight:600;}
+  .camera-video{width:100%;height:100%;object-fit:cover;display:none;}
+  .camera-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
+  .cam-overlay{position:absolute;top:12px;left:12px;display:flex;gap:8px;}
+  .cam-badge{background:rgba(0,0,0,.6);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;backdrop-filter:blur(4px);display:none;align-items:center;gap:6px;}
+  .cam-badge.live{background:rgba(239,68,68,.85);}
+  .cam-badge svg{width:10px;height:10px;}
+  /* scan line overlay when live */
+  .scan-overlay{position:absolute;inset:0;pointer-events:none;display:none;}
+  .scan-bar{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent);animation:scanV 3s ease-in-out infinite;}
+  @keyframes scanV{0%,100%{top:10%;opacity:0;}10%{opacity:1;}90%{opacity:1;}95%{top:90%;opacity:0;}}
+  .scan-corner{position:absolute;width:20px;height:20px;border-color:var(--primary);border-style:solid;animation:cornerBlink 2s ease-in-out infinite;}
+  .sc-tl{top:10px;left:10px;border-width:2px 0 0 2px;}
+  .sc-tr{top:10px;right:10px;border-width:2px 2px 0 0;}
+  .sc-bl{bottom:10px;left:10px;border-width:0 0 2px 2px;}
+  .sc-br{bottom:10px;right:10px;border-width:0 2px 2px 0;}
+  @keyframes cornerBlink{0%,100%{opacity:.4;}50%{opacity:1;filter:drop-shadow(0 0 4px var(--primary));}}
 
-.dc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
-.dc-avatar {
-    width: 48px; height: 48px;
-    background: linear-gradient(135deg, var(--primary), #0078ba);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800;
-    color: white; flex-shrink: 0;
-}
-.dc-avatar.unknown { background: linear-gradient(135deg, #f59e0b, #d97706); }
-.dc-name { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; }
-.dc-conf { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+  /* CONTROLS */
+  .cam-controls{display:flex;gap:10px;margin-top:14px;}
+  .ctrl-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:11px;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;}
+  .ctrl-btn svg{width:16px;height:16px;}
+  .ctrl-btn.start{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 14px rgba(0,120,186,.28);}
+  .ctrl-btn.start:hover{transform:translateY(-1px);opacity:.92;}
+  .ctrl-btn.stop{background:#fef2f2;color:var(--danger);}
+  .ctrl-btn.stop:hover{background:#fee2e2;}
+  .ctrl-btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;}
 
-.dc-details { display: grid; gap: 6px; }
-.dc-detail {
-    display: flex; align-items: center; gap: 8px;
-    font-size: 13px; padding: 6px 10px;
-    background: var(--gray-50); border-radius: 8px;
-}
-.dc-detail-icon { font-size: 14px; }
-.dc-detail-label { color: var(--gray-500); width: 60px; flex-shrink: 0; }
-.dc-detail-value { font-weight: 600; color: var(--gray-700); }
+  /* UPLOAD AREA */
+  .upload-area{
+    border:2px dashed var(--gray-300);border-radius:var(--radius-lg);
+    padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;
+  }
+  .upload-area:hover{border-color:var(--primary);background:var(--primary-light);}
+  .upload-area svg{width:44px;height:44px;color:var(--gray-400);margin:0 auto 12px;display:block;}
+  .upload-area p{font-weight:700;color:var(--gray-700);font-size:14px;}
+  .upload-area small{font-size:12px;color:var(--gray-400);display:block;margin-top:5px;}
 
-.camera-controls { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  /* CARD */
+  .side-card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-sm);}
+  .side-card-header{padding:18px 20px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;}
+  .side-card-title{font-size:16px;font-weight:800;color:var(--gray-800);display:flex;align-items:center;gap:8px;}
+  .side-card-title svg{width:18px;height:18px;color:var(--primary);}
+  .side-card-body{padding:18px;}
 
-.upload-recog-area {
-    border: 2px dashed var(--gray-300); border-radius: var(--radius-lg);
-    padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s;
-}
-.upload-recog-area:hover { border-color: var(--primary); background: var(--primary-light); }
+  /* STATS BAR */
+  .stats-trio{display:flex;gap:0;border-radius:var(--radius);overflow:hidden;margin-bottom:18px;border:1px solid var(--gray-200);}
+  .stat-cell{flex:1;text-align:center;padding:14px 8px;background:var(--white);}
+  .stat-cell:not(:last-child){border-right:1px solid var(--gray-200);}
+  .stat-cell .sv{font-size:26px;font-weight:800;font-family:'Outfit',sans-serif;color:var(--primary);}
+  .stat-cell .sl{font-size:10px;color:var(--gray-400);font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-top:2px;}
 
-.recog-uploaded-img { max-width: 100%; border-radius: var(--radius-lg); margin-top: 12px; }
+  /* DETECTED CARDS */
+  .detected-list{display:flex;flex-direction:column;gap:12px;}
+  .detected-card{
+    border:1.5px solid var(--gray-200);border-radius:var(--radius);padding:14px;
+    background:var(--white);animation:slideIn .3s ease;
+    border-left:4px solid var(--primary);
+  }
+  .detected-card.unknown{border-left-color:var(--warning);}
+  @keyframes slideIn{from{opacity:0;transform:translateX(10px);}to{opacity:1;transform:translateX(0);}}
+  .dc-head{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+  .dc-avatar{width:46px;height:46px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#0078ba);display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:800;color:#fff;flex-shrink:0;}
+  .dc-avatar.unk{background:linear-gradient(135deg,#f59e0b,#d97706);}
+  .dc-name{font-size:17px;font-weight:800;}
+  .dc-conf{font-size:12px;color:var(--gray-500);margin-top:2px;}
+  .dc-details{display:grid;gap:5px;}
+  .dc-row{display:flex;align-items:center;gap:7px;font-size:13px;padding:6px 9px;background:var(--gray-50);border-radius:8px;}
+  .dc-row svg{width:14px;height:14px;color:var(--primary);flex-shrink:0;}
+  .dc-lbl{color:var(--gray-400);font-weight:600;width:56px;flex-shrink:0;}
+  .dc-val{font-weight:700;color:var(--gray-700);}
 
-.stats-bar {
-    display: flex; gap: 12px; margin-bottom: 16px;
-    background: var(--gray-50); border-radius: 12px; padding: 12px 16px;
-}
-.stat-item { text-align: center; flex: 1; }
-.stat-item .val { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--primary); }
-.stat-item .lbl { font-size: 11px; color: var(--gray-500); font-weight: 600; }
+  /* NO RESULTS */
+  .no-results{text-align:center;padding:36px 16px;color:var(--gray-400);}
+  .no-results svg{width:44px;height:44px;display:block;margin:0 auto 12px;opacity:.4;}
+  .no-results p{font-size:13px;font-weight:600;}
 
-@media (max-width: 900px) { .recog-layout { grid-template-columns: 1fr; } }
+  /* DB INFO */
+  .db-info-row{display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:8px;}
+  .db-info-row svg{width:15px;height:15px;flex-shrink:0;}
+  .refresh-btn{width:100%;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:7px;padding:9px;background:var(--gray-100);border:none;border-radius:var(--radius);font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;color:var(--gray-700);transition:all .2s;}
+  .refresh-btn:hover{background:var(--gray-200);}
+  .refresh-btn svg{width:15px;height:15px;}
+
+  /* CLEAR BTN */
+  .clear-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;background:var(--gray-100);border:none;border-radius:8px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;color:var(--gray-600);transition:all .2s;}
+  .clear-btn:hover{background:var(--gray-200);}
+  .clear-btn svg{width:13px;height:13px;}
+
+  .alert{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .alert-warning{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
+  .alert-danger{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+  .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+
+  #uploadCanvas{max-width:100%;border-radius:var(--radius-lg);display:none;margin-top:12px;}
 </style>
 </head>
 <body>
 <div id="mainNav"></div>
-<div class="page-container">
-    <div class="page-header">
-        <h1 class="page-title">🔍 Face Recognition</h1>
-        <p class="page-subtitle">Detect and identify registered faces in real-time or from images</p>
+
+<!-- HERO -->
+<div class="page-hero">
+  <svg class="page-hero-bg" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="pg2" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#pg2)" opacity=".08"/>
+    <circle cx="1050" cy="20" r="100" fill="rgba(255,255,255,.05)"/>
+    <circle cx="200" cy="140" r="80" fill="rgba(255,255,255,.04)"/>
+  </svg>
+  <div class="page-hero-inner">
+    <div class="ph-title">
+      <div class="ph-icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      Face Recognition
     </div>
+    <p class="ph-sub">Detect and identify registered faces in real-time or from uploaded images</p>
+  </div>
+  <svg class="hero-wave" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,40 C300,0 900,0 1200,40 L1200,40 L0,40Z" fill="#f9fafb"/>
+  </svg>
+</div>
 
-    <div id="alertBox"></div>
+<div class="main-wrap">
+  <div id="alertBox"></div>
 
-    <div id="modelStatus" class="model-status">
-        <div class="spinner" style="border-top-color:var(--primary); border-color:rgba(0,173,238,0.3); width:16px; height:16px;"></div>
-        <span>Loading AI recognition models...</span>
+  <!-- MODEL STATUS -->
+  <div class="model-status" id="modelStatus">
+    <div class="status-icon-wrap">
+      <svg class="spin-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
     </div>
+    <div>
+      <div>Loading AI recognition models…</div>
+      <div style="font-size:12px;font-weight:500;opacity:.7;margin-top:2px;">This may take a moment on first load</div>
+    </div>
+  </div>
 
-    <div class="recog-layout">
-        <!-- Left: Camera/Upload -->
-        <div>
-            <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('camera')" id="tabCam">📷 Live Camera</button>
-                <button class="tab-btn" onclick="switchTab('upload')" id="tabUpload">📁 Upload Image</button>
+  <div class="recog-layout">
+    <!-- LEFT -->
+    <div>
+      <div class="tab-row">
+        <button class="tab-pill active" onclick="switchTab('camera')" id="tabCam">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Live Camera
+        </button>
+        <button class="tab-pill" onclick="switchTab('upload')" id="tabUpload">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+          Upload Image
+        </button>
+      </div>
+
+      <!-- CAMERA SECTION -->
+      <div id="camSection">
+        <div class="cam-box" id="camBox">
+          <div class="cam-placeholder" id="camPlaceholder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <p>Start camera to begin</p>
+          </div>
+          <video id="recogVideo" class="camera-video" autoplay muted playsinline></video>
+          <canvas id="recogCanvas" class="camera-canvas"></canvas>
+          <div class="cam-overlay">
+            <div class="cam-badge live" id="liveBadge">
+              <svg viewBox="0 0 10 10" fill="red"><circle cx="5" cy="5" r="5"/></svg>
+              LIVE
             </div>
-
-            <!-- Camera -->
-            <div id="camSection">
-                <div class="camera-container" id="camBox" style="max-width:100%; aspect-ratio:4/3; background:#0f0f23; display:flex; align-items:center; justify-content:center;">
-                    <p style="color:#555; text-align:center; font-size:18px;">📷<br><small>Start camera to begin</small></p>
-                    <video id="recogVideo" class="camera-video" style="display:none;" autoplay muted playsinline></video>
-                    <canvas id="recogCanvas" class="camera-canvas"></canvas>
-                    <div class="camera-overlay">
-                        <span class="camera-badge live" id="liveBadge" style="display:none;">🔴 LIVE</span>
-                        <span class="camera-badge" id="fpsBadge" style="display:none;">0 FPS</span>
-                    </div>
-                </div>
-
-                <div class="camera-controls">
-                    <button class="btn btn-primary flex-1" onclick="startRecogCamera()" id="startBtn">▶ Start Camera</button>
-                    <button class="btn btn-danger flex-1" onclick="stopCamera()" id="stopBtn" disabled>⏹ Stop</button>
-                </div>
-            </div>
-
-            <!-- Upload -->
-            <div id="uploadSection" style="display:none;">
-                <div class="upload-recog-area" onclick="document.getElementById('recogImgInput').click()">
-                    <div style="font-size:40px; margin-bottom:12px;">🖼️</div>
-                    <p style="font-weight:600;">Click to upload an image for recognition</p>
-                    <p style="font-size:13px; color:var(--gray-400); margin-top:6px;">JPG, PNG, WEBP</p>
-                    <input type="file" id="recogImgInput" accept="image/*" style="display:none;" onchange="recognizeFromImage(this)">
-                </div>
-                <div id="uploadImgResult" style="margin-top:16px; position:relative;">
-                    <canvas id="uploadCanvas" style="max-width:100%; border-radius:12px; display:none;"></canvas>
-                </div>
-            </div>
+            <div class="cam-badge" id="fpsBadge">0 FPS</div>
+          </div>
+          <!-- Scan overlay (shown when live) -->
+          <div class="scan-overlay" id="scanOverlay">
+            <div class="scan-bar"></div>
+            <div class="scan-corner sc-tl"></div>
+            <div class="scan-corner sc-tr"></div>
+            <div class="scan-corner sc-bl"></div>
+            <div class="scan-corner sc-br"></div>
+          </div>
         </div>
-
-        <!-- Right: Results Panel -->
-        <div>
-            <div class="card">
-                <div class="card-header">
-                    <span class="card-title">👁️ Detected Persons</span>
-                    <button class="btn btn-secondary btn-sm" onclick="clearResults()">Clear</button>
-                </div>
-                <div class="card-body" style="padding:16px;">
-                    <div class="stats-bar">
-                        <div class="stat-item">
-                            <div class="val" id="totalDetected">0</div>
-                            <div class="lbl">DETECTED</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="val" id="totalKnown">0</div>
-                            <div class="lbl">KNOWN</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="val" id="totalUnknown">0</div>
-                            <div class="lbl">UNKNOWN</div>
-                        </div>
-                    </div>
-                    <div id="recogResults">
-                        <div class="no-results">
-                            <div class="icon">👁️</div>
-                            <p>Start camera or upload an image to detect faces</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- DB Info -->
-            <div class="card" style="margin-top:16px;">
-                <div class="card-header"><span class="card-title">📊 Database</span></div>
-                <div class="card-body" style="padding:16px;">
-                    <div id="dbInfo" style="font-size:14px; color:var(--gray-500);">Loading...</div>
-                    <button class="btn btn-secondary w-full btn-sm" style="margin-top:12px;" onclick="reloadDescriptors()">🔄 Refresh Database</button>
-                </div>
-            </div>
+        <div class="cam-controls">
+          <button class="ctrl-btn start" onclick="startRecogCamera()" id="startBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            Start Camera
+          </button>
+          <button class="ctrl-btn stop" onclick="stopCamera()" id="stopBtn" disabled>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+            Stop
+          </button>
         </div>
+      </div>
+
+      <!-- UPLOAD SECTION -->
+      <div id="uploadSection" style="display:none">
+        <div class="upload-area" onclick="document.getElementById('recogImgInput').click()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          <p>Click to upload image for recognition</p>
+          <small>JPG · PNG · WEBP</small>
+          <input type="file" id="recogImgInput" accept="image/*" style="display:none" onchange="recognizeFromImage(this)">
+        </div>
+        <canvas id="uploadCanvas"></canvas>
+      </div>
     </div>
+
+    <!-- RIGHT -->
+    <div>
+      <div class="side-card">
+        <div class="side-card-header">
+          <div class="side-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Detected Persons
+          </div>
+          <button class="clear-btn" onclick="clearResults()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+            Clear
+          </button>
+        </div>
+        <div class="side-card-body">
+          <div class="stats-trio">
+            <div class="stat-cell"><div class="sv" id="totalDetected">0</div><div class="sl">Detected</div></div>
+            <div class="stat-cell"><div class="sv" style="color:var(--success)" id="totalKnown">0</div><div class="sl">Known</div></div>
+            <div class="stat-cell"><div class="sv" style="color:var(--warning)" id="totalUnknown">0</div><div class="sl">Unknown</div></div>
+          </div>
+          <div id="recogResults">
+            <div class="no-results">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <p>Start camera or upload an image<br>to detect faces</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DB INFO -->
+      <div class="side-card" style="margin-top:16px;">
+        <div class="side-card-header">
+          <div class="side-card-title">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+            Database
+          </div>
+        </div>
+        <div class="side-card-body">
+          <div id="dbInfo" style="font-size:14px;color:var(--gray-500);">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <svg width="16" height="16" class="spin-svg" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+              Loading…
+            </div>
+          </div>
+          <button class="refresh-btn" onclick="reloadDescriptors()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.03"/></svg>
+            Refresh Database
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="/js/auth.js"></script>
 <script src="/js/navbar.js"></script>
 <script src="/js/esp32-notify.js"></script>
 <script>
-const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-let labeledDescriptors = [];
-let faceMatcher = null;
-let stream = null;
-let detectionLoop = null;
-let personMap = {}; // name -> details
-let frameCount = 0, lastFpsTime = Date.now();
-let currentResults = {};
+const MODEL_URL='https://justadudewhohacks.github.io/face-api.js/models';
+let labeledDescriptors=[],faceMatcher=null,stream=null,detectionLoop=null,personMap={};
+let frameCount=0,lastFpsTime=Date.now();
 
-async function loadModels() {
-    try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--success)">✅</span> <span style="color:var(--success); font-weight:700;">AI Models ready!</span>';
-        setTimeout(() => document.getElementById('modelStatus').style.display = 'none', 2000);
-        await loadDescriptors();
-    } catch(e) {
-        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--danger);">❌ Failed to load AI models.</span>';
-    }
+async function loadModels(){
+  try{
+    await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
+    await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
+    document.getElementById('modelStatus').innerHTML=`
+      <div class="status-icon-wrap" style="background:#f0fdf4;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div style="color:var(--success)"><div style="font-weight:800;">AI Models ready!</div><div style="font-size:12px;opacity:.7;margin-top:2px;">Face recognition is active</div></div>`;
+    setTimeout(()=>document.getElementById('modelStatus').style.display='none',2500);
+    await loadDescriptors();
+  }catch(e){
+    document.getElementById('modelStatus').innerHTML=`<div style="color:var(--danger);font-weight:700;">Failed to load AI models. Check internet connection.</div>`;
+  }
 }
 
-async function loadDescriptors() {
-    const res = await fetch('/api/persons/descriptors');
-    const data = await res.json();
-    if (!data.success || data.data.length === 0) {
-        document.getElementById('dbInfo').innerHTML = '<span style="color:var(--warning);">⚠️ No trained faces found. <a href="/register-face" style="color:var(--primary)">Register faces first →</a></span>';
-        return;
-    }
-
-    labeledDescriptors = [];
-    personMap = {};
-
-    for (const person of data.data) {
-        if (!person.descriptors || person.descriptors.length === 0) continue;
-        personMap[person.name] = person;
-        const descriptors = person.descriptors.map(d => new Float32Array(d));
-        labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(person.name, descriptors));
-    }
-
-    if (labeledDescriptors.length > 0) {
-        faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.55);
-    }
-
-    document.getElementById('dbInfo').innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:6px;">
-            <div>👥 <strong>${data.data.length}</strong> persons in database</div>
-            <div>📸 <strong>${data.data.reduce((a,p) => a + p.descriptors.length, 0)}</strong> total face samples</div>
-            <div style="color:var(--success);">✅ Recognition ready</div>
-        </div>`;
+async function loadDescriptors(){
+  const res=await fetch('/api/persons/descriptors');
+  const data=await res.json();
+  if(!data.success||data.data.length===0){
+    document.getElementById('dbInfo').innerHTML=`
+      <div class="db-info-row" style="color:var(--warning);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        No trained faces found. <a href="/register-face" style="color:var(--primary);font-weight:700;">Register faces →</a>
+      </div>`;
+    return;
+  }
+  labeledDescriptors=[];personMap={};
+  for(const p of data.data){
+    if(!p.descriptors||p.descriptors.length===0)continue;
+    personMap[p.name]=p;
+    const d=p.descriptors.map(d=>new Float32Array(d));
+    labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(p.name,d));
+  }
+  if(labeledDescriptors.length>0)faceMatcher=new faceapi.FaceMatcher(labeledDescriptors,0.55);
+  const totalSamples=data.data.reduce((a,p)=>a+p.descriptors.length,0);
+  document.getElementById('dbInfo').innerHTML=`
+    <div class="db-info-row"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span><strong>${data.data.length}</strong> persons</span></div>
+    <div class="db-info-row"><svg viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span><strong>${totalSamples}</strong> face samples</span></div>
+    <div class="db-info-row" style="color:var(--success)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Recognition ready</div>`;
 }
 
-async function reloadDescriptors() { await loadDescriptors(); }
+async function reloadDescriptors(){await loadDescriptors();}
 
-async function startRecogCamera() {
-    if (!faceMatcher) return showAlert('No trained faces in database. Please register faces first.', 'warning');
-    try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
-        const video = document.getElementById('recogVideo');
-        video.srcObject = stream;
-        video.style.display = 'block';
-        document.querySelector('#camBox p')?.remove();
-        document.getElementById('liveBadge').style.display = '';
-        document.getElementById('fpsBadge').style.display = '';
-        document.getElementById('startBtn').disabled = true;
-        document.getElementById('stopBtn').disabled = false;
-        startRecognitionLoop();
-    } catch(e) {
-        showAlert('Camera access denied.', 'danger');
-    }
+async function startRecogCamera(){
+  if(!faceMatcher)return showAlert('No trained faces. Register faces first.','warning');
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{width:640,height:480,facingMode:'user'}});
+    const v=document.getElementById('recogVideo');
+    v.srcObject=stream;v.style.display='block';
+    document.getElementById('camPlaceholder').style.display='none';
+    document.getElementById('liveBadge').style.display='flex';
+    document.getElementById('fpsBadge').style.display='flex';
+    document.getElementById('scanOverlay').style.display='block';
+    document.getElementById('startBtn').disabled=true;
+    document.getElementById('stopBtn').disabled=false;
+    startRecognitionLoop();
+  }catch(e){showAlert('Camera access denied.','danger');}
 }
 
-function stopCamera() {
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    if (detectionLoop) clearInterval(detectionLoop);
-    stream = null;
-    detectionLoop = null;
-    document.getElementById('recogVideo').style.display = 'none';
-    const canvas = document.getElementById('recogCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-    document.getElementById('liveBadge').style.display = 'none';
-    document.getElementById('fpsBadge').style.display = 'none';
-    // Cancel any pending ESP32 commands and clear the server slot
-    if (typeof stopESP32Notify === 'function') stopESP32Notify();
+function stopCamera(){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  if(detectionLoop)clearInterval(detectionLoop);
+  stream=null;detectionLoop=null;
+  document.getElementById('recogVideo').style.display='none';
+  document.getElementById('camPlaceholder').style.display='';
+  const canvas=document.getElementById('recogCanvas');
+  canvas.getContext('2d').clearRect(0,0,canvas.width,canvas.height);
+  document.getElementById('startBtn').disabled=false;
+  document.getElementById('stopBtn').disabled=true;
+  document.getElementById('liveBadge').style.display='none';
+  document.getElementById('fpsBadge').style.display='none';
+  document.getElementById('scanOverlay').style.display='none';
+  if(typeof stopESP32Notify==='function')stopESP32Notify();
 }
 
-function startRecognitionLoop() {
-    const video = document.getElementById('recogVideo');
-    const canvas = document.getElementById('recogCanvas');
-
-    detectionLoop = setInterval(async () => {
-        if (video.readyState < 2) return;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-
-        try {
-            const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 }))
-                .withFaceLandmarks().withFaceDescriptors();
-
-            const dims = faceapi.matchDimensions(canvas, video, true);
-            const resized = faceapi.resizeResults(detections, dims);
-            const ctx = canvas.getContext('2d');
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            const recognized = {};
-
-            for (const det of resized) {
-                const match = faceMatcher.findBestMatch(det.descriptor);
-                const isKnown = match.label !== 'unknown';
-                const name = isKnown ? match.label : 'Unknown';
-                const confidence = Math.round((1 - match.distance) * 100);
-
-                const box = det.detection.box;
-                const color = isKnown ? '#00adee' : '#f59e0b';
-
-                // Draw box
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2.5;
-                ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-                // Draw label background
-                const label = `${name} ${isKnown ? confidence + '%' : ''}`;
-                ctx.font = 'bold 15px Outfit, sans-serif';
-                const tw = ctx.measureText(label).width;
-                ctx.fillStyle = color;
-                ctx.fillRect(box.x - 1, box.y - 28, tw + 16, 26);
-
-                // Draw label text
-                ctx.fillStyle = 'white';
-                ctx.fillText(label, box.x + 7, box.y - 9);
-
-                if (isKnown && confidence > 40) {
-                    recognized[name] = { confidence, person: personMap[match.label] };
-                } else if (!isKnown) {
-                    recognized['Unknown_' + Math.random()] = { confidence: 0, isUnknown: true };
-                }
-            }
-
-            // FPS
-            frameCount++;
-            const now = Date.now();
-            if (now - lastFpsTime > 1000) {
-                document.getElementById('fpsBadge').textContent = frameCount + ' FPS';
-                frameCount = 0; lastFpsTime = now;
-            }
-
-            updateResultsPanel(Object.values(recognized), detections.length);
-        } catch(e) {}
-    }, 200);
+function startRecognitionLoop(){
+  const video=document.getElementById('recogVideo');
+  const canvas=document.getElementById('recogCanvas');
+  detectionLoop=setInterval(async()=>{
+    if(video.readyState<2)return;
+    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+    try{
+      const detections=await faceapi.detectAllFaces(video,new faceapi.SsdMobilenetv1Options({minConfidence:0.45})).withFaceLandmarks().withFaceDescriptors();
+      const dims=faceapi.matchDimensions(canvas,video,true);
+      const resized=faceapi.resizeResults(detections,dims);
+      const ctx=canvas.getContext('2d');
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      const recognized={};
+      for(const det of resized){
+        const match=faceMatcher.findBestMatch(det.descriptor);
+        const isKnown=match.label!=='unknown';
+        const name=isKnown?match.label:'Unknown';
+        const confidence=Math.round((1-match.distance)*100);
+        const box=det.detection.box;
+        const color=isKnown?'#00adee':'#f59e0b';
+        ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.strokeRect(box.x,box.y,box.width,box.height);
+        const label=`${name} ${isKnown?confidence+'%':''}`;
+        ctx.font='bold 15px Outfit,sans-serif';
+        const tw=ctx.measureText(label).width;
+        ctx.fillStyle=color;ctx.fillRect(box.x-1,box.y-28,tw+16,26);
+        ctx.fillStyle='white';ctx.fillText(label,box.x+7,box.y-9);
+        if(isKnown&&confidence>40)recognized[name]={confidence,person:personMap[match.label]};
+        else if(!isKnown)recognized['Unknown_'+Math.random()]={confidence:0,isUnknown:true};
+      }
+      frameCount++;
+      const now=Date.now();
+      if(now-lastFpsTime>1000){document.getElementById('fpsBadge').textContent=frameCount+' FPS';frameCount=0;lastFpsTime=now;}
+      updateResultsPanel(Object.values(recognized),detections.length);
+    }catch(e){}
+  },200);
 }
 
-function updateResultsPanel(recognized, totalCount) {
-    const known = recognized.filter(r => !r.isUnknown);
-    const unknown = recognized.filter(r => r.isUnknown);
-
-    // FIXED: Only call notifyESP32 based on actual totalCount (faces in frame).
-    // Previously, 'none' fired every frame when confidence was low — cancelling
-    // the pending GREEN debounce before it could send. Now 'none' only fires
-    // when there are truly zero faces detected by the camera.
-    if (known.length > 0) {
-        const top = known[0];
-        notifyESP32('known', top.person.name, top.confidence);
-    }
-    else if (unknown.length > 0) {
-        notifyESP32('unknown');
-    }
-    else if (totalCount === 0) {
-        // Only send 'none' when camera sees zero faces — not just low confidence
-        notifyESP32('none');
-    }
-    // If totalCount > 0 but no known/unknown passed threshold, do nothing.
-    // The priority guard in esp32-notify.js will protect the last sent command.
-    document.getElementById('totalDetected').textContent = totalCount;
-    document.getElementById('totalKnown').textContent = known.length;
-    document.getElementById('totalUnknown').textContent = unknown.length;
-
-    if (totalCount === 0) {
-        document.getElementById('recogResults').innerHTML = '<div class="no-results"><div class="icon">👁️</div><p>No faces detected in frame</p></div>';
-        return;
-    }
-
-    let html = '<div class="detected-list">';
-
-    for (const r of known) {
-        const p = r.person || {};
-        const initial = (p.name || '?').charAt(0).toUpperCase();
-        html += `
-        <div class="detected-card">
-            <div class="dc-header">
-                <div class="dc-avatar">${initial}</div>
-                <div>
-                    <div class="dc-name">${p.name || 'Unknown'}</div>
-                    <div class="dc-conf">Confidence: ${r.confidence}%</div>
-                </div>
-            </div>
-            <div class="dc-details">
-                ${p.age ? `<div class="dc-detail"><span class="dc-detail-icon">🎂</span><span class="dc-detail-label">Age</span><span class="dc-detail-value">${p.age} years</span></div>` : ''}
-                ${p.email ? `<div class="dc-detail"><span class="dc-detail-icon">📧</span><span class="dc-detail-label">Email</span><span class="dc-detail-value">${p.email}</span></div>` : ''}
-                ${p.mobile ? `<div class="dc-detail"><span class="dc-detail-icon">📱</span><span class="dc-detail-label">Mobile</span><span class="dc-detail-value">${p.mobile}</span></div>` : ''}
-            </div>
-        </div>`;
-    }
-
-    for (const r of unknown) {
-        html += `
-        <div class="detected-card unknown">
-            <div class="dc-header">
-                <div class="dc-avatar unknown">?</div>
-                <div>
-                    <div class="dc-name">Unknown Person</div>
-                    <div class="dc-conf">Face detected but not recognized</div>
-                </div>
-            </div>
-        </div>`;
-    }
-
-    html += '</div>';
-    document.getElementById('recogResults').innerHTML = html;
+function updateResultsPanel(recognized,totalCount){
+  const known=recognized.filter(r=>!r.isUnknown);
+  const unknown=recognized.filter(r=>r.isUnknown);
+  if(known.length>0)notifyESP32('known',known[0].person.name,known[0].confidence);
+  else if(unknown.length>0)notifyESP32('unknown');
+  else if(totalCount===0)notifyESP32('none');
+  document.getElementById('totalDetected').textContent=totalCount;
+  document.getElementById('totalKnown').textContent=known.length;
+  document.getElementById('totalUnknown').textContent=unknown.length;
+  if(totalCount===0){
+    document.getElementById('recogResults').innerHTML='<div class="no-results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><p>No faces detected in frame</p></div>';
+    return;
+  }
+  let html='<div class="detected-list">';
+  for(const r of known){
+    const p=r.person||{};
+    const i=(p.name||'?').charAt(0).toUpperCase();
+    html+=`<div class="detected-card">
+      <div class="dc-head"><div class="dc-avatar">${i}</div><div><div class="dc-name">${p.name||'Unknown'}</div><div class="dc-conf">Confidence: ${r.confidence}%</div></div></div>
+      <div class="dc-details">
+        ${p.age?`<div class="dc-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg><span class="dc-lbl">Age</span><span class="dc-val">${p.age} yrs</span></div>`:''}
+        ${p.email?`<div class="dc-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg><span class="dc-lbl">Email</span><span class="dc-val">${p.email}</span></div>`:''}
+        ${p.mobile?`<div class="dc-row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span class="dc-lbl">Mobile</span><span class="dc-val">${p.mobile}</span></div>`:''}
+      </div>
+    </div>`;
+  }
+  for(const r of unknown){
+    html+=`<div class="detected-card unknown"><div class="dc-head"><div class="dc-avatar unk">?</div><div><div class="dc-name">Unknown Person</div><div class="dc-conf">Not in database</div></div></div></div>`;
+  }
+  html+='</div>';
+  document.getElementById('recogResults').innerHTML=html;
 }
 
-async function recognizeFromImage(input) {
-    if (!faceMatcher) return showAlert('No trained faces. Register faces first.', 'warning');
-    const file = input.files[0];
-    if (!file) return;
-
-    const img = await faceapi.bufferToImage(file);
-    const canvas = document.getElementById('uploadCanvas');
-    canvas.style.display = 'block';
-
-    const detections = await faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 }))
-        .withFaceLandmarks().withFaceDescriptors();
-
-    faceapi.matchDimensions(canvas, img);
-    const resized = faceapi.resizeResults(detections, img);
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-    const recognized = [];
-    let unknownCount = 0;
-
-    for (const det of resized) {
-        const match = faceMatcher.findBestMatch(det.descriptor);
-        const isKnown = match.label !== 'unknown';
-        const name = isKnown ? match.label : 'Unknown';
-        const confidence = Math.round((1 - match.distance) * 100);
-
-        const box = det.detection.box;
-        const color = isKnown ? '#00adee' : '#f59e0b';
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
-        ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-        const label = `${name} ${isKnown ? confidence + '%' : ''}`;
-        ctx.font = 'bold 16px sans-serif';
-        const tw = ctx.measureText(label).width;
-        ctx.fillStyle = color;
-        ctx.fillRect(box.x - 1, box.y - 30, tw + 16, 28);
-        ctx.fillStyle = 'white';
-        ctx.fillText(label, box.x + 7, box.y - 8);
-
-        if (isKnown && confidence > 40) {
-            recognized.push({ confidence, person: personMap[match.label] });
-        } else {
-            unknownCount++;
-        }
-    }
-
-    updateResultsPanel(recognized.concat(Array(unknownCount).fill({ isUnknown: true })), detections.length);
+async function recognizeFromImage(input){
+  if(!faceMatcher)return showAlert('No trained faces. Register faces first.','warning');
+  const file=input.files[0];if(!file)return;
+  const img=await faceapi.bufferToImage(file);
+  const canvas=document.getElementById('uploadCanvas');
+  canvas.style.display='block';
+  const detections=await faceapi.detectAllFaces(img,new faceapi.SsdMobilenetv1Options({minConfidence:0.45})).withFaceLandmarks().withFaceDescriptors();
+  faceapi.matchDimensions(canvas,img);
+  const resized=faceapi.resizeResults(detections,img);
+  const ctx=canvas.getContext('2d');
+  ctx.drawImage(img,0,0,canvas.width,canvas.height);
+  const recognized=[];let unknownCount=0;
+  for(const det of resized){
+    const match=faceMatcher.findBestMatch(det.descriptor);
+    const isKnown=match.label!=='unknown';
+    const confidence=Math.round((1-match.distance)*100);
+    const box=det.detection.box;
+    const color=isKnown?'#00adee':'#f59e0b';
+    ctx.strokeStyle=color;ctx.lineWidth=3;ctx.strokeRect(box.x,box.y,box.width,box.height);
+    const label=`${isKnown?match.label:'Unknown'} ${isKnown?confidence+'%':''}`;
+    ctx.font='bold 16px sans-serif';const tw=ctx.measureText(label).width;
+    ctx.fillStyle=color;ctx.fillRect(box.x-1,box.y-30,tw+16,28);
+    ctx.fillStyle='white';ctx.fillText(label,box.x+7,box.y-8);
+    if(isKnown&&confidence>40)recognized.push({confidence,person:personMap[match.label]});
+    else unknownCount++;
+  }
+  updateResultsPanel(recognized.concat(Array(unknownCount).fill({isUnknown:true})),detections.length);
 }
 
-function switchTab(tab) {
-    const isCamera = tab === 'camera';
-    document.getElementById('tabCam').classList.toggle('active', isCamera);
-    document.getElementById('tabUpload').classList.toggle('active', !isCamera);
-    document.getElementById('camSection').style.display = isCamera ? '' : 'none';
-    document.getElementById('uploadSection').style.display = isCamera ? 'none' : '';
-    if (!isCamera) stopCamera();
+function switchTab(tab){
+  const isCamera=tab==='camera';
+  document.getElementById('tabCam').classList.toggle('active',isCamera);
+  document.getElementById('tabUpload').classList.toggle('active',!isCamera);
+  document.getElementById('camSection').style.display=isCamera?'':'none';
+  document.getElementById('uploadSection').style.display=isCamera?'none':'';
+  if(!isCamera)stopCamera();
 }
 
-function clearResults() {
-    document.getElementById('recogResults').innerHTML = '<div class="no-results"><div class="icon">👁️</div><p>Start camera or upload an image</p></div>';
-    document.getElementById('totalDetected').textContent = '0';
-    document.getElementById('totalKnown').textContent = '0';
-    document.getElementById('totalUnknown').textContent = '0';
+function clearResults(){
+  document.getElementById('recogResults').innerHTML='<div class="no-results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><p>Start camera or upload an image</p></div>';
+  ['totalDetected','totalKnown','totalUnknown'].forEach(id=>document.getElementById(id).textContent='0');
 }
 
-Auth.setupNav().then(() => {});
-window.addEventListener('load', loadModels);
+function showAlert(m,t){
+  const icons={success:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',danger:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',warning:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'};
+  document.getElementById('alertBox').innerHTML=`<div class="alert alert-${t}">${icons[t]||''} ${m}</div>`;
+}
+
+Auth.setupNav().then(()=>{});
+window.addEventListener('load',loadModels);
 </script>
 </body>
 </html>
