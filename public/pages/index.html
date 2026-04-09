@@ -8,724 +8,507 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --primary: #00adee;
-    --primary-dark: #0078ba;
-    --primary-deeper: #00adee;
-    --white: #ffffff;
-    --gray-50: #f8fafc;
-    --gray-100: #f1f5f9;
-    --gray-200: #e2e8f0;
-    --gray-400: #94a3b8;
-    --gray-500: #64748b;
-    --gray-700: #334155;
-    --gray-900: #0f172a;
-    --danger: #ef4444;
-    --success: #22c55e;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
-    --shadow-md: 0 4px 16px rgba(0,0,0,.10);
-    --shadow-lg: 0 12px 40px rgba(0,0,0,.14);
-    --radius: 12px;
-    --radius-lg: 16px;
+    --primary: #00adee; --primary-dark: #0078ba; --white: #ffffff;
+    --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+    --gray-400: #94a3b8; --gray-500: #64748b; --gray-700: #334155; --gray-900: #0f172a;
+    --danger: #ef4444; --success: #22c55e;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,.08); --shadow-md: 0 4px 16px rgba(0,0,0,.10);
+    --radius: 12px; --radius-lg: 16px;
   }
+  html,body { height:100%; font-family:'Outfit',sans-serif; }
+  .auth-page { min-height:100vh; display:grid; grid-template-columns:1.15fr 0.85fr; }
 
-  html, body { height: 100%; font-family: 'Outfit', sans-serif; }
-
-  .auth-page {
-    min-height: 100vh;
-    display: grid;
-    grid-template-columns: 1.1fr 0.9fr;
-  }
-
-  /* ── LEFT HERO ── */
+  /* HERO */
   .hero-panel {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 64px 56px;
-    background: linear-gradient(145deg, #00c6fb 0%, #005bea 100%);
-    overflow: hidden;
-    color: #fff;
+    position:relative; display:flex; flex-direction:column;
+    justify-content:center; align-items:center;
+    padding:40px 48px;
+    background:linear-gradient(145deg,#00c6fb 0%,#005bea 100%);
+    overflow:hidden; color:#fff;
   }
-
-  /* Animated floating blobs */
-  .blob {
-    position: absolute;
-    border-radius: 50%;
-    background: rgba(255,255,255,.07);
-    animation: floatBlob linear infinite;
-  }
-  .blob-1 { width: 420px; height: 420px; top: -120px; right: -120px; animation-duration: 18s; }
-  .blob-2 { width: 260px; height: 260px; bottom: -80px; left: -80px; animation-duration: 22s; animation-delay: -8s; }
-  .blob-3 { width: 180px; height: 180px; top: 44%; right: 8%; animation-duration: 15s; animation-delay: -4s; }
-  .blob-4 { width: 100px; height: 100px; top: 20%; left: 10%; animation-duration: 12s; animation-delay: -6s; }
-
-  @keyframes floatBlob {
-    0%   { transform: translate(0, 0) scale(1); }
-    25%  { transform: translate(12px, -18px) scale(1.04); }
-    50%  { transform: translate(-8px, 10px) scale(0.96); }
-    75%  { transform: translate(16px, 8px) scale(1.02); }
-    100% { transform: translate(0, 0) scale(1); }
-  }
-
-  /* Animated scan lines */
-  .scan-lines {
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 30px,
-      rgba(255,255,255,.015) 30px,
-      rgba(255,255,255,.015) 31px
-    );
-    pointer-events: none;
-  }
-
-  .hero-inner { position: relative; z-index: 1; max-width: 460px; }
+  .hero-bg-grid { position:absolute;inset:0;width:100%;height:100%;pointer-events:none; }
+  .orb { position:absolute; border-radius:50%; background:rgba(255,255,255,.06); }
+  .orb-1 { width:440px;height:440px;top:-130px;right:-130px; animation:orbF 8s ease-in-out infinite; }
+  .orb-2 { width:280px;height:280px;bottom:-90px;left:-90px; animation:orbF 8s ease-in-out infinite; animation-delay:-3s; }
+  .orb-3 { width:160px;height:160px;top:42%;right:6%; animation:orbF 8s ease-in-out infinite; animation-delay:-5s; }
+  @keyframes orbF { 0%,100%{transform:translate(0,0);} 50%{transform:translate(10px,-14px);} }
+  .particles { position:absolute;inset:0;pointer-events:none;overflow:hidden; }
+  .particle { position:absolute;border-radius:50%;animation:pDrift linear infinite; }
+  @keyframes pDrift { 0%{transform:translateY(100vh) scale(0);opacity:0;} 10%{opacity:1;} 90%{opacity:1;} 100%{transform:translateY(-20px) scale(1);opacity:0;} }
+  .hero-inner { position:relative;z-index:2;max-width:480px;width:100%; }
 
   .brand-badge {
-    display: inline-flex; align-items: center; gap: 10px;
-    background: rgba(255,255,255,.15);
-    border: 1px solid rgba(255,255,255,.25);
-    border-radius: 50px;
-    padding: 8px 20px;
-    font-size: 13px; font-weight: 700; letter-spacing: .6px;
-    text-transform: uppercase; margin-bottom: 32px;
-    backdrop-filter: blur(8px);
+    display:inline-flex;align-items:center;gap:10px;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.24);
+    border-radius:50px;padding:7px 18px;
+    font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+    margin-bottom:24px;backdrop-filter:blur(8px);
   }
-  .brand-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: #7effa0;
-    box-shadow: 0 0 6px #7effa0;
-    animation: pulse-dot 2s ease-in-out infinite;
-  }
-  @keyframes pulse-dot {
-    0%, 100% { box-shadow: 0 0 6px #7effa0; transform: scale(1); }
-    50% { box-shadow: 0 0 14px #7effa0, 0 0 24px rgba(126,255,160,.4); transform: scale(1.2); }
-  }
+  .brand-dot { width:8px;height:8px;border-radius:50%;background:#7effa0;box-shadow:0 0 8px #7effa0;animation:pdot 2s ease-in-out infinite; }
+  @keyframes pdot { 0%,100%{box-shadow:0 0 4px #7effa0;} 50%{box-shadow:0 0 14px #7effa0,0 0 24px rgba(126,255,160,.4);} }
 
-  /* Logo with animated SVG */
-  .hero-logo-wrap {
-    width: 88px; height: 88px;
-    background: rgba(255,255,255,.18);
-    border: 2px solid rgba(255,255,255,.30);
-    border-radius: 24px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 28px;
-    backdrop-filter: blur(10px);
-    box-shadow: 0 8px 32px rgba(0,0,0,.18);
-    animation: logoFloat 4s ease-in-out infinite;
-  }
-  @keyframes logoFloat {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-6px); }
-  }
+  .hero-heading { font-size:40px;font-weight:800;line-height:1.12;margin-bottom:12px;letter-spacing:-.5px; }
+  .hero-heading span { color:#b3f0ff; }
+  .hero-desc { font-size:14px;opacity:.84;line-height:1.7;margin-bottom:28px; }
 
-  .hero-heading {
-    font-size: 44px; font-weight: 800; line-height: 1.15;
-    margin-bottom: 16px; letter-spacing: -.5px;
-  }
-  .hero-heading span { color: #b3f0ff; }
-
-  .hero-desc {
-    font-size: 16px; opacity: .85; line-height: 1.7; margin-bottom: 40px;
-  }
-
-  /* How it works link */
-  .how-it-works-link {
-    display: inline-flex; align-items: center; gap: 8px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.22);
-    border-radius: 10px;
-    padding: 10px 18px;
-    font-size: 13px; font-weight: 700;
-    color: #fff; text-decoration: none;
-    margin-bottom: 28px;
-    backdrop-filter: blur(6px);
-    transition: background .2s, transform .2s;
-  }
-  .how-it-works-link:hover { background: rgba(255,255,255,.22); transform: translateX(4px); }
-  .how-it-works-link svg { flex-shrink: 0; }
-
-  .feature-grid { display: grid; gap: 12px; }
+  .feature-grid { display:grid;gap:9px; }
   .feature-item {
-    display: flex; align-items: flex-start; gap: 14px;
-    background: rgba(255,255,255,.10);
-    border: 1px solid rgba(255,255,255,.15);
-    border-radius: 14px;
-    padding: 14px 18px;
-    backdrop-filter: blur(6px);
-    transition: background .2s, transform .2s;
+    display:flex;align-items:flex-start;gap:13px;
+    background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.13);
+    border-radius:13px;padding:12px 15px;
+    backdrop-filter:blur(6px);transition:background .25s,transform .25s;
+    animation:fSlide .6s ease both;
   }
-  .feature-item:hover { background: rgba(255,255,255,.16); transform: translateX(4px); }
-  .fi-icon { flex-shrink: 0; margin-top: 1px; }
-  .fi-text strong { display: block; font-size: 14px; font-weight: 700; margin-bottom: 2px; }
-  .fi-text span { font-size: 12px; opacity: .75; }
+  .feature-item:nth-child(1){animation-delay:.1s;} .feature-item:nth-child(2){animation-delay:.2s;}
+  .feature-item:nth-child(3){animation-delay:.3s;} .feature-item:nth-child(4){animation-delay:.4s;}
+  @keyframes fSlide { from{opacity:0;transform:translateX(-20px);} to{opacity:1;transform:translateX(0);} }
+  .feature-item:hover { background:rgba(255,255,255,.16);transform:translateX(4px); }
+  .fi-icon { flex-shrink:0;margin-top:2px; }
+  .fi-text strong { display:block;font-size:13px;font-weight:700;margin-bottom:2px; }
+  .fi-text span { font-size:12px;opacity:.72;line-height:1.4; }
 
-  /* Animated face scan SVG */
-  .face-scan-wrap {
-    margin-bottom: 28px;
-    display: flex; justify-content: center;
-  }
+  /* Face scan SVG animations */
+  .face-scan-wrap { position:relative;z-index:2;display:flex;justify-content:center;margin-bottom:24px; }
+  .face-scan-svg { width:230px;height:230px;filter:drop-shadow(0 0 24px rgba(0,194,255,.6));animation:fFloat 5s ease-in-out infinite; }
+  @keyframes fFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+  .scan-line { animation:scanMove 2.8s ease-in-out infinite; }
+  @keyframes scanMove { 0%{transform:translateY(-65px);opacity:0;} 8%{opacity:1;} 92%{opacity:1;} 100%{transform:translateY(65px);opacity:0;} }
+  .corner-tl,.corner-tr,.corner-bl,.corner-br { animation:cBlink 2.6s ease-in-out infinite; }
+  .corner-tr{animation-delay:.15s;} .corner-bl{animation-delay:.3s;} .corner-br{animation-delay:.45s;}
+  @keyframes cBlink { 0%,100%{opacity:.5;} 50%{opacity:1;filter:drop-shadow(0 0 6px #00c6fb);} }
+  .orbit-ring-1 { animation:oSpin 9s linear infinite;transform-origin:115px 115px;transform-box:fill-box; }
+  .orbit-ring-2 { animation:oSpin 14s linear infinite reverse;transform-origin:115px 115px;transform-box:fill-box; }
+  @keyframes oSpin { from{transform:rotate(0);} to{transform:rotate(360deg);} }
+  .recog-dot { animation:rFlash 3.2s ease-in-out infinite; }
+  .recog-dot:nth-child(2){animation-delay:.45s;} .recog-dot:nth-child(3){animation-delay:.9s;}
+  .recog-dot:nth-child(4){animation-delay:1.35s;} .recog-dot:nth-child(5){animation-delay:1.8s;}
+  .recog-dot:nth-child(6){animation-delay:.25s;} .recog-dot:nth-child(7){animation-delay:.7s;}
+  @keyframes rFlash { 0%,100%{opacity:0;transform:scale(0);} 15%,85%{opacity:.9;transform:scale(1);} }
+  .face-head { animation:fPulse 3.5s ease-in-out infinite; }
+  @keyframes fPulse { 0%,100%{opacity:.88;} 50%{opacity:1;} }
+  .pulse-ring { animation:pulseExpand 2.8s ease-out infinite;transform-origin:115px 108px;transform-box:fill-box; }
+  .pulse-ring:nth-child(2){animation-delay:1.4s;}
+  @keyframes pulseExpand { 0%{transform:scale(0.82);opacity:0.7;} 100%{transform:scale(1.3);opacity:0;} }
+  .data-stream { animation:dataFlow 2.2s ease-in-out infinite; stroke-dasharray:5 7; }
+  .data-stream:nth-child(2){animation-delay:.35s;} .data-stream:nth-child(3){animation-delay:.7s;}
+  .data-stream:nth-child(4){animation-delay:.2s;} .data-stream:nth-child(5){animation-delay:.55s;} .data-stream:nth-child(6){animation-delay:.9s;}
+  @keyframes dataFlow { 0%,100%{stroke-dashoffset:0;opacity:0.25;} 50%{stroke-dashoffset:-24;opacity:0.85;} }
 
-  /* ── RIGHT AUTH PANEL ── */
-  .auth-panel {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 56px 48px;
-    background: var(--gray-50);
-    overflow-y: auto;
-  }
-
-  .auth-box { width: 100%; max-width: 400px; }
-
-  .mobile-brand {
-    display: none;
-    align-items: center; gap: 10px;
-    margin-bottom: 28px;
-    font-size: 20px; font-weight: 800; color: var(--primary);
-  }
-
-  .auth-heading {
-    font-size: 28px; font-weight: 800; color: var(--gray-900);
-    margin-bottom: 4px;
-  }
-  .auth-heading em { font-style: normal; color: var(--primary); }
-  .auth-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 28px; }
-
-  .tab-bar {
-    display: flex; gap: 0;
-    border-bottom: 2px solid var(--gray-200);
-    margin-bottom: 28px;
-  }
-  .tab-btn {
-    flex: 1; border: none; background: none; cursor: pointer;
-    padding: 11px 0; font-size: 14px; font-weight: 700;
-    color: var(--gray-400); font-family: 'Outfit', sans-serif;
-    border-bottom: 2px solid transparent; margin-bottom: -2px;
-    transition: all .2s;
-  }
-  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
-
-  .form-section { display: none; }
-  .form-section.active { display: block; }
-
-  .field { margin-bottom: 18px; }
-  .field-label {
-    display: block; font-size: 13px; font-weight: 700;
-    color: var(--gray-700); margin-bottom: 7px;
-  }
-
-  .input-wrap { position: relative; }
-  .input-wrap input {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--gray-200);
-    border-radius: var(--radius);
-    font-size: 14px; font-family: 'Outfit', sans-serif;
-    background: var(--white);
-    color: var(--gray-900);
-    outline: none;
-    transition: border-color .2s, box-shadow .2s;
-  }
-  .input-wrap input:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(0,173,238,.12);
-  }
-  .input-wrap input.has-toggle { padding-right: 44px; }
-
-  .eye-btn {
-    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-    background: none; border: none; cursor: pointer;
-    color: var(--gray-400); display: flex; align-items: center;
-    padding: 4px; border-radius: 6px; transition: color .2s;
-  }
-  .eye-btn:hover { color: var(--primary); }
-  .eye-btn svg { width: 18px; height: 18px; display: block; }
-
-  .input-icon {
-    position: absolute; left: 13px; top: 50%; transform: translateY(-50%);
-    pointer-events: none; display: flex; align-items: center;
-  }
-  .input-wrap input.with-icon { padding-left: 42px; }
-
-  .submit-btn {
-    width: 100%; padding: 13px;
-    border: none; border-radius: var(--radius);
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    color: #fff; font-family: 'Outfit', sans-serif;
-    font-size: 15px; font-weight: 700; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    box-shadow: 0 4px 14px rgba(0,120,186,.30);
-    transition: opacity .2s, transform .15s;
-    margin-top: 4px;
-  }
-  .submit-btn:hover { opacity: .92; transform: translateY(-1px); }
-  .submit-btn:active { transform: translateY(0); }
-  .submit-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-
-  .spin {
-    width: 16px; height: 16px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,.4);
-    border-top-color: #fff;
-    animation: spin .7s linear infinite;
-    display: inline-block;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .alert-box { margin-bottom: 18px; }
-  .alert {
-    padding: 11px 14px; border-radius: var(--radius);
-    font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px;
-  }
-  .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
-  .alert-danger  { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
-
-  .auth-footer { text-align: center; margin-top: 24px; font-size: 12px; color: var(--gray-400); }
-  .auth-footer a { color: var(--primary); text-decoration: none; font-weight: 600; }
-
-  .esp32-pill {
-    display: flex; align-items: center; gap: 7px;
-    margin-top: 20px; justify-content: center;
-    font-size: 11px; color: var(--gray-400); font-weight: 600;
-  }
-  .esp32-dot {
-    width: 7px; height: 7px; border-radius: 50%;
-    background: #22c55e; box-shadow: 0 0 5px #22c55e;
-    animation: pulse-dot 2s ease-in-out infinite;
-  }
-
-  @media (max-width: 860px) {
-    .auth-page { grid-template-columns: 1fr; }
-    .hero-panel { display: none; }
-    .auth-panel { padding: 40px 24px; }
-    .mobile-brand { display: flex; }
-  }
-
-  /* SVG animations */
-  .scan-ring { animation: scanRotate 4s linear infinite; transform-origin: 50% 50%; }
-  .scan-beam { animation: scanBeam 3s ease-in-out infinite; }
-  .face-dot { animation: faceDotPulse 2s ease-in-out infinite; }
-  .corner-tl { animation: cornerGlow 2s ease-in-out infinite; }
-  .corner-tr { animation: cornerGlow 2s ease-in-out infinite 0.5s; }
-  .corner-bl { animation: cornerGlow 2s ease-in-out infinite 1s; }
-  .corner-br { animation: cornerGlow 2s ease-in-out infinite 1.5s; }
-
-  @keyframes scanRotate {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-  }
-  @keyframes scanBeam {
-    0%, 100% { opacity: 0.3; transform: translateY(0); }
-    50% { opacity: 0.9; transform: translateY(60px); }
-  }
-  @keyframes faceDotPulse {
-    0%, 100% { opacity: 0.6; r: 2; }
-    50% { opacity: 1; r: 3.5; }
-  }
-  @keyframes cornerGlow {
-    0%, 100% { stroke-opacity: 0.6; }
-    50% { stroke-opacity: 1; filter: drop-shadow(0 0 4px rgba(126,255,160,0.8)); }
+  /* AUTH */
+  .auth-panel { display:flex;flex-direction:column;justify-content:center;align-items:center;padding:48px 44px;background:var(--gray-50);overflow-y:auto; }
+  .auth-box { width:100%;max-width:400px; }
+  .mobile-brand { display:none;align-items:center;gap:10px;margin-bottom:28px;font-size:20px;font-weight:800;color:var(--primary); }
+  .auth-heading { font-size:28px;font-weight:800;color:var(--gray-900);margin-bottom:4px; }
+  .auth-heading em { font-style:normal;color:var(--primary); }
+  .auth-sub { font-size:14px;color:var(--gray-500);margin-bottom:28px; }
+  .tab-bar { display:flex;border-bottom:2px solid var(--gray-200);margin-bottom:28px; }
+  .tab-btn { flex:1;border:none;background:none;cursor:pointer;padding:11px 0;font-size:14px;font-weight:700;color:var(--gray-400);font-family:'Outfit',sans-serif;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s; }
+  .tab-btn.active { color:var(--primary);border-bottom-color:var(--primary); }
+  .form-section { display:none; } .form-section.active { display:block; }
+  .field { margin-bottom:18px; }
+  .field-label { display:block;font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:7px; }
+  .input-wrap { position:relative; }
+  .input-wrap input { width:100%;padding:12px 14px 12px 42px;border:1.5px solid var(--gray-200);border-radius:var(--radius);font-size:14px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--gray-900);outline:none;transition:border-color .2s,box-shadow .2s; }
+  .input-wrap input:focus { border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,173,238,.12); }
+  .input-wrap input.has-toggle { padding-right:44px; }
+  .input-svg { position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;pointer-events:none;color:var(--gray-400); }
+  .eye-btn { position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--gray-400);display:flex;align-items:center;padding:4px;border-radius:6px;transition:color .2s; }
+  .eye-btn:hover { color:var(--primary); }
+  .eye-btn svg { width:18px;height:18px;display:block; }
+  .submit-btn { width:100%;padding:13px;border:none;border-radius:var(--radius);background:linear-gradient(135deg,var(--primary) 0%,var(--primary-dark) 100%);color:#fff;font-family:'Outfit',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(0,120,186,.30);transition:opacity .2s,transform .15s;margin-top:4px; }
+  .submit-btn:hover { opacity:.92;transform:translateY(-1px); }
+  .submit-btn:active { transform:translateY(0); }
+  .submit-btn:disabled { opacity:.6;cursor:not-allowed;transform:none; }
+  .spin { width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block; }
+  @keyframes spin { to{transform:rotate(360deg);} }
+  .alert-box { margin-bottom:18px; }
+  .alert { padding:11px 14px;border-radius:var(--radius);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px; }
+  .alert-success { background:#f0fdf4;border:1px solid #bbf7d0;color:#166534; }
+  .alert-danger { background:#fef2f2;border:1px solid #fecaca;color:#991b1b; }
+  .auth-footer { text-align:center;margin-top:24px;font-size:12px;color:var(--gray-400); }
+  .auth-footer a { color:var(--primary);text-decoration:none;font-weight:600; }
+  .esp32-pill { display:flex;align-items:center;gap:7px;margin-top:16px;justify-content:center;font-size:11px;color:var(--gray-400);font-weight:600; }
+  .esp32-dot { width:7px;height:7px;border-radius:50%;background:#22c55e;box-shadow:0 0 5px #22c55e;animation:pdot 2s ease-in-out infinite; }
+  .how-link { display:flex;align-items:center;justify-content:center;gap:6px;margin-top:14px;font-size:12px;color:var(--primary);font-weight:700;text-decoration:none;padding:9px 16px;border-radius:20px;border:1.5px solid rgba(0,173,238,.3);background:rgba(0,173,238,.06);transition:all .2s; }
+  .how-link:hover { background:rgba(0,173,238,.13);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,173,238,.15); }
+  @media (max-width:860px) {
+    .auth-page { grid-template-columns:1fr; }
+    .hero-panel { display:none; }
+    .auth-panel { padding:40px 24px; }
+    .mobile-brand { display:flex; }
   }
 </style>
 </head>
 <body>
-
 <div class="auth-page">
 
-  <!-- ═══ LEFT HERO ═══ -->
+  <!-- HERO PANEL -->
   <div class="hero-panel">
-    <div class="blob blob-1"></div>
-    <div class="blob blob-2"></div>
-    <div class="blob blob-3"></div>
-    <div class="blob blob-4"></div>
-    <div class="scan-lines"></div>
+    <!-- Animated SVG grid background -->
+    <svg class="hero-bg-grid" viewBox="0 0 600 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;opacity:.07;pointer-events:none;">
+      <defs>
+        <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
+          <path d="M 44 0 L 0 0 0 44" fill="none" stroke="white" stroke-width="0.6"/>
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#grid)"/>
+      <line x1="0" y1="300" x2="600" y2="300" stroke="white" stroke-width="1.5" stroke-dasharray="10 20" opacity="0">
+        <animate attributeName="y1" values="0;900;0" dur="14s" repeatCount="indefinite"/>
+        <animate attributeName="y2" values="0;900;0" dur="14s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0.6;0" dur="14s" repeatCount="indefinite"/>
+      </line>
+      <line x1="300" y1="0" x2="300" y2="900" stroke="white" stroke-width="1" stroke-dasharray="8 18" opacity="0">
+        <animate attributeName="x1" values="0;600;0" dur="20s" repeatCount="indefinite"/>
+        <animate attributeName="x2" values="0;600;0" dur="20s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0.4;0" dur="20s" repeatCount="indefinite"/>
+      </line>
+    </svg>
+
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="particles" id="particles"></div>
 
     <div class="hero-inner">
-
       <div class="brand-badge">
         <span class="brand-dot"></span>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
         Live &amp; Active
       </div>
 
-      <!-- Animated logo SVG -->
-      <div class="hero-logo-wrap">
-        <svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Eye iris -->
-          <circle cx="26" cy="26" r="18" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
-          <circle cx="26" cy="26" r="10" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
-          <circle cx="26" cy="26" r="5" fill="white" opacity="0.9"/>
-          <circle cx="28" cy="24" r="1.5" fill="rgba(0,90,180,0.6)"/>
-          <!-- Scan ring -->
-          <circle cx="26" cy="26" r="22" stroke="rgba(126,255,160,0.6)" stroke-width="1.5" stroke-dasharray="6 4" class="scan-ring"/>
-          <!-- Corner brackets -->
-          <path d="M8 14 L8 8 L14 8" stroke="#7effa0" stroke-width="2.5" stroke-linecap="round" class="corner-tl"/>
-          <path d="M38 8 L44 8 L44 14" stroke="#7effa0" stroke-width="2.5" stroke-linecap="round" class="corner-tr"/>
-          <path d="M8 38 L8 44 L14 44" stroke="#7effa0" stroke-width="2.5" stroke-linecap="round" class="corner-bl"/>
-          <path d="M44 38 L44 44 L38 44" stroke="#7effa0" stroke-width="2.5" stroke-linecap="round" class="corner-br"/>
+      <!-- FULLY DETAILED HUMAN FACE SCAN SVG -->
+      <div class="face-scan-wrap">
+        <svg class="face-scan-svg" viewBox="0 0 230 230" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="fg" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#c8f4ff" stop-opacity="0.92"/>
+              <stop offset="100%" stop-color="#00c6fb" stop-opacity="0.68"/>
+            </linearGradient>
+            <linearGradient id="sg" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stop-color="#00c6fb" stop-opacity="0"/>
+              <stop offset="50%" stop-color="#00c6fb" stop-opacity="0.92"/>
+              <stop offset="100%" stop-color="#00c6fb" stop-opacity="0"/>
+            </linearGradient>
+            <radialGradient id="bgG" cx="50%" cy="46%" r="48%">
+              <stop offset="0%" stop-color="#00c6fb" stop-opacity="0.14"/>
+              <stop offset="100%" stop-color="#00c6fb" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <filter id="glow2"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            <clipPath id="fc"><path d="M115 43 C136 43 156 56 163 76 C170 96 170 116 168 131 C166 146 160 158 151 167 C142 176 130 181 119 183 C117 183 116 183 115 183 C114 183 113 183 111 183 C100 181 88 176 79 167 C70 158 64 146 62 131 C60 116 60 96 67 76 C74 56 94 43 115 43Z"/></clipPath>
+          </defs>
+
+          <!-- BG glow -->
+          <circle cx="115" cy="108" r="102" fill="url(#bgG)"/>
+
+          <!-- Orbit ring 1 -->
+          <g class="orbit-ring-1">
+            <circle cx="115" cy="115" r="106" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="3 9"/>
+            <circle cx="115" cy="9" r="5" fill="#7effa0" filter="url(#glow)"/>
+            <circle cx="221" cy="115" r="4" fill="#00c6fb" filter="url(#glow)"/>
+            <circle cx="115" cy="221" r="5" fill="#b3f0ff" filter="url(#glow)"/>
+            <circle cx="9" cy="115" r="4" fill="#7effa0" filter="url(#glow)"/>
+          </g>
+          <!-- Orbit ring 2 -->
+          <g class="orbit-ring-2">
+            <circle cx="115" cy="115" r="90" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="2 14"/>
+            <rect x="111" y="25" width="8" height="8" rx="1.5" fill="rgba(255,255,255,0.45)" transform="rotate(45 115 29)"/>
+          </g>
+
+          <!-- Pulse rings -->
+          <ellipse class="pulse-ring" cx="115" cy="108" rx="65" ry="72" fill="none" stroke="rgba(0,198,251,0.45)" stroke-width="1.5"/>
+          <ellipse class="pulse-ring" cx="115" cy="108" rx="65" ry="72" fill="none" stroke="rgba(0,198,251,0.3)" stroke-width="1.5"/>
+
+          <!-- Scan corner brackets -->
+          <g class="corner-tl"><line x1="44" y1="54" x2="44" y2="37" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/><line x1="44" y1="37" x2="61" y2="37" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/></g>
+          <g class="corner-tr"><line x1="186" y1="54" x2="186" y2="37" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/><line x1="186" y1="37" x2="169" y2="37" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/></g>
+          <g class="corner-bl"><line x1="44" y1="170" x2="44" y2="187" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/><line x1="44" y1="187" x2="61" y2="187" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/></g>
+          <g class="corner-br"><line x1="186" y1="170" x2="186" y2="187" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/><line x1="186" y1="187" x2="169" y2="187" stroke="#00c6fb" stroke-width="3" stroke-linecap="round"/></g>
+
+          <!-- Neck -->
+          <path d="M101 169 Q99 182 96 188 L134 188 Q131 182 129 169" fill="url(#fg)" opacity="0.44"/>
+          <!-- Shoulders -->
+          <path d="M74 192 Q95 185 115 184 Q135 185 156 192 Q170 200 175 215 L55 215 Q60 200 74 192Z" fill="url(#fg)" opacity="0.26"/>
+
+          <!-- FACE OVAL — realistic human head shape -->
+          <path class="face-head" d="M115 43 C136 43 156 56 163 76 C170 96 170 116 168 131 C166 146 160 158 151 167 C142 176 130 181 119 183 C117 183 116 183 115 183 C114 183 113 183 111 183 C100 181 88 176 79 167 C70 158 64 146 62 131 C60 116 60 96 67 76 C74 56 94 43 115 43Z" fill="url(#fg)" stroke="rgba(255,255,255,0.65)" stroke-width="1.6" opacity="0.91"/>
+
+          <!-- EARS — left -->
+          <path d="M62 100 Q50 100 48 113 Q46 127 55 133 Q60 136 65 131" fill="url(#fg)" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" opacity="0.66"/>
+          <path d="M57 107 Q53 113 54 121 Q56 126 59 124" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="0.9"/>
+          <!-- EARS — right -->
+          <path d="M168 100 Q180 100 182 113 Q184 127 175 133 Q170 136 165 131" fill="url(#fg)" stroke="rgba(255,255,255,0.45)" stroke-width="1.2" opacity="0.66"/>
+          <path d="M173 107 Q177 113 176 121 Q174 126 171 124" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="0.9"/>
+
+          <!-- HAIR — natural crown shape -->
+          <path d="M80 62 Q87 44 115 42 Q143 40 150 62 Q137 50 115 50 Q93 50 80 62Z" fill="rgba(255,255,255,0.26)"/>
+          <path d="M67 74 Q64 61 76 52" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.8"/>
+          <path d="M163 74 Q166 61 154 52" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1.8"/>
+
+          <!-- EYEBROWS -->
+          <path d="M81 98 Q93 93 107 96" fill="none" stroke="rgba(255,255,255,0.82)" stroke-width="2.3" stroke-linecap="round"/>
+          <path d="M123 96 Q137 93 149 98" fill="none" stroke="rgba(255,255,255,0.82)" stroke-width="2.3" stroke-linecap="round"/>
+
+          <!-- LEFT EYE — detailed -->
+          <g filter="url(#glow)">
+            <!-- eye white shadow -->
+            <path d="M81 109 Q94 101 107 109 Q94 117 81 109Z" fill="rgba(255,255,255,0.18)"/>
+            <!-- upper lid -->
+            <path d="M81 109 Q94 102 107 109" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.1" stroke-linecap="round"/>
+            <!-- lower lid -->
+            <path d="M81 109 Q94 116 107 109" fill="none" stroke="rgba(255,255,255,0.48)" stroke-width="1.2" stroke-linecap="round"/>
+            <!-- iris -->
+            <circle cx="94" cy="109" r="5.8" fill="rgba(0,190,255,0.72)" stroke="rgba(255,255,255,0.92)" stroke-width="1.5"/>
+            <!-- pupil -->
+            <circle cx="94" cy="109" r="2.6" fill="rgba(0,35,110,0.95)"/>
+            <!-- catchlight main -->
+            <circle cx="95.8" cy="107" r="1.4" fill="rgba(255,255,255,0.96)"/>
+            <!-- catchlight small -->
+            <circle cx="92.2" cy="110.5" r="0.65" fill="rgba(255,255,255,0.6)"/>
+            <!-- eyelashes -->
+            <line x1="83" y1="105" x2="82" y2="102" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="88" y1="103" x2="88" y2="100" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="94" y1="102" x2="94" y2="99" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="100" y1="103" x2="101" y2="100" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="105" y1="105" x2="106" y2="102" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <!-- inner canthus -->
+            <path d="M81 109 Q79 108 80 110" fill="rgba(255,160,160,0.28)"/>
+          </g>
+
+          <!-- RIGHT EYE — detailed -->
+          <g filter="url(#glow)">
+            <path d="M123 109 Q136 101 149 109 Q136 117 123 109Z" fill="rgba(255,255,255,0.18)"/>
+            <path d="M123 109 Q136 102 149 109" fill="none" stroke="rgba(255,255,255,0.92)" stroke-width="2.1" stroke-linecap="round"/>
+            <path d="M123 109 Q136 116 149 109" fill="none" stroke="rgba(255,255,255,0.48)" stroke-width="1.2" stroke-linecap="round"/>
+            <circle cx="136" cy="109" r="5.8" fill="rgba(0,190,255,0.72)" stroke="rgba(255,255,255,0.92)" stroke-width="1.5"/>
+            <circle cx="136" cy="109" r="2.6" fill="rgba(0,35,110,0.95)"/>
+            <circle cx="137.8" cy="107" r="1.4" fill="rgba(255,255,255,0.96)"/>
+            <circle cx="134.2" cy="110.5" r="0.65" fill="rgba(255,255,255,0.6)"/>
+            <line x1="125" y1="105" x2="124" y2="102" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="130" y1="103" x2="130" y2="100" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="136" y1="102" x2="136" y2="99" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="142" y1="103" x2="143" y2="100" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <line x1="147" y1="105" x2="148" y2="102" stroke="rgba(255,255,255,0.55)" stroke-width="1.1"/>
+            <path d="M149 109 Q151 108 150 110" fill="rgba(255,160,160,0.28)"/>
+          </g>
+
+          <!-- NOSE — bridge + tip + nostrils -->
+          <g opacity="0.82">
+            <path d="M107 118 L105 134" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="1.3" stroke-linecap="round"/>
+            <path d="M123 118 L125 134" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="1.3" stroke-linecap="round"/>
+            <!-- nose tip arch -->
+            <path d="M103 141 Q115 147 127 141" fill="none" stroke="rgba(255,255,255,0.62)" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- nose bridge top connection -->
+            <path d="M107 118 Q115 115 123 118" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="1" stroke-linecap="round"/>
+            <!-- nostrils -->
+            <ellipse cx="104" cy="142" rx="3.8" ry="2.4" fill="rgba(0,35,100,0.42)" stroke="rgba(255,255,255,0.48)" stroke-width="0.9" transform="rotate(-14 104 142)"/>
+            <ellipse cx="126" cy="142" rx="3.8" ry="2.4" fill="rgba(0,35,100,0.42)" stroke="rgba(255,255,255,0.48)" stroke-width="0.9" transform="rotate(14 126 142)"/>
+            <!-- tip highlight -->
+            <circle cx="115" cy="144" r="2" fill="rgba(255,255,255,0.18)"/>
+          </g>
+
+          <!-- LIPS — cupid's bow + lower lip -->
+          <g opacity="0.87">
+            <!-- philtrum -->
+            <path d="M112 147 Q113 151 112 155" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.8"/>
+            <path d="M118 147 Q117 151 118 155" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.8"/>
+            <!-- upper lip cupid bow -->
+            <path d="M101 155 Q108 149 115 152 Q122 149 129 155" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.8)" stroke-width="1.6" stroke-linecap="round"/>
+            <!-- lower lip -->
+            <path d="M101 155 Q115 166 129 155" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.68)" stroke-width="1.6" stroke-linecap="round"/>
+            <!-- center lip line -->
+            <path d="M101 155 Q115 157 129 155" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="0.8"/>
+            <!-- corners -->
+            <circle cx="101" cy="155" r="1.3" fill="rgba(255,255,255,0.45)"/>
+            <circle cx="129" cy="155" r="1.3" fill="rgba(255,255,255,0.45)"/>
+            <!-- lower lip highlight -->
+            <ellipse cx="115" cy="161" rx="8" ry="3" fill="rgba(255,255,255,0.11)"/>
+          </g>
+
+          <!-- Chin -->
+          <path d="M108 173 Q115 178 122 173" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="0.9"/>
+          <!-- Jaw shadows -->
+          <path d="M65 124 Q63 135 69 150" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2.5"/>
+          <path d="M165 124 Q167 135 161 150" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="2.5"/>
+          <!-- Cheek highlights -->
+          <ellipse cx="75" cy="125" rx="12" ry="7" fill="rgba(255,255,255,0.06)" transform="rotate(-18 75 125)"/>
+          <ellipse cx="155" cy="125" rx="12" ry="7" fill="rgba(255,255,255,0.06)" transform="rotate(18 155 125)"/>
+          <!-- Forehead highlight -->
+          <ellipse cx="115" cy="68" rx="22" ry="9" fill="rgba(255,255,255,0.07)"/>
+
+          <!-- AI LANDMARK DOTS -->
+          <g class="recog-dot"><circle cx="94" cy="109" r="7.5" fill="none" stroke="#7effa0" stroke-width="2" filter="url(#glow)"/></g>
+          <g class="recog-dot"><circle cx="136" cy="109" r="7.5" fill="none" stroke="#7effa0" stroke-width="2" filter="url(#glow)"/></g>
+          <g class="recog-dot"><circle cx="115" cy="137" r="6" fill="none" stroke="#7effa0" stroke-width="2" filter="url(#glow)"/></g>
+          <g class="recog-dot"><circle cx="101" cy="155" r="5" fill="none" stroke="#7effa0" stroke-width="2" filter="url(#glow)"/></g>
+          <g class="recog-dot"><circle cx="129" cy="155" r="5" fill="none" stroke="#7effa0" stroke-width="2" filter="url(#glow)"/></g>
+          <g class="recog-dot"><circle cx="81" cy="98" r="4" fill="none" stroke="#b3f0ff" stroke-width="1.5" filter="url(#glow)"/></g>
+          <g class="recog-dot"><circle cx="149" cy="98" r="4" fill="none" stroke="#b3f0ff" stroke-width="1.5" filter="url(#glow)"/></g>
+
+          <!-- Landmark mesh lines -->
+          <g opacity="0.22" stroke="#00c6fb" stroke-width="0.9" stroke-dasharray="2 5">
+            <line x1="94" y1="109" x2="136" y2="109"/>
+            <line x1="94" y1="109" x2="115" y2="137"/>
+            <line x1="136" y1="109" x2="115" y2="137"/>
+            <line x1="115" y1="137" x2="101" y2="155"/>
+            <line x1="115" y1="137" x2="129" y2="155"/>
+            <line x1="101" y1="155" x2="129" y2="155"/>
+            <line x1="94" y1="109" x2="81" y2="98"/>
+            <line x1="136" y1="109" x2="149" y2="98"/>
+            <line x1="81" y1="98" x2="115" y2="55"/>
+            <line x1="149" y1="98" x2="115" y2="55"/>
+          </g>
+
+          <!-- Animated data streams from face sides -->
+          <g>
+            <line class="data-stream" x1="44" y1="109" x2="16" y2="109" stroke="#00c6fb" stroke-width="1.8"/>
+            <line class="data-stream" x1="186" y1="109" x2="214" y2="109" stroke="#00c6fb" stroke-width="1.8"/>
+            <line class="data-stream" x1="44" y1="122" x2="16" y2="131" stroke="#7effa0" stroke-width="1.2"/>
+            <line class="data-stream" x1="186" y1="122" x2="214" y2="131" stroke="#7effa0" stroke-width="1.2"/>
+            <line class="data-stream" x1="44" y1="96" x2="16" y2="87" stroke="#b3f0ff" stroke-width="1.2"/>
+            <line class="data-stream" x1="186" y1="96" x2="214" y2="87" stroke="#b3f0ff" stroke-width="1.2"/>
+          </g>
+
+          <!-- Scan line clipped to face -->
+          <g clip-path="url(#fc)">
+            <rect class="scan-line" x="50" y="76" width="130" height="24" fill="url(#sg)" opacity="0.72"/>
+          </g>
+
+          <!-- Status badge -->
+          <rect x="68" y="192" width="94" height="22" rx="11" fill="rgba(126,255,160,0.18)" stroke="rgba(126,255,160,0.62)" stroke-width="1"/>
+          <circle cx="82" cy="203" r="3.5" fill="#7effa0" filter="url(#glow)"/>
+          <text x="127" y="206.5" text-anchor="middle" fill="#7effa0" font-size="8.5" font-family="Outfit,sans-serif" font-weight="700" letter-spacing="1.2">SCANNING...</text>
         </svg>
       </div>
 
       <h1 class="hero-heading">FaceID <span>SaaS</span></h1>
-      <p class="hero-desc">
-        AI-powered face recognition platform. Register people, train the model, and identify faces
-        in real-time — now with ESP32 LED &amp; buzzer integration.
-      </p>
-
-      <!-- Animated face scan illustration -->
-      <div class="face-scan-wrap">
-        <svg width="260" height="130" viewBox="0 0 260 130" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- Face outline -->
-          <ellipse cx="130" cy="65" rx="42" ry="52" stroke="rgba(255,255,255,0.25)" stroke-width="1.5"/>
-          <!-- Eyes -->
-          <ellipse cx="113" cy="55" rx="8" ry="5" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-          <ellipse cx="147" cy="55" rx="8" ry="5" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.5)" stroke-width="1"/>
-          <circle cx="113" cy="55" r="2.5" fill="white" opacity="0.8"/>
-          <circle cx="147" cy="55" r="2.5" fill="white" opacity="0.8"/>
-          <!-- Nose bridge -->
-          <path d="M130 62 Q127 72 124 76 Q130 78 136 76 Q133 72 130 62" stroke="rgba(255,255,255,0.35)" stroke-width="1" fill="none"/>
-          <!-- Smile -->
-          <path d="M118 88 Q130 96 142 88" stroke="rgba(255,255,255,0.45)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-          <!-- Landmark dots -->
-          <circle cx="113" cy="55" r="2" fill="#7effa0" class="face-dot"/>
-          <circle cx="147" cy="55" r="2" fill="#7effa0" class="face-dot" style="animation-delay:.4s"/>
-          <circle cx="130" cy="76" r="2" fill="#7effa0" class="face-dot" style="animation-delay:.8s"/>
-          <circle cx="118" cy="88" r="2" fill="#7effa0" class="face-dot" style="animation-delay:.2s"/>
-          <circle cx="142" cy="88" r="2" fill="#7effa0" class="face-dot" style="animation-delay:.6s"/>
-          <circle cx="130" cy="17" r="2" fill="#7effa0" class="face-dot" style="animation-delay:1s"/>
-          <!-- Scan beam -->
-          <rect x="88" y="30" width="84" height="2" rx="1" fill="rgba(126,255,160,0.5)" class="scan-beam"/>
-          <!-- Corner brackets -->
-          <path d="M65 25 L65 12 L78 12" stroke="#7effa0" stroke-width="2" stroke-linecap="round" class="corner-tl"/>
-          <path d="M182 12 L195 12 L195 25" stroke="#7effa0" stroke-width="2" stroke-linecap="round" class="corner-tr"/>
-          <path d="M65 105 L65 118 L78 118" stroke="#7effa0" stroke-width="2" stroke-linecap="round" class="corner-bl"/>
-          <path d="M195 105 L195 118 L182 118" stroke="#7effa0" stroke-width="2" stroke-linecap="round" class="corner-br"/>
-          <!-- Side data labels -->
-          <text x="8" y="52" fill="rgba(255,255,255,0.5)" font-size="8" font-family="monospace">DETECT</text>
-          <text x="8" y="62" fill="rgba(126,255,160,0.8)" font-size="8" font-family="monospace">99.2%</text>
-          <text x="214" y="52" fill="rgba(255,255,255,0.5)" font-size="8" font-family="monospace">MATCH</text>
-          <text x="214" y="62" fill="rgba(126,255,160,0.8)" font-size="8" font-family="monospace">FOUND</text>
-        </svg>
-      </div>
-
-      <!-- How It Works link -->
-      <a href="how-it-works.html" class="how-it-works-link">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M12 16v-4M12 8h.01"/>
-        </svg>
-        How Face Recognition Works
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M5 12h14M12 5l7 7-7 7"/>
-        </svg>
-      </a>
+      <p class="hero-desc">AI-powered face recognition. Register people, train the model, and identify faces in real-time — with ESP32 LED &amp; buzzer integration.</p>
 
       <div class="feature-grid">
         <div class="feature-item">
-          <span class="fi-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-              <circle cx="12" cy="13" r="4"/>
-            </svg>
-          </span>
-          <div class="fi-text">
-            <strong>Live Camera &amp; Upload</strong>
-            <span>Register faces via webcam or image files</span>
-          </div>
+          <span class="fi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b3f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
+          <div class="fi-text"><strong>Live Camera &amp; Upload</strong><span>Register faces via webcam or image files</span></div>
         </div>
         <div class="feature-item">
-          <span class="fi-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44l-3.1-12.4A2.5 2.5 0 0 1 6.4 4H9.5z"/>
-              <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44l3.1-12.4A2.5 2.5 0 0 0 17.6 4H14.5z"/>
-            </svg>
-          </span>
-          <div class="fi-text">
-            <strong>AI Recognition Engine</strong>
-            <span>Powered by face-api.js for high accuracy</span>
-          </div>
+          <span class="fi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b3f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg></span>
+          <div class="fi-text"><strong>AI Recognition Engine</strong><span>Powered by face-api.js for high accuracy</span></div>
         </div>
         <div class="feature-item">
-          <span class="fi-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <circle cx="12" cy="12" r="3"/>
-              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
-            </svg>
-          </span>
-          <div class="fi-text">
-            <strong>ESP32 LED + Buzzer</strong>
-            <span>Green for known · Red+buzz for unknown</span>
-          </div>
+          <span class="fi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b3f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></span>
+          <div class="fi-text"><strong>ESP32 LED + Buzzer</strong><span>Green for known · Red+buzz for unknown</span></div>
         </div>
         <div class="feature-item">
-          <span class="fi-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </span>
-          <div class="fi-text">
-            <strong>Secure Multi-user SaaS</strong>
-            <span>Each account has isolated face data</span>
-          </div>
+          <span class="fi-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#b3f0ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>
+          <div class="fi-text"><strong>Secure Multi-user SaaS</strong><span>Each account has isolated face data</span></div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- ═══ RIGHT AUTH PANEL ═══ -->
+  <!-- AUTH PANEL -->
   <div class="auth-panel">
     <div class="auth-box">
-
-      <!-- mobile brand -->
       <div class="mobile-brand">
-        <svg width="28" height="28" viewBox="0 0 52 52" fill="none">
-          <circle cx="26" cy="26" r="10" fill="#e0f5fd" stroke="#00adee" stroke-width="1.5"/>
-          <circle cx="26" cy="26" r="5" fill="#00adee" opacity="0.9"/>
-          <circle cx="28" cy="24" r="1.5" fill="white"/>
-          <circle cx="26" cy="26" r="22" stroke="#00adee" stroke-width="1.5" stroke-dasharray="6 4" opacity="0.4"/>
-        </svg>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         FaceID SaaS
       </div>
-
       <h1 class="auth-heading">Welcome <em>Back</em></h1>
       <p class="auth-sub">Sign in to your account or create a new one below</p>
-
       <div class="alert-box" id="alertBox"></div>
-
       <div class="tab-bar">
-        <button class="tab-btn active" id="tabLogin"    onclick="switchTab('login')">Sign In</button>
-        <button class="tab-btn"        id="tabRegister" onclick="switchTab('register')">Create Account</button>
+        <button class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Sign In</button>
+        <button class="tab-btn" id="tabRegister" onclick="switchTab('register')">Create Account</button>
       </div>
 
       <!-- LOGIN -->
       <div class="form-section active" id="loginSection">
-
         <div class="field">
           <label class="field-label" for="loginEmail">Email Address</label>
           <div class="input-wrap">
-            <span class="input-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-            </span>
-            <input type="email" id="loginEmail" class="with-icon" placeholder="you@example.com" autocomplete="email">
+            <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
           </div>
         </div>
-
         <div class="field">
           <label class="field-label" for="loginPassword">Password</label>
           <div class="input-wrap">
-            <span class="input-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </span>
-            <input type="password" id="loginPassword" class="with-icon has-toggle"
-                   placeholder="Your password" autocomplete="current-password"
-                   onkeydown="if(event.key==='Enter') doLogin()">
-            <button class="eye-btn" type="button" onclick="toggleEye('loginPassword', this)" aria-label="Toggle password">
-              <svg id="eyeIcon_loginPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
-                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
+            <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="loginPassword" class="has-toggle" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+            <button class="eye-btn" type="button" onclick="toggleEye('loginPassword',this)">
+              <svg id="eyeIcon_loginPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             </button>
           </div>
         </div>
-
         <button class="submit-btn" id="loginBtn" onclick="doLogin()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           Sign In
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
         </button>
       </div>
 
       <!-- REGISTER -->
       <div class="form-section" id="registerSection">
-
         <div class="field">
           <label class="field-label" for="regName">Full Name</label>
           <div class="input-wrap">
-            <span class="input-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </span>
-            <input type="text" id="regName" class="with-icon" placeholder="John Doe" autocomplete="name">
+            <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            <input type="text" id="regName" placeholder="John Doe" autocomplete="name">
           </div>
         </div>
-
         <div class="field">
           <label class="field-label" for="regEmail">Email Address</label>
           <div class="input-wrap">
-            <span class="input-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-            </span>
-            <input type="email" id="regEmail" class="with-icon" placeholder="you@example.com" autocomplete="email">
+            <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            <input type="email" id="regEmail" placeholder="you@example.com" autocomplete="email">
           </div>
         </div>
-
         <div class="field">
           <label class="field-label" for="regPassword">Password</label>
           <div class="input-wrap">
-            <span class="input-icon">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </span>
-            <input type="password" id="regPassword" class="with-icon has-toggle"
-                   placeholder="Min. 6 characters" autocomplete="new-password"
-                   onkeydown="if(event.key==='Enter') doRegister()">
-            <button class="eye-btn" type="button" onclick="toggleEye('regPassword', this)" aria-label="Toggle password">
-              <svg id="eyeIcon_regPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
-                <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-                <line x1="1" y1="1" x2="23" y2="23"/>
-              </svg>
+            <svg class="input-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <input type="password" id="regPassword" class="has-toggle" placeholder="Min. 6 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')doRegister()">
+            <button class="eye-btn" type="button" onclick="toggleEye('regPassword',this)">
+              <svg id="eyeIcon_regPassword" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
             </button>
           </div>
         </div>
-
         <button class="submit-btn" id="registerBtn" onclick="doRegister()">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
           Create Account
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M5 12h14M12 5l7 7-7 7"/>
-          </svg>
         </button>
       </div>
 
       <div class="auth-footer">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline;vertical-align:middle;">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-        </svg>
+        <svg style="display:inline;vertical-align:middle;margin-right:3px" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
         Secure &middot; Fast &middot; Reliable &middot; Powered by <a href="https://github.com/justadudewhohacks/face-api.js" target="_blank">face-api.js</a>
       </div>
-
       <div class="esp32-pill">
-        <span class="esp32-dot"></span> ESP32 Integration Active
+        <span class="esp32-dot"></span>
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:#94a3b8"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        ESP32 Integration Active
       </div>
-
+      <a href="/pages/how-it-works.html" class="how-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        How does face recognition work?
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
     </div>
   </div>
-
 </div>
-
 <script>
-fetch('/api/auth/me').then(r => r.json()).then(d => {
-    if (d.loggedIn) window.location.href = '/dashboard';
-});
-
-function switchTab(tab) {
-    const isLogin = tab === 'login';
-    document.getElementById('tabLogin').classList.toggle('active', isLogin);
-    document.getElementById('tabRegister').classList.toggle('active', !isLogin);
-    document.getElementById('loginSection').classList.toggle('active', isLogin);
-    document.getElementById('registerSection').classList.toggle('active', !isLogin);
-    document.getElementById('alertBox').innerHTML = '';
-}
-
-function showMsg(msg, type) {
-    const icons = {
-        success: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
-        danger: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'
-    };
-    document.getElementById('alertBox').innerHTML =
-        `<div class="alert alert-${type}">${icons[type] || ''} ${msg}</div>`;
-}
-
-function toggleEye(inputId, btn) {
-    const input = document.getElementById(inputId);
-    const icon  = document.getElementById('eyeIcon_' + inputId);
-    const isHidden = input.type === 'password';
-    input.type = isHidden ? 'text' : 'password';
-    if (isHidden) {
-        icon.innerHTML = `<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>`;
-    } else {
-        icon.innerHTML = `
-            <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/>
-            <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/>
-            <line x1="1" y1="1" x2="23" y2="23"/>`;
-    }
-}
-
-async function doLogin() {
-    const btn      = document.getElementById('loginBtn');
-    const email    = document.getElementById('loginEmail').value.trim();
-    const password = document.getElementById('loginPassword').value;
-    if (!email || !password) return showMsg('Please fill all fields.', 'danger');
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spin"></span> Signing in…';
-
-    try {
-        const res  = await fetch('/api/auth/login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showMsg('Login successful! Redirecting…', 'success');
-            setTimeout(() => window.location.href = '/dashboard', 800);
-        } else {
-            showMsg(data.message, 'danger');
-        }
-    } catch (e) {
-        showMsg('Network error. Please try again.', 'danger');
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = 'Sign In <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
-}
-
-async function doRegister() {
-    const btn      = document.getElementById('registerBtn');
-    const name     = document.getElementById('regName').value.trim();
-    const email    = document.getElementById('regEmail').value.trim();
-    const password = document.getElementById('regPassword').value;
-
-    if (!name || !email || !password) return showMsg('Please fill all fields.', 'danger');
-    if (password.length < 6) return showMsg('Password must be at least 6 characters.', 'danger');
-
-    btn.disabled = true;
-    btn.innerHTML = '<span class="spin"></span> Creating account…';
-
-    try {
-        const res  = await fetch('/api/auth/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-        });
-        const data = await res.json();
-        if (data.success) {
-            showMsg('Account created! Please sign in.', 'success');
-            setTimeout(() => switchTab('login'), 1500);
-        } else {
-            showMsg(data.message, 'danger');
-        }
-    } catch (e) {
-        showMsg('Network error. Please try again.', 'danger');
-    }
-
-    btn.disabled = false;
-    btn.innerHTML = 'Create Account <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>';
-}
+(function(){
+  const c=document.getElementById('particles');
+  const cols=['rgba(255,255,255,0.3)','rgba(179,240,255,0.4)','rgba(126,255,160,0.3)','rgba(0,198,251,0.3)'];
+  for(let i=0;i<22;i++){const p=document.createElement('div');p.className='particle';const s=2+Math.random()*4;p.style.cssText=`left:${Math.random()*100}%;animation-duration:${8+Math.random()*14}s;animation-delay:${-Math.random()*22}s;width:${s}px;height:${s}px;background:${cols[Math.floor(Math.random()*cols.length)]};`;c.appendChild(p);}
+})();
+fetch('/api/auth/me').then(r=>r.json()).then(d=>{if(d.loggedIn)window.location.href='/dashboard';});
+function switchTab(t){const l=t==='login';['tabLogin','tabRegister'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i===0?l:!l));['loginSection','registerSection'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i===0?l:!l));document.getElementById('alertBox').innerHTML='';}
+function showMsg(m,t){const ic={success:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',danger:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'};document.getElementById('alertBox').innerHTML=`<div class="alert alert-${t}">${ic[t]||''} ${m}</div>`;}
+function toggleEye(id,btn){const inp=document.getElementById(id),ic=document.getElementById('eyeIcon_'+id),h=inp.type==='password';inp.type=h?'text':'password';ic.innerHTML=h?'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>':'<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';}
+const sS='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>';
+const rS='<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>';
+async function doLogin(){const btn=document.getElementById('loginBtn'),e=document.getElementById('loginEmail').value.trim(),p=document.getElementById('loginPassword').value;if(!e||!p)return showMsg('Please fill all fields.','danger');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Signing in…';try{const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p})});const d=await r.json();if(d.success){showMsg('Login successful! Redirecting…','success');setTimeout(()=>window.location.href='/dashboard',800);}else showMsg(d.message,'danger');}catch(e){showMsg('Network error. Please try again.','danger');}btn.disabled=false;btn.innerHTML=sS+' Sign In';}
+async function doRegister(){const btn=document.getElementById('registerBtn'),n=document.getElementById('regName').value.trim(),e=document.getElementById('regEmail').value.trim(),p=document.getElementById('regPassword').value;if(!n||!e||!p)return showMsg('Please fill all fields.','danger');if(p.length<6)return showMsg('Password must be at least 6 characters.','danger');btn.disabled=true;btn.innerHTML='<span class="spin"></span> Creating account…';try{const r=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n,email:e,password:p})});const d=await r.json();if(d.success){showMsg('Account created! Please sign in.','success');setTimeout(()=>switchTab('login'),1500);}else showMsg(d.message,'danger');}catch(e){showMsg('Network error. Please try again.','danger');}btn.disabled=false;btn.innerHTML=rS+' Create Account';}
 </script>
 </body>
 </html>
