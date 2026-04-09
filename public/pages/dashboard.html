@@ -6,287 +6,417 @@
 <title>Dashboard — FaceID SaaS</title>
 <link rel="stylesheet" href="/css/style.css">
 <style>
+/* ── Welcome Banner ──────────────────────────── */
 .welcome-banner {
-    background: linear-gradient(135deg, var(--primary) 0%, #0078ba 100%);
-    border-radius: var(--radius-xl);
-    padding: 36px 40px;
-    color: white;
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 32px;
-    position: relative; overflow: hidden;
+  background: linear-gradient(135deg, var(--primary) 0%, #0078ba 100%);
+  border-radius: var(--radius-xl);
+  padding: 36px 40px;
+  color: white;
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 32px;
+  position: relative; overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,120,186,.3);
 }
+.banner-grid-bg { position:absolute;inset:0;opacity:0.07;pointer-events:none; }
 .welcome-banner::before {
-    content: '';
-    position: absolute; right: -40px; top: -40px;
-    width: 200px; height: 200px;
-    background: rgba(255,255,255,0.08);
-    border-radius: 50%;
+  content:''; position:absolute; right:-50px; top:-50px;
+  width:220px;height:220px;background:rgba(255,255,255,0.07);border-radius:50%;
 }
 .welcome-banner::after {
-    content: '';
-    position: absolute; right: 60px; bottom: -60px;
-    width: 150px; height: 150px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 50%;
+  content:''; position:absolute; right:70px; bottom:-70px;
+  width:170px;height:170px;background:rgba(255,255,255,0.05);border-radius:50%;
 }
-.welcome-text { position: relative; z-index: 1; }
-.welcome-greeting { font-family: 'Outfit', sans-serif; font-size: 28px; font-weight: 800; margin-bottom: 8px; }
-.welcome-sub { opacity: 0.85; font-size: 15px; }
-.welcome-icon { font-size: 64px; position: relative; z-index: 1; }
+.banner-wave { position:absolute; bottom:0; left:0; right:0; height:40px; opacity:.12; }
+.welcome-text { position:relative;z-index:1; }
+.welcome-greeting { font-family:'Outfit',sans-serif;font-size:28px;font-weight:800;margin-bottom:8px; }
+.welcome-sub { opacity:.85;font-size:15px; }
+.banner-svg-wrap {
+  position:relative;z-index:1;flex-shrink:0;
+  animation: bannerFloat 4s ease-in-out infinite;
+}
+@keyframes bannerFloat { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-8px);} }
 
-.quick-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 32px; }
+/* Animated scan lines in banner SVG */
+.bscan { animation:bscanMove 2.4s ease-in-out infinite; }
+@keyframes bscanMove { 0%,100%{opacity:0;transform:translateY(-28px);} 50%{opacity:0.8;} 80%{opacity:0.8;transform:translateY(28px);} }
+.bcorner { animation:bcorn 2.4s ease-in-out infinite; }
+.bcorner:nth-child(2){animation-delay:.15s;} .bcorner:nth-child(3){animation-delay:.3s;} .bcorner:nth-child(4){animation-delay:.45s;}
+@keyframes bcorn { 0%,100%{opacity:0.5;} 50%{opacity:1;} }
+.beye { animation:bpulse 2.5s ease-in-out infinite; }
+.beye:nth-child(2){animation-delay:.5s;}
+@keyframes bpulse { 0%,100%{opacity:0.6;r:3.5;} 50%{opacity:1;r:4.5;} }
 
+/* ── Stat Cards ─────────────────────────────── */
+.stat-card {
+  background:var(--white);border:1px solid var(--gray-200);
+  border-radius:var(--radius-lg);padding:24px;text-align:center;
+  box-shadow:var(--shadow-sm);transition:all .25s;position:relative;overflow:hidden;
+}
+.stat-card::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,var(--card-accent,var(--primary)),transparent);
+}
+.stat-card:hover { transform:translateY(-3px);box-shadow:var(--shadow-md); }
+.stat-icon-wrap {
+  width:52px;height:52px;border-radius:14px;
+  background:var(--card-bg,rgba(0,173,238,.1));
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;
+  transition: transform .3s;
+}
+.stat-card:hover .stat-icon-wrap { transform: scale(1.1) rotate(-5deg); }
+.stat-number { font-family:'Outfit',sans-serif;font-size:38px;font-weight:800;color:var(--card-accent,var(--primary));margin-bottom:4px; }
+.stat-label { font-size:13px;color:var(--gray-500);font-weight:600; }
+
+/* ── Quick Action Cards ─────────────────────── */
+.quick-actions { display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-bottom:32px; }
 .action-card {
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    padding: 28px 24px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.25s;
-    text-decoration: none;
-    display: block;
-    box-shadow: var(--shadow-sm);
+  background:var(--white);border:1px solid var(--gray-200);
+  border-radius:var(--radius-lg);padding:28px 22px;
+  text-align:center;cursor:pointer;transition:all .25s;
+  text-decoration:none;display:block;box-shadow:var(--shadow-sm);
+  position:relative;overflow:hidden;
 }
-.action-card:hover {
-    border-color: var(--primary);
-    box-shadow: var(--shadow-primary);
-    transform: translateY(-3px);
+.action-card::after {
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,173,238,.04),transparent);
+  opacity:0;transition:opacity .25s;
 }
-.action-icon { font-size: 42px; margin-bottom: 14px; }
-.action-title { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; color: var(--gray-800); margin-bottom: 6px; }
-.action-desc { font-size: 13px; color: var(--gray-500); line-height: 1.5; }
+.action-card:hover { border-color:var(--primary);box-shadow:var(--shadow-primary);transform:translateY(-3px); }
+.action-card:hover::after { opacity:1; }
+.action-svg-wrap {
+  width:64px;height:64px;border-radius:18px;
+  background:linear-gradient(135deg,var(--primary-light),#f0fffe);
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 14px;transition:transform .25s;
+}
+.action-card:hover .action-svg-wrap { transform:scale(1.1) rotate(-4deg); }
+.action-title { font-family:'Outfit',sans-serif;font-size:17px;font-weight:700;color:var(--gray-800);margin-bottom:6px; }
+.action-desc { font-size:13px;color:var(--gray-500);line-height:1.5; }
 .action-badge {
-    display: inline-block; margin-top: 14px;
-    background: var(--primary-light); color: var(--primary);
-    padding: 4px 14px; border-radius: 20px;
-    font-size: 12px; font-weight: 700;
+  display:inline-flex;align-items:center;gap:5px;
+  margin-top:14px;background:var(--primary-light);color:var(--primary);
+  padding:5px 14px;border-radius:20px;font-size:12px;font-weight:700;
+  transition:background .2s;
 }
+.action-card:hover .action-badge { background:var(--primary);color:#fff; }
 
-.recent-persons { }
-.person-row { display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--gray-100); }
-.person-row:last-child { border-bottom: none; }
-.person-avatar { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), #0078ba); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-family: 'Outfit', sans-serif; flex-shrink: 0; }
-.person-row-info { flex: 1; }
-.person-row-name { font-weight: 600; font-size: 15px; color: var(--gray-800); }
-.person-row-meta { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
+/* ── Person rows ───────────────────────────── */
+.person-row { display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--gray-100); }
+.person-row:last-child { border-bottom:none; }
+.person-avatar {
+  width:42px;height:42px;
+  background:linear-gradient(135deg,var(--primary),#0078ba);
+  border-radius:50%;display:flex;align-items:center;justify-content:center;
+  color:white;font-weight:700;font-family:'Outfit',sans-serif;flex-shrink:0;
+  font-size:16px;box-shadow:0 2px 8px rgba(0,120,186,.3);
+}
+.person-row-info { flex:1; }
+.person-row-name { font-weight:600;font-size:15px;color:var(--gray-800); }
+.person-row-meta { font-size:12px;color:var(--gray-500);margin-top:2px; }
 
-@media (max-width: 768px) { .quick-actions { grid-template-columns: 1fr; } }
+/* ── ESP32 Token ────────────────────────────── */
+.token-display {
+  display:flex;align-items:center;gap:10px;
+  background:var(--gray-50);border:1px solid var(--gray-200);
+  border-radius:10px;padding:12px 16px;
+}
+.token-value { font-family:monospace;font-size:20px;font-weight:800;color:var(--primary);letter-spacing:2px; }
+
+@keyframes statPop { 0%{transform:scale(1.3);opacity:0;} 100%{transform:scale(1);opacity:1;} }
+.stat-number.loaded { animation:statPop .4s ease; }
+
+/* Pulse dot in stat card */
+.live-dot { width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;margin-right:5px;animation:ldot 2s ease-in-out infinite; }
+@keyframes ldot { 0%,100%{box-shadow:0 0 3px #22c55e;} 50%{box-shadow:0 0 10px #22c55e,0 0 20px rgba(34,197,94,.3);} }
+
+@media (max-width:768px) { .quick-actions{grid-template-columns:1fr;} }
 </style>
 </head>
 <body>
 <div id="mainNav"></div>
-
 <div class="page-container">
-    <!-- Welcome Banner -->
-    <div class="welcome-banner">
-        <div class="welcome-text">
-            <div class="welcome-greeting">Hello, <span id="welcomeName">User</span>! 👋</div>
-            <div class="welcome-sub">Manage your face recognition database and run real-time detection</div>
-        </div>
-        <div class="welcome-icon">🤖</div>
+
+  <!-- Welcome Banner -->
+  <div class="welcome-banner">
+    <!-- Animated grid background -->
+    <svg class="banner-grid-bg" viewBox="0 0 900 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0;width:100%;height:100%;">
+      <defs><pattern id="bg" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M 32 0 L 0 0 0 32" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs>
+      <rect width="100%" height="100%" fill="url(#bg)"/>
+    </svg>
+    <svg class="banner-wave" viewBox="0 0 1200 60" preserveAspectRatio="none"><path d="M0,30 C200,60 400,0 600,30 C800,60 1000,0 1200,30 L1200,60 L0,60Z" fill="white"/></svg>
+
+    <div class="welcome-text">
+      <div class="welcome-greeting">
+        <svg style="display:inline;vertical-align:middle;margin-right:8px;margin-bottom:3px" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Hello, <span id="welcomeName">User</span>!
+      </div>
+      <div class="welcome-sub">Manage your face recognition database and run real-time detection</div>
     </div>
 
-    <!-- Stats -->
-    <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-icon">👤</div>
-            <div class="stat-number" id="statPersons">0</div>
-            <div class="stat-label">Registered Persons</div>
-        </div>
-        <div class="stat-card" style="--primary: #22c55e">
-            <div class="stat-icon">📸</div>
-            <div class="stat-number" id="statSamples">0</div>
-            <div class="stat-label">Face Samples</div>
-        </div>
-        <div class="stat-card" style="--primary: #f59e0b">
-            <div class="stat-icon">✅</div>
-            <div class="stat-number" id="statTrained">0</div>
-            <div class="stat-label">Trained Persons</div>
-        </div>
+    <div class="banner-svg-wrap">
+      <!-- Animated face scan SVG in banner -->
+      <svg width="96" height="96" viewBox="0 0 96 96" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="48" cy="48" r="42" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.35)" stroke-width="1.5"/>
+        <!-- Face oval -->
+        <ellipse cx="48" cy="46" rx="20" ry="24" fill="rgba(255,255,255,0.14)" stroke="rgba(255,255,255,0.72)" stroke-width="1.5"/>
+        <!-- Eyebrows -->
+        <path d="M37 36 Q41 33 45 35" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.4" stroke-linecap="round"/>
+        <path d="M51 35 Q55 33 59 36" fill="none" stroke="rgba(255,255,255,0.75)" stroke-width="1.4" stroke-linecap="round"/>
+        <!-- Left eye -->
+        <path d="M37 40 Q41 36 45 40 Q41 44 37 40Z" fill="rgba(255,255,255,0.18)"/>
+        <path d="M37 40 Q41 37 45 40" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M37 40 Q41 43 45 40" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-linecap="round"/>
+        <circle cx="41" cy="40" r="3.5" fill="rgba(0,190,255,0.6)" stroke="rgba(255,255,255,0.9)" stroke-width="1"/>
+        <circle cx="41" cy="40" r="1.6" fill="rgba(0,30,100,0.9)"/>
+        <circle cx="42" cy="39" r="0.9" fill="white"/>
+        <!-- Right eye -->
+        <path d="M51 40 Q55 36 59 40 Q55 44 51 40Z" fill="rgba(255,255,255,0.18)"/>
+        <path d="M51 40 Q55 37 59 40" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M51 40 Q55 43 59 40" fill="none" stroke="rgba(255,255,255,0.4)" stroke-width="1" stroke-linecap="round"/>
+        <circle cx="55" cy="40" r="3.5" fill="rgba(0,190,255,0.6)" stroke="rgba(255,255,255,0.9)" stroke-width="1"/>
+        <circle cx="55" cy="40" r="1.6" fill="rgba(0,30,100,0.9)"/>
+        <circle cx="56" cy="39" r="0.9" fill="white"/>
+        <!-- Nose -->
+        <path d="M48 44 L46 52 Q48 54 50 52 L48 44" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1" stroke-linecap="round"/>
+        <ellipse cx="45.5" cy="52.5" rx="2" ry="1.4" fill="rgba(0,30,100,0.35)" stroke="rgba(255,255,255,0.4)" stroke-width="0.7"/>
+        <ellipse cx="50.5" cy="52.5" rx="2" ry="1.4" fill="rgba(0,30,100,0.35)" stroke="rgba(255,255,255,0.4)" stroke-width="0.7"/>
+        <!-- Lips -->
+        <path d="M42 56 Q45 53 48 55 Q51 53 54 56" fill="none" stroke="rgba(255,255,255,0.76)" stroke-width="1.3" stroke-linecap="round"/>
+        <path d="M42 56 Q48 62 54 56" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1.3" stroke-linecap="round"/>
+        <!-- Scan brackets -->
+        <g class="bcorner"><line x1="22" y1="22" x2="22" y2="14" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/><line x1="22" y1="14" x2="30" y2="14" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/></g>
+        <g class="bcorner"><line x1="74" y1="22" x2="74" y2="14" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/><line x1="74" y1="14" x2="66" y2="14" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/></g>
+        <g class="bcorner"><line x1="22" y1="74" x2="22" y2="82" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/><line x1="22" y1="82" x2="30" y2="82" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/></g>
+        <g class="bcorner"><line x1="74" y1="74" x2="74" y2="82" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/><line x1="74" y1="82" x2="66" y2="82" stroke="rgba(255,255,255,0.8)" stroke-width="2.2" stroke-linecap="round"/></g>
+        <!-- Animated scan line -->
+        <line x1="28" y1="22" x2="68" y2="22" stroke="rgba(255,255,255,0.65)" stroke-width="1.8" stroke-dasharray="5 4">
+          <animate attributeName="y1" values="22;70;22" dur="2.5s" repeatCount="indefinite"/>
+          <animate attributeName="y2" values="22;70;22" dur="2.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0;1;0" dur="2.5s" repeatCount="indefinite"/>
+        </line>
+        <!-- Landmark dots -->
+        <circle cx="41" cy="40" r="5" fill="none" stroke="#7effa0" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.3s" repeatCount="indefinite"/></circle>
+        <circle cx="55" cy="40" r="5" fill="none" stroke="#7effa0" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.6s" repeatCount="indefinite"/></circle>
+        <circle cx="48" cy="53" r="4" fill="none" stroke="#7effa0" stroke-width="1.3" opacity="0"><animate attributeName="opacity" values="0;1;0" dur="2.5s" begin="0.9s" repeatCount="indefinite"/></circle>
+      </svg>
     </div>
+  </div>
 
-    <!-- Quick Actions -->
-    <h2 style="margin-bottom:16px; font-size:20px;">Quick Actions</h2>
-    <div class="quick-actions">
-        <a href="/register-face" class="action-card">
-            <div class="action-icon">📸</div>
-            <div class="action-title">Register Face</div>
-            <div class="action-desc">Add a new person with live camera or upload images for training</div>
-            <div class="action-badge">→ Start</div>
-        </a>
-        <a href="/recognize" class="action-card">
-            <div class="action-icon">🔍</div>
-            <div class="action-title">Recognize Faces</div>
-            <div class="action-desc">Use live camera or upload an image to identify registered faces</div>
-            <div class="action-badge">→ Detect</div>
-        </a>
-        <a href="/persons" class="action-card">
-            <div class="action-icon">👥</div>
-            <div class="action-title">Manage Persons</div>
-            <div class="action-desc">View, manage and delete all registered persons in your database</div>
-            <div class="action-badge">→ View All</div>
-        </a>
+  <!-- Stats -->
+  <div class="stats-grid" style="margin-bottom:32px;">
+    <div class="stat-card" style="--card-accent:#00adee;--card-bg:rgba(0,173,238,.08);">
+      <div class="stat-icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div class="stat-number" id="statPersons">0</div>
+      <div class="stat-label">Registered Persons</div>
     </div>
+    <div class="stat-card" style="--card-accent:#22c55e;--card-bg:rgba(34,197,94,.08);">
+      <div class="stat-icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+      <div class="stat-number" id="statSamples">0</div>
+      <div class="stat-label">Face Samples</div>
+    </div>
+    <div class="stat-card" style="--card-accent:#f59e0b;--card-bg:rgba(245,158,11,.08);">
+      <div class="stat-icon-wrap">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </div>
+      <div class="stat-number" id="statTrained">0</div>
+      <div class="stat-label">Trained Persons</div>
+    </div>
+  </div>
 
-    <!-- ESP32 Token Card -->
-    <div class="card" id="esp32TokenCard" style="margin-bottom:20px;">
-        <div class="card-header">
-            <span class="card-title">🔌 ESP32 Device Token</span>
-        </div>
-        <div class="card-body" style="padding:16px;">
-            <p style="font-size:13px; color:var(--gray-500); margin-bottom:12px;">
-                Copy this token into your Arduino sketch so your ESP32 only receives commands from <strong>your</strong> account.
-            </p>
-            <div style="display:flex; align-items:center; gap:10px; background:var(--gray-50); border:1px solid var(--gray-200); border-radius:10px; padding:12px 16px;">
-                <span style="font-size:13px; color:var(--gray-500); white-space:nowrap;">Your Token (User ID):</span>
-                <span id="esp32Token" style="font-family:monospace; font-size:20px; font-weight:800; color:var(--primary); letter-spacing:2px;">...</span>
-                <button onclick="copyToken()" style="margin-left:auto; background:var(--primary); color:white; border:none; border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer;">📋 Copy</button>
-            </div>
-            <p style="font-size:12px; color:var(--gray-400); margin-top:10px;">
-                In your Arduino sketch set: <code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;">const int USER_TOKEN = <span id="esp32TokenInline">...</span>;</code>
-            </p>
-        </div>
-    </div>
+  <!-- Quick Actions -->
+  <h2 style="margin-bottom:16px;font-size:20px;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:8px;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+    Quick Actions
+  </h2>
+  <div class="quick-actions">
+    <a href="/register-face" class="action-card">
+      <div class="action-svg-wrap">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+      </div>
+      <div class="action-title">Register Face</div>
+      <div class="action-desc">Add a new person with live camera or upload images for training</div>
+      <div class="action-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        Start
+      </div>
+    </a>
+    <a href="/recognize" class="action-card">
+      <div class="action-svg-wrap">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </div>
+      <div class="action-title">Recognize Faces</div>
+      <div class="action-desc">Use live camera or upload an image to identify registered faces</div>
+      <div class="action-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        Detect
+      </div>
+    </a>
+    <a href="/persons" class="action-card">
+      <div class="action-svg-wrap">
+        <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      <div class="action-title">Manage Persons</div>
+      <div class="action-desc">View, manage and delete all registered persons in your database</div>
+      <div class="action-badge">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        View All
+      </div>
+    </a>
+  </div>
 
-    <!-- Arduino Code Section -->
-    <div class="card" id="arduinoCodeCard" style="margin-bottom:20px;">
-        <div class="card-header" style="cursor:pointer;" onclick="toggleArduinoCode()">
-            <span class="card-title">⚙️ Arduino Sketch</span>
-            <button id="arduinoToggleBtn" style="background:var(--primary); color:white; border:none; border-radius:8px; padding:5px 14px; font-size:13px; cursor:pointer;">▼ Show Code</button>
-        </div>
-        <div id="arduinoCodeBody" style="display:none; padding:16px;">
-            <p style="font-size:13px; color:var(--gray-500); margin-bottom:12px;">
-                Copy this sketch into Arduino IDE. Your <strong>User Token</strong> is already filled in below.
-            </p>
-            <div style="position:relative;">
-                <button onclick="copyArduinoCode()" style="position:absolute; top:10px; right:10px; background:var(--primary); color:white; border:none; border-radius:8px; padding:5px 12px; font-size:12px; cursor:pointer; z-index:1;">📋 Copy</button>
-                <pre id="arduinoCodePre" style="background:#0f0f1a; color:#e2e8f0; border-radius:10px; padding:20px 16px; font-size:12.5px; line-height:1.7; overflow-x:auto; white-space:pre; margin:0; font-family:'Courier New',monospace;"><code id="arduinoCodeContent">// Loading...</code></pre>
-            </div>
-        </div>
+  <!-- ESP32 Token Card -->
+  <div class="card" id="esp32TokenCard" style="margin-bottom:20px;">
+    <div class="card-header">
+      <span class="card-title" style="display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+        ESP32 Device Token
+      </span>
     </div>
+    <div class="card-body" style="padding:16px;">
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">Copy this token into your Arduino sketch so your ESP32 only receives commands from <strong>your</strong> account.</p>
+      <div class="token-display">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <span style="font-size:13px;color:var(--gray-500);white-space:nowrap;">Your Token (User ID):</span>
+        <span id="esp32Token" class="token-value">...</span>
+        <button onclick="copyToken()" style="margin-left:auto;background:var(--primary);color:white;border:none;border-radius:8px;padding:6px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+      </div>
+      <p style="font-size:12px;color:var(--gray-400);margin-top:10px;">In your Arduino sketch set: <code style="background:var(--gray-100);padding:2px 6px;border-radius:4px;">const int USER_TOKEN = <span id="esp32TokenInline">...</span>;</code></p>
+    </div>
+  </div>
 
-    <!-- Recent Persons -->
-    <div class="card">
-        <div class="card-header">
-            <span class="card-title">Recently Registered</span>
-            <a href="/persons" class="btn btn-secondary btn-sm">View All</a>
-        </div>
-        <div class="card-body" id="recentPersons">
-            <p class="text-muted text-center">No persons registered yet. <a href="/register-face" style="color:var(--primary)">Register your first person →</a></p>
-        </div>
+  <!-- Arduino Sketch -->
+  <div class="card" id="arduinoCodeCard" style="margin-bottom:20px;">
+    <div class="card-header" style="cursor:pointer;" onclick="toggleArduinoCode()">
+      <span class="card-title" style="display:flex;align-items:center;gap:8px;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+        Arduino Sketch
+      </span>
+      <button id="arduinoToggleBtn" style="background:var(--primary);color:white;border:none;border-radius:8px;padding:5px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:5px;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" id="toggleChevron"><polyline points="6 9 12 15 18 9"/></svg>
+        Show Code
+      </button>
     </div>
+    <div id="arduinoCodeBody" style="display:none;padding:16px;">
+      <p style="font-size:13px;color:var(--gray-500);margin-bottom:12px;">Copy this sketch into Arduino IDE. Your <strong>User Token</strong> is already filled in below.</p>
+      <div style="position:relative;">
+        <button onclick="copyArduinoCode()" style="position:absolute;top:10px;right:10px;background:var(--primary);color:white;border:none;border-radius:8px;padding:5px 12px;font-size:12px;cursor:pointer;z-index:1;display:flex;align-items:center;gap:5px;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy
+        </button>
+        <pre id="arduinoCodePre" style="background:#0f0f1a;color:#e2e8f0;border-radius:10px;padding:20px 16px;font-size:12.5px;line-height:1.7;overflow-x:auto;white-space:pre;margin:0;font-family:'Courier New',monospace;"><code id="arduinoCodeContent">// Loading...</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Persons -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" style="display:flex;align-items:center;gap:8px;">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Recently Registered
+      </span>
+      <a href="/persons" class="btn btn-secondary btn-sm">View All</a>
+    </div>
+    <div class="card-body" id="recentPersons">
+      <p class="text-muted text-center">No persons registered yet. <a href="/register-face" style="color:var(--primary)">Register your first person</a></p>
+    </div>
+  </div>
 </div>
 
 <script src="/js/auth.js"></script>
 <script src="/js/navbar.js"></script>
 <script>
 (async () => {
-    const user = await Auth.setupNav();
-    if (!user) return;
-    document.getElementById('welcomeName').textContent = user.name.split(' ')[0];
+  const user = await Auth.setupNav();
+  if (!user) return;
+  document.getElementById('welcomeName').textContent = user.name.split(' ')[0];
 
-    // Load ESP32 token
-    try {
-        const tr = await fetch('/api/esp32/token');
-        const td = await tr.json();
-        if (td.success) {
-            document.getElementById('esp32Token').textContent = td.token;
-            document.getElementById('esp32TokenInline').textContent = td.token;
-            // Populate Arduino sketch with real token
-            document.getElementById('arduinoCodeContent').textContent = buildArduinoSketch(td.token);
-        }
-    } catch(e) {}
+  try {
+    const tr = await fetch('/api/esp32/token');
+    const td = await tr.json();
+    if (td.success) {
+      document.getElementById('esp32Token').textContent = td.token;
+      document.getElementById('esp32TokenInline').textContent = td.token;
+      document.getElementById('arduinoCodeContent').textContent = buildArduinoSketch(td.token);
+    }
+  } catch(e) {}
 
-    // Load stats
-    const res = await fetch('/api/persons/list');
-    const data = await res.json();
-    if (!data.success) return;
+  const res = await fetch('/api/persons/list');
+  const data = await res.json();
+  if (!data.success) return;
 
-    const persons = data.persons;
-    document.getElementById('statPersons').textContent = persons.length;
-    document.getElementById('statSamples').textContent = persons.reduce((a, p) => a + (p.sample_count || 0), 0);
-    document.getElementById('statTrained').textContent = persons.filter(p => p.sample_count >= 3).length;
+  const persons = data.persons;
+  ['statPersons','statSamples','statTrained'].forEach(id => {
+    document.getElementById(id).classList.add('loaded');
+  });
+  document.getElementById('statPersons').textContent = persons.length;
+  document.getElementById('statSamples').textContent = persons.reduce((a,p)=>a+(p.sample_count||0),0);
+  document.getElementById('statTrained').textContent = persons.filter(p=>p.sample_count>=3).length;
 
-    const container = document.getElementById('recentPersons');
-    if (persons.length === 0) return;
+  const container = document.getElementById('recentPersons');
+  if (persons.length === 0) return;
 
-    container.innerHTML = persons.slice(0, 5).map(p => `
-        <div class="person-row">
-            <div class="person-avatar">${p.name.charAt(0).toUpperCase()}</div>
-            <div class="person-row-info">
-                <div class="person-row-name">${p.name}</div>
-                <div class="person-row-meta">Age: ${p.age || 'N/A'} · ${p.email || 'No email'} · ${p.mobile || 'No mobile'}</div>
-            </div>
-            <span class="badge ${p.sample_count >= 3 ? 'badge-success' : 'badge-warning'}">
-                ${p.sample_count} samples
-            </span>
-        </div>
-    `).join('');
+  container.innerHTML = persons.slice(0,5).map(p => `
+    <div class="person-row">
+      <div class="person-avatar">${p.name.charAt(0).toUpperCase()}</div>
+      <div class="person-row-info">
+        <div class="person-row-name">${p.name}</div>
+        <div class="person-row-meta">Age: ${p.age||'N/A'} · ${p.email||'No email'} · ${p.mobile||'No mobile'}</div>
+      </div>
+      <span class="badge ${p.sample_count>=3?'badge-success':'badge-warning'}">${p.sample_count} samples</span>
+    </div>`).join('');
 })();
 
 function copyToken() {
-    const token = document.getElementById('esp32Token').textContent;
-    navigator.clipboard.writeText(token).then(() => {
-        showAlert('Token copied to clipboard!', 'success');
-    });
+  const token = document.getElementById('esp32Token').textContent;
+  navigator.clipboard.writeText(token).then(() => showAlert('Token copied to clipboard!','success'));
 }
 
 function toggleArduinoCode() {
-    const body = document.getElementById('arduinoCodeBody');
-    const btn  = document.getElementById('arduinoToggleBtn');
-    const hidden = body.style.display === 'none';
-    body.style.display = hidden ? 'block' : 'none';
-    btn.textContent = hidden ? '▲ Hide Code' : '▼ Show Code';
+  const body = document.getElementById('arduinoCodeBody');
+  const hidden = body.style.display === 'none';
+  body.style.display = hidden ? 'block' : 'none';
+  document.getElementById('arduinoToggleBtn').innerHTML = hidden
+    ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg> Hide Code'
+    : '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg> Show Code';
 }
 
 function buildArduinoSketch(token) {
-    return `#include <Arduino.h>
+  return `#include <Arduino.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-// ════════════════════════════════════════════
-//  USER CONFIG  ← change WiFi credentials
-//  USER_TOKEN is your account ID (pre-filled)
-// ════════════════════════════════════════════
 const char* WIFI_SSID     = "YOUR_WIFI_SSID";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
-const int   USER_TOKEN    = ${token};   // ← Your User ID (auto-filled)
+const int   USER_TOKEN    = ${token};
 
-// ════════════════════════════════════════════
-//  Server  (no need to change)
-// ════════════════════════════════════════════
 const char* SERVER_BASE = "https://facerecognition.makelearners.com";
 const bool  SKIP_TLS    = true;
 
-// ════════════════════════════════════════════
-//  GPIO
-// ════════════════════════════════════════════
 const int PIN_GREEN  = 26;
 const int PIN_RED    = 27;
 const int PIN_BUZZER = 25;
 
-// ════════════════════════════════════════════
-//  Timing
-// ════════════════════════════════════════════
-const unsigned long POLL_MS   = 200;    // reduced: faster LED response
+const unsigned long POLL_MS   = 200;
 const unsigned long LED_ON_MS = 5000;
 const int BEEP_HZ    = 2000;
 const int BEEP_MS    = 200;
 const int BEEP_GAP   = 100;
 const int BEEP_COUNT = 3;
 
-// ════════════════════════════════════════════
-//  Derived URLs  (built at runtime from token)
-// ════════════════════════════════════════════
 String STATUS_URL;
 String CLEAR_URL;
 
-// ════════════════════════════════════════════
-//  LEDC shim  (Arduino core 2.x vs 3.x)
-// ════════════════════════════════════════════
 #if ESP_ARDUINO_VERSION_MAJOR >= 3
   void buzzerInit()     { ledcAttach(PIN_BUZZER, BEEP_HZ, 8); }
   void buzzerOn(int hz) { ledcWriteTone(PIN_BUZZER, hz); }
@@ -298,166 +428,61 @@ String CLEAR_URL;
   void buzzerOff()      { ledcWriteTone(BUZZ_CH, 0); }
 #endif
 
-// ════════════════════════════════════════════
-//  State
-// ════════════════════════════════════════════
 unsigned long lastPoll  = 0;
 unsigned long ledOffAt  = 0;
 bool          ledActive = false;
 String        lastCmd   = "";
 
-// ════════════════════════════════════════════
-//  Helpers
-// ════════════════════════════════════════════
-void allOff() {
-    digitalWrite(PIN_GREEN, LOW);
-    digitalWrite(PIN_RED,   LOW);
-    buzzerOff();
-    ledActive = false;
-    lastCmd   = "OFF";
-}
+void allOff() { digitalWrite(PIN_GREEN,LOW); digitalWrite(PIN_RED,LOW); buzzerOff(); ledActive=false; lastCmd="OFF"; }
 
-void doGreen(const String& personName, int confidence) {
-    Serial.printf("[ESP32] GREEN — Known: %s (%d%%)\\n", personName.c_str(), confidence);
-    allOff();
-    for (int i = 0; i < 2; i++) {
-        digitalWrite(PIN_GREEN, HIGH); delay(120);
-        digitalWrite(PIN_GREEN, LOW);  delay(80);
-    }
-    digitalWrite(PIN_GREEN, HIGH);
-    ledActive = true;
-    ledOffAt  = millis() + LED_ON_MS;
-    lastCmd   = "GREEN";
+void doGreen(const String& personName,int confidence) {
+  allOff();
+  for(int i=0;i<2;i++){digitalWrite(PIN_GREEN,HIGH);delay(120);digitalWrite(PIN_GREEN,LOW);delay(80);}
+  digitalWrite(PIN_GREEN,HIGH); ledActive=true; ledOffAt=millis()+LED_ON_MS; lastCmd="GREEN";
 }
 
 void doRedBuzz() {
-    Serial.println("[ESP32] RED_BUZZ — Unknown person");
-    allOff();
-    for (int i = 0; i < BEEP_COUNT; i++) {
-        digitalWrite(PIN_RED, HIGH);
-        buzzerOn(BEEP_HZ);
-        delay(BEEP_MS);
-        digitalWrite(PIN_RED, LOW);
-        buzzerOff();
-        delay(BEEP_GAP);
-    }
-    digitalWrite(PIN_RED, HIGH);
-    ledActive = true;
-    ledOffAt  = millis() + LED_ON_MS;
-    lastCmd   = "RED_BUZZ";
+  allOff();
+  for(int i=0;i<BEEP_COUNT;i++){digitalWrite(PIN_RED,HIGH);buzzerOn(BEEP_HZ);delay(BEEP_MS);digitalWrite(PIN_RED,LOW);buzzerOff();delay(BEEP_GAP);}
+  digitalWrite(PIN_RED,HIGH); ledActive=true; ledOffAt=millis()+LED_ON_MS; lastCmd="RED_BUZZ";
 }
 
-void clearServerCmd() {
-    WiFiClientSecure cl;
-    if (SKIP_TLS) cl.setInsecure();
-    HTTPClient h;
-    if (h.begin(cl, CLEAR_URL)) {
-        h.addHeader("Content-Type", "application/json");
-        h.POST("{}");
-        h.end();
-    }
-}
-
-// ════════════════════════════════════════════
-//  Setup
-// ════════════════════════════════════════════
 void setup() {
-    Serial.begin(115200);
-    delay(400);
-
-    STATUS_URL = String(SERVER_BASE) + "/api/esp32/status?token=" + String(USER_TOKEN);
-    CLEAR_URL  = String(SERVER_BASE) + "/api/esp32/clear?token="  + String(USER_TOKEN);
-
-    pinMode(PIN_GREEN,  OUTPUT);
-    pinMode(PIN_RED,    OUTPUT);
-    pinMode(PIN_BUZZER, OUTPUT);
-    allOff();
-    buzzerInit();
-
-    Serial.printf("\\n[ESP32] User Token : %d\\n", USER_TOKEN);
-    Serial.printf("[ESP32] Connecting to WiFi: %s\\n", WIFI_SSID);
-
-    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-    int n = 0;
-    while (WiFi.status() != WL_CONNECTED) {
-        digitalWrite(PIN_GREEN, n % 2 == 0);
-        digitalWrite(PIN_RED,   n % 2 != 0);
-        delay(400); n++;
-        Serial.print(".");
-    }
-    allOff();
-
-    Serial.printf("\\n[ESP32] WiFi OK  IP=%s\\n", WiFi.localIP().toString().c_str());
-    for (int i = 0; i < 2; i++) {
-        digitalWrite(PIN_GREEN, HIGH); delay(150);
-        digitalWrite(PIN_GREEN, LOW);  delay(100);
-    }
-    Serial.println("[ESP32] Ready — polling started");
+  Serial.begin(115200);
+  STATUS_URL=String(SERVER_BASE)+"/api/esp32/status?token="+String(USER_TOKEN);
+  CLEAR_URL=String(SERVER_BASE)+"/api/esp32/clear?token="+String(USER_TOKEN);
+  pinMode(PIN_GREEN,OUTPUT); pinMode(PIN_RED,OUTPUT); pinMode(PIN_BUZZER,OUTPUT);
+  allOff(); buzzerInit();
+  WiFi.begin(WIFI_SSID,WIFI_PASSWORD);
+  while(WiFi.status()!=WL_CONNECTED){delay(400);}
 }
 
-// ════════════════════════════════════════════
-//  Loop
-// ════════════════════════════════════════════
 void loop() {
-    if (ledActive && millis() >= ledOffAt) {
-        Serial.println("[ESP32] LED timeout -> OFF");
-        allOff();
+  if(ledActive&&millis()>=ledOffAt)allOff();
+  if(millis()-lastPoll<POLL_MS)return;
+  lastPoll=millis();
+  WiFiClientSecure client; if(SKIP_TLS)client.setInsecure(); client.setTimeout(4);
+  HTTPClient http;
+  if(!http.begin(client,STATUS_URL))return;
+  http.setTimeout(4000);
+  int code=http.GET();
+  if(code==HTTP_CODE_OK){
+    String body=http.getString();
+    StaticJsonDocument<256> doc;
+    if(!deserializeJson(doc,body)){
+      String cmd=doc["command"]|"OFF"; String personName=doc["personName"]|""; int confidence=doc["confidence"]|0;
+      if(cmd!="OFF"&&(cmd!=lastCmd||!ledActive)){
+        if(cmd=="GREEN"){doGreen(personName,confidence);} else if(cmd=="RED_BUZZ"){doRedBuzz();}
+      }
     }
-
-    if (millis() - lastPoll < POLL_MS) return;
-    lastPoll = millis();
-
-    if (WiFi.status() != WL_CONNECTED) {
-        Serial.println("[ESP32] WiFi lost - reconnecting...");
-        WiFi.reconnect();
-        delay(1000);
-        return;
-    }
-
-    WiFiClientSecure client;
-    if (SKIP_TLS) client.setInsecure();
-    client.setTimeout(4);
-
-    HTTPClient http;
-    if (!http.begin(client, STATUS_URL)) {
-        Serial.println("[ESP32] http.begin() failed");
-        return;
-    }
-    http.setTimeout(4000);
-
-    int code = http.GET();
-    if (code == HTTP_CODE_OK) {
-        String body = http.getString();
-        Serial.println("[ESP32] << " + body);
-
-        StaticJsonDocument<256> doc;
-        if (!deserializeJson(doc, body)) {
-            String cmd        = doc["command"]    | "OFF";
-            String personName = doc["personName"] | "";
-            int    confidence = doc["confidence"] | 0;
-
-            if (cmd != "OFF" && (cmd != lastCmd || !ledActive)) {
-                if (cmd == "GREEN") {
-                    doGreen(personName, confidence);
-                    clearServerCmd();
-                } else if (cmd == "RED_BUZZ") {
-                    doRedBuzz();
-                    clearServerCmd();
-                }
-            }
-        }
-    } else {
-        Serial.printf("[ESP32] HTTP error: %d\\n", code);
-    }
-    http.end();
+  }
+  http.end();
 }`;
 }
 
 function copyArduinoCode() {
-    const code = document.getElementById('arduinoCodeContent').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-        showAlert('Arduino sketch copied to clipboard!', 'success');
-    });
+  const code = document.getElementById('arduinoCodeContent').textContent;
+  navigator.clipboard.writeText(code).then(() => showAlert('Arduino sketch copied!','success'));
 }
 </script>
 </body>
