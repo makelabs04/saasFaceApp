@@ -8,7 +8,6 @@
 <script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
 .recog-layout { display: grid; grid-template-columns: 1fr 360px; gap: 24px; align-items: start; }
-
 .model-status {
     background: var(--primary-light); border: 1px solid #bae6fd;
     border-radius: 12px; padding: 14px 16px;
@@ -16,62 +15,45 @@
     margin-bottom: 16px;
     font-size: 14px; font-weight: 600; color: var(--primary);
 }
-
 .recog-results { margin-top: 0; }
-
-.no-results {
-    text-align: center; padding: 40px 20px;
-    color: var(--gray-400);
-}
-.no-results .icon { font-size: 48px; margin-bottom: 12px; }
-
+.no-results { text-align: center; padding: 40px 20px; color: var(--gray-400); }
+.no-results-icon { margin-bottom: 12px; display: flex; justify-content: center; }
 .detected-list { display: flex; flex-direction: column; gap: 12px; }
-
 .detected-card {
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    padding: 16px;
-    box-shadow: var(--shadow-sm);
-    animation: slideIn 0.3s ease;
+    background: var(--white); border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg); padding: 16px;
+    box-shadow: var(--shadow-sm); animation: slideIn 0.3s ease;
     border-left: 4px solid var(--primary);
 }
-
 .detected-card.unknown { border-left-color: var(--warning); }
-
 .dc-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
 .dc-avatar {
     width: 48px; height: 48px;
     background: linear-gradient(135deg, var(--primary), #0078ba);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
     font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 800;
     color: white; flex-shrink: 0;
 }
 .dc-avatar.unknown { background: linear-gradient(135deg, #f59e0b, #d97706); }
 .dc-name { font-family: 'Outfit', sans-serif; font-size: 18px; font-weight: 700; }
 .dc-conf { font-size: 12px; color: var(--gray-500); margin-top: 2px; }
-
 .dc-details { display: grid; gap: 6px; }
 .dc-detail {
     display: flex; align-items: center; gap: 8px;
     font-size: 13px; padding: 6px 10px;
     background: var(--gray-50); border-radius: 8px;
 }
-.dc-detail-icon { font-size: 14px; }
+.dc-detail-icon { display: flex; align-items: center; flex-shrink: 0; }
 .dc-detail-label { color: var(--gray-500); width: 60px; flex-shrink: 0; }
 .dc-detail-value { font-weight: 600; color: var(--gray-700); }
-
 .camera-controls { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
-
 .upload-recog-area {
     border: 2px dashed var(--gray-300); border-radius: var(--radius-lg);
     padding: 30px; text-align: center; cursor: pointer; transition: all 0.2s;
 }
 .upload-recog-area:hover { border-color: var(--primary); background: var(--primary-light); }
-
+.upload-area-icon { display: flex; justify-content: center; margin-bottom: 12px; }
 .recog-uploaded-img { max-width: 100%; border-radius: var(--radius-lg); margin-top: 12px; }
-
 .stats-bar {
     display: flex; gap: 12px; margin-bottom: 16px;
     background: var(--gray-50); border-radius: 12px; padding: 12px 16px;
@@ -79,7 +61,7 @@
 .stat-item { text-align: center; flex: 1; }
 .stat-item .val { font-family: 'Outfit', sans-serif; font-size: 22px; font-weight: 800; color: var(--primary); }
 .stat-item .lbl { font-size: 11px; color: var(--gray-500); font-weight: 600; }
-
+.cam-placeholder { width:100%;aspect-ratio:4/3;background:#0f0f23;display:flex;align-items:center;justify-content:center;border-radius:var(--radius-lg); }
 @media (max-width: 900px) { .recog-layout { grid-template-columns: 1fr; } }
 </style>
 </head>
@@ -87,7 +69,10 @@
 <div id="mainNav"></div>
 <div class="page-container">
     <div class="page-header">
-        <h1 class="page-title">🔍 Face Recognition</h1>
+        <h1 class="page-title" style="display:flex;align-items:center;gap:10px;">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            Face Recognition
+        </h1>
         <p class="page-subtitle">Detect and identify registered faces in real-time or from images</p>
     </div>
 
@@ -102,32 +87,52 @@
         <!-- Left: Camera/Upload -->
         <div>
             <div class="tabs">
-                <button class="tab-btn active" onclick="switchTab('camera')" id="tabCam">📷 Live Camera</button>
-                <button class="tab-btn" onclick="switchTab('upload')" id="tabUpload">📁 Upload Image</button>
+                <button class="tab-btn active" onclick="switchTab('camera')" id="tabCam" style="display:inline-flex;align-items:center;gap:6px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Live Camera
+                </button>
+                <button class="tab-btn" onclick="switchTab('upload')" id="tabUpload" style="display:inline-flex;align-items:center;gap:6px;">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Upload Image
+                </button>
             </div>
 
             <!-- Camera -->
             <div id="camSection">
                 <div class="camera-container" id="camBox" style="max-width:100%; aspect-ratio:4/3; background:#0f0f23; display:flex; align-items:center; justify-content:center;">
-                    <p style="color:#555; text-align:center; font-size:18px;">📷<br><small>Start camera to begin</small></p>
+                    <div style="color:#555; text-align:center; display:flex;flex-direction:column;align-items:center;gap:10px;">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                        <small style="font-size:13px;">Start camera to begin</small>
+                    </div>
                     <video id="recogVideo" class="camera-video" style="display:none;" autoplay muted playsinline></video>
                     <canvas id="recogCanvas" class="camera-canvas"></canvas>
                     <div class="camera-overlay">
-                        <span class="camera-badge live" id="liveBadge" style="display:none;">🔴 LIVE</span>
+                        <span class="camera-badge live" id="liveBadge" style="display:none;">
+                            <svg width="9" height="9" viewBox="0 0 10 10" fill="#ef4444" style="border-radius:50%;display:inline-block;animation:pulse 1s ease-in-out infinite;"><circle cx="5" cy="5" r="5"/></svg>
+                            LIVE
+                        </span>
                         <span class="camera-badge" id="fpsBadge" style="display:none;">0 FPS</span>
                     </div>
                 </div>
 
                 <div class="camera-controls">
-                    <button class="btn btn-primary flex-1" onclick="startRecogCamera()" id="startBtn">▶ Start Camera</button>
-                    <button class="btn btn-danger flex-1" onclick="stopCamera()" id="stopBtn" disabled>⏹ Stop</button>
+                    <button class="btn btn-primary flex-1" onclick="startRecogCamera()" id="startBtn" style="display:inline-flex;align-items:center;justify-content:center;gap:7px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        Start Camera
+                    </button>
+                    <button class="btn btn-danger flex-1" onclick="stopCamera()" id="stopBtn" disabled style="display:inline-flex;align-items:center;justify-content:center;gap:7px;">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                        Stop
+                    </button>
                 </div>
             </div>
 
             <!-- Upload -->
             <div id="uploadSection" style="display:none;">
                 <div class="upload-recog-area" onclick="document.getElementById('recogImgInput').click()">
-                    <div style="font-size:40px; margin-bottom:12px;">🖼️</div>
+                    <div class="upload-area-icon">
+                        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    </div>
                     <p style="font-weight:600;">Click to upload an image for recognition</p>
                     <p style="font-size:13px; color:var(--gray-400); margin-top:6px;">JPG, PNG, WEBP</p>
                     <input type="file" id="recogImgInput" accept="image/*" style="display:none;" onchange="recognizeFromImage(this)">
@@ -142,39 +147,35 @@
         <div>
             <div class="card">
                 <div class="card-header">
-                    <span class="card-title">👁️ Detected Persons</span>
+                    <span class="card-title" style="display:flex;align-items:center;gap:7px;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00adee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                        Detected Persons
+                    </span>
                     <button class="btn btn-secondary btn-sm" onclick="clearResults()">Clear</button>
                 </div>
                 <div class="card-body" style="padding:16px;">
                     <div class="stats-bar">
                         <div class="stat-item">
                             <div class="val" id="totalDetected">0</div>
-                            <div class="lbl">DETECTED</div>
+                            <div class="lbl">Detected</div>
                         </div>
                         <div class="stat-item">
-                            <div class="val" id="totalKnown">0</div>
-                            <div class="lbl">KNOWN</div>
+                            <div class="val" id="totalKnown" style="color:#22c55e;">0</div>
+                            <div class="lbl">Known</div>
                         </div>
                         <div class="stat-item">
-                            <div class="val" id="totalUnknown">0</div>
-                            <div class="lbl">UNKNOWN</div>
+                            <div class="val" id="totalUnknown" style="color:#f59e0b;">0</div>
+                            <div class="lbl">Unknown</div>
                         </div>
                     </div>
                     <div id="recogResults">
                         <div class="no-results">
-                            <div class="icon">👁️</div>
-                            <p>Start camera or upload an image to detect faces</p>
+                            <div class="no-results-icon">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                            </div>
+                            <p>Start camera or upload an image</p>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- DB Info -->
-            <div class="card" style="margin-top:16px;">
-                <div class="card-header"><span class="card-title">📊 Database</span></div>
-                <div class="card-body" style="padding:16px;">
-                    <div id="dbInfo" style="font-size:14px; color:var(--gray-500);">Loading...</div>
-                    <button class="btn btn-secondary w-full btn-sm" style="margin-top:12px;" onclick="reloadDescriptors()">🔄 Refresh Database</button>
                 </div>
             </div>
         </div>
@@ -185,155 +186,111 @@
 <script src="/js/navbar.js"></script>
 <script src="/js/esp32-notify.js"></script>
 <script>
-const MODEL_URL = 'https://justadudewhohacks.github.io/face-api.js/models';
-let labeledDescriptors = [];
 let faceMatcher = null;
-let stream = null;
-let detectionLoop = null;
-let personMap = {}; // name -> details
+let personMap = {};
+let cameraStream = null;
+let recognitionInterval = null;
 let frameCount = 0, lastFpsTime = Date.now();
-let currentResults = {};
 
 async function loadModels() {
     try {
-        await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-        await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--success)">✅</span> <span style="color:var(--success); font-weight:700;">AI Models ready!</span>';
-        setTimeout(() => document.getElementById('modelStatus').style.display = 'none', 2000);
-        await loadDescriptors();
+        const MODEL_URL = '/models';
+        await Promise.all([
+            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL),
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL)
+        ]);
+        document.getElementById('modelStatus').innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>
+            <span style="color:#166534;">AI Models loaded successfully!</span>`;
+        await loadFaceData();
     } catch(e) {
-        document.getElementById('modelStatus').innerHTML = '<span style="color:var(--danger);">❌ Failed to load AI models.</span>';
+        document.getElementById('modelStatus').innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span style="color:#991b1b;">Failed to load models. Please refresh.</span>`;
     }
 }
 
-async function loadDescriptors() {
-    const res = await fetch('/api/persons/descriptors');
+async function loadFaceData() {
+    const res = await fetch('/api/persons/face-data');
     const data = await res.json();
-    if (!data.success || data.data.length === 0) {
-        document.getElementById('dbInfo').innerHTML = '<span style="color:var(--warning);">⚠️ No trained faces found. <a href="/register-face" style="color:var(--primary)">Register faces first →</a></span>';
-        return;
+    if (!data.success || !data.persons?.length) return;
+    const labeled = [];
+    for (const p of data.persons) {
+        personMap[p.name] = p;
+        if (!p.descriptors?.length) continue;
+        const descs = p.descriptors.map(d => new Float32Array(Object.values(d)));
+        labeled.push(new faceapi.LabeledFaceDescriptors(p.name, descs));
     }
-
-    labeledDescriptors = [];
-    personMap = {};
-
-    for (const person of data.data) {
-        if (!person.descriptors || person.descriptors.length === 0) continue;
-        personMap[person.name] = person;
-        const descriptors = person.descriptors.map(d => new Float32Array(d));
-        labeledDescriptors.push(new faceapi.LabeledFaceDescriptors(person.name, descriptors));
-    }
-
-    if (labeledDescriptors.length > 0) {
-        faceMatcher = new faceapi.FaceMatcher(labeledDescriptors, 0.55);
-    }
-
-    document.getElementById('dbInfo').innerHTML = `
-        <div style="display:flex; flex-direction:column; gap:6px;">
-            <div>👥 <strong>${data.data.length}</strong> persons in database</div>
-            <div>📸 <strong>${data.data.reduce((a,p) => a + p.descriptors.length, 0)}</strong> total face samples</div>
-            <div style="color:var(--success);">✅ Recognition ready</div>
-        </div>`;
+    if (labeled.length > 0) faceMatcher = new faceapi.FaceMatcher(labeled, 0.5);
 }
-
-async function reloadDescriptors() { await loadDescriptors(); }
 
 async function startRecogCamera() {
-    if (!faceMatcher) return showAlert('No trained faces in database. Please register faces first.', 'warning');
     try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480, facingMode: 'user' } });
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode:'user', width:640, height:480 } });
         const video = document.getElementById('recogVideo');
-        video.srcObject = stream;
+        video.srcObject = cameraStream;
         video.style.display = 'block';
-        document.querySelector('#camBox p')?.remove();
-        document.getElementById('liveBadge').style.display = '';
-        document.getElementById('fpsBadge').style.display = '';
+        document.querySelector('#camBox div:first-child')?.remove?.();
+        document.getElementById('liveBadge').style.display = 'inline-flex';
+        document.getElementById('fpsBadge').style.display = 'inline-flex';
         document.getElementById('startBtn').disabled = true;
         document.getElementById('stopBtn').disabled = false;
-        startRecognitionLoop();
-    } catch(e) {
-        showAlert('Camera access denied.', 'danger');
-    }
+        video.onloadedmetadata = () => startRecognitionLoop(video);
+    } catch(e) { showAlert('Camera access denied or unavailable.','danger'); }
 }
 
 function stopCamera() {
-    if (stream) stream.getTracks().forEach(t => t.stop());
-    if (detectionLoop) clearInterval(detectionLoop);
-    stream = null;
-    detectionLoop = null;
+    if (cameraStream) { cameraStream.getTracks().forEach(t => t.stop()); cameraStream = null; }
+    if (recognitionInterval) { clearInterval(recognitionInterval); recognitionInterval = null; }
     document.getElementById('recogVideo').style.display = 'none';
-    const canvas = document.getElementById('recogCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
     document.getElementById('liveBadge').style.display = 'none';
     document.getElementById('fpsBadge').style.display = 'none';
-    // Cancel any pending ESP32 commands and clear the server slot
-    if (typeof stopESP32Notify === 'function') stopESP32Notify();
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = true;
+    const ctx = document.getElementById('recogCanvas').getContext('2d');
+    ctx.clearRect(0, 0, 9999, 9999);
 }
 
-function startRecognitionLoop() {
-    const video = document.getElementById('recogVideo');
+function startRecognitionLoop(video) {
     const canvas = document.getElementById('recogCanvas');
-
-    detectionLoop = setInterval(async () => {
-        if (video.readyState < 2) return;
+    recognitionInterval = setInterval(async () => {
+        if (!faceMatcher) return;
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
-
         try {
             const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 }))
                 .withFaceLandmarks().withFaceDescriptors();
-
             const dims = faceapi.matchDimensions(canvas, video, true);
             const resized = faceapi.resizeResults(detections, dims);
             const ctx = canvas.getContext('2d');
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-
             const recognized = {};
-
             for (const det of resized) {
                 const match = faceMatcher.findBestMatch(det.descriptor);
                 const isKnown = match.label !== 'unknown';
                 const name = isKnown ? match.label : 'Unknown';
                 const confidence = Math.round((1 - match.distance) * 100);
-
                 const box = det.detection.box;
                 const color = isKnown ? '#00adee' : '#f59e0b';
-
-                // Draw box
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = color; ctx.lineWidth = 2.5;
                 ctx.strokeRect(box.x, box.y, box.width, box.height);
-
-                // Draw label background
                 const label = `${name} ${isKnown ? confidence + '%' : ''}`;
                 ctx.font = 'bold 15px Outfit, sans-serif';
                 const tw = ctx.measureText(label).width;
                 ctx.fillStyle = color;
                 ctx.fillRect(box.x - 1, box.y - 28, tw + 16, 26);
-
-                // Draw label text
                 ctx.fillStyle = 'white';
                 ctx.fillText(label, box.x + 7, box.y - 9);
-
-                if (isKnown && confidence > 40) {
-                    recognized[name] = { confidence, person: personMap[match.label] };
-                } else if (!isKnown) {
-                    recognized['Unknown_' + Math.random()] = { confidence: 0, isUnknown: true };
-                }
+                if (isKnown && confidence > 40) recognized[name] = { confidence, person: personMap[match.label] };
+                else if (!isKnown) recognized['Unknown_' + Math.random()] = { confidence: 0, isUnknown: true };
             }
-
-            // FPS
             frameCount++;
             const now = Date.now();
             if (now - lastFpsTime > 1000) {
                 document.getElementById('fpsBadge').textContent = frameCount + ' FPS';
                 frameCount = 0; lastFpsTime = now;
             }
-
             updateResultsPanel(Object.values(recognized), detections.length);
         } catch(e) {}
     }, 200);
@@ -342,68 +299,29 @@ function startRecognitionLoop() {
 function updateResultsPanel(recognized, totalCount) {
     const known = recognized.filter(r => !r.isUnknown);
     const unknown = recognized.filter(r => r.isUnknown);
-
-    // FIXED: Only call notifyESP32 based on actual totalCount (faces in frame).
-    // Previously, 'none' fired every frame when confidence was low — cancelling
-    // the pending GREEN debounce before it could send. Now 'none' only fires
-    // when there are truly zero faces detected by the camera.
-    if (known.length > 0) {
-        const top = known[0];
-        notifyESP32('known', top.person.name, top.confidence);
-    }
-    else if (unknown.length > 0) {
-        notifyESP32('unknown');
-    }
-    else if (totalCount === 0) {
-        // Only send 'none' when camera sees zero faces — not just low confidence
-        notifyESP32('none');
-    }
-    // If totalCount > 0 but no known/unknown passed threshold, do nothing.
-    // The priority guard in esp32-notify.js will protect the last sent command.
+    if (known.length > 0) { const top = known[0]; notifyESP32('known', top.person.name, top.confidence); }
+    else if (unknown.length > 0) notifyESP32('unknown');
+    else if (totalCount === 0) notifyESP32('none');
     document.getElementById('totalDetected').textContent = totalCount;
     document.getElementById('totalKnown').textContent = known.length;
     document.getElementById('totalUnknown').textContent = unknown.length;
-
     if (totalCount === 0) {
-        document.getElementById('recogResults').innerHTML = '<div class="no-results"><div class="icon">👁️</div><p>No faces detected in frame</p></div>';
+        document.getElementById('recogResults').innerHTML = `<div class="no-results"><div class="no-results-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><p>No faces detected in frame</p></div>`;
         return;
     }
-
     let html = '<div class="detected-list">';
-
     for (const r of known) {
         const p = r.person || {};
         const initial = (p.name || '?').charAt(0).toUpperCase();
-        html += `
-        <div class="detected-card">
-            <div class="dc-header">
-                <div class="dc-avatar">${initial}</div>
-                <div>
-                    <div class="dc-name">${p.name || 'Unknown'}</div>
-                    <div class="dc-conf">Confidence: ${r.confidence}%</div>
-                </div>
-            </div>
-            <div class="dc-details">
-                ${p.age ? `<div class="dc-detail"><span class="dc-detail-icon">🎂</span><span class="dc-detail-label">Age</span><span class="dc-detail-value">${p.age} years</span></div>` : ''}
-                ${p.email ? `<div class="dc-detail"><span class="dc-detail-icon">📧</span><span class="dc-detail-label">Email</span><span class="dc-detail-value">${p.email}</span></div>` : ''}
-                ${p.mobile ? `<div class="dc-detail"><span class="dc-detail-icon">📱</span><span class="dc-detail-label">Mobile</span><span class="dc-detail-value">${p.mobile}</span></div>` : ''}
-            </div>
-        </div>`;
+        html += `<div class="detected-card"><div class="dc-header"><div class="dc-avatar">${initial}</div><div><div class="dc-name">${p.name || 'Unknown'}</div><div class="dc-conf">Confidence: ${r.confidence}%</div></div></div><div class="dc-details">
+        ${p.age ? `<div class="dc-detail"><span class="dc-detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span><span class="dc-detail-label">Age</span><span class="dc-detail-value">${p.age} years</span></div>` : ''}
+        ${p.email ? `<div class="dc-detail"><span class="dc-detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span><span class="dc-detail-label">Email</span><span class="dc-detail-value">${p.email}</span></div>` : ''}
+        ${p.mobile ? `<div class="dc-detail"><span class="dc-detail-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span><span class="dc-detail-label">Mobile</span><span class="dc-detail-value">${p.mobile}</span></div>` : ''}
+        </div></div>`;
     }
-
     for (const r of unknown) {
-        html += `
-        <div class="detected-card unknown">
-            <div class="dc-header">
-                <div class="dc-avatar unknown">?</div>
-                <div>
-                    <div class="dc-name">Unknown Person</div>
-                    <div class="dc-conf">Face detected but not recognized</div>
-                </div>
-            </div>
-        </div>`;
+        html += `<div class="detected-card unknown"><div class="dc-header"><div class="dc-avatar unknown">?</div><div><div class="dc-name">Unknown Person</div><div class="dc-conf">Face detected but not recognized</div></div></div></div>`;
     }
-
     html += '</div>';
     document.getElementById('recogResults').innerHTML = html;
 }
@@ -412,35 +330,25 @@ async function recognizeFromImage(input) {
     if (!faceMatcher) return showAlert('No trained faces. Register faces first.', 'warning');
     const file = input.files[0];
     if (!file) return;
-
     const img = await faceapi.bufferToImage(file);
     const canvas = document.getElementById('uploadCanvas');
     canvas.style.display = 'block';
-
-    const detections = await faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 }))
-        .withFaceLandmarks().withFaceDescriptors();
-
+    const detections = await faceapi.detectAllFaces(img, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.45 })).withFaceLandmarks().withFaceDescriptors();
     faceapi.matchDimensions(canvas, img);
     const resized = faceapi.resizeResults(detections, img);
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
     const recognized = [];
     let unknownCount = 0;
-
     for (const det of resized) {
         const match = faceMatcher.findBestMatch(det.descriptor);
         const isKnown = match.label !== 'unknown';
         const name = isKnown ? match.label : 'Unknown';
         const confidence = Math.round((1 - match.distance) * 100);
-
         const box = det.detection.box;
         const color = isKnown ? '#00adee' : '#f59e0b';
-
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 3;
+        ctx.strokeStyle = color; ctx.lineWidth = 3;
         ctx.strokeRect(box.x, box.y, box.width, box.height);
-
         const label = `${name} ${isKnown ? confidence + '%' : ''}`;
         ctx.font = 'bold 16px sans-serif';
         const tw = ctx.measureText(label).width;
@@ -448,14 +356,9 @@ async function recognizeFromImage(input) {
         ctx.fillRect(box.x - 1, box.y - 30, tw + 16, 28);
         ctx.fillStyle = 'white';
         ctx.fillText(label, box.x + 7, box.y - 8);
-
-        if (isKnown && confidence > 40) {
-            recognized.push({ confidence, person: personMap[match.label] });
-        } else {
-            unknownCount++;
-        }
+        if (isKnown && confidence > 40) recognized.push({ confidence, person: personMap[match.label] });
+        else unknownCount++;
     }
-
     updateResultsPanel(recognized.concat(Array(unknownCount).fill({ isUnknown: true })), detections.length);
 }
 
@@ -469,7 +372,7 @@ function switchTab(tab) {
 }
 
 function clearResults() {
-    document.getElementById('recogResults').innerHTML = '<div class="no-results"><div class="icon">👁️</div><p>Start camera or upload an image</p></div>';
+    document.getElementById('recogResults').innerHTML = `<div class="no-results"><div class="no-results-icon"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></div><p>Start camera or upload an image</p></div>`;
     document.getElementById('totalDetected').textContent = '0';
     document.getElementById('totalKnown').textContent = '0';
     document.getElementById('totalUnknown').textContent = '0';
