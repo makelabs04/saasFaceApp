@@ -5,238 +5,377 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Persons — FaceID SaaS</title>
 <link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-.persons-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+  :root {
+    --primary:#00adee;--primary-dark:#0078ba;--primary-light:#e0f5fd;
+    --white:#fff;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;
+    --gray-700:#374151;--gray-800:#1f2937;
+    --success:#22c55e;--warning:#f59e0b;--danger:#ef4444;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+    --radius:12px;--radius-lg:20px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Outfit',sans-serif;background:var(--gray-50);color:var(--gray-700);min-height:100vh;}
 
-.person-card {
-    background: var(--white);
-    border: 1px solid var(--gray-200);
-    border-radius: var(--radius-lg);
-    overflow: hidden;
-    box-shadow: var(--shadow-sm);
-    transition: all 0.25s;
-}
-.person-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-
-.person-card-top {
-    background: linear-gradient(135deg, var(--primary-light) 0%, #f0fdf4 100%);
-    padding: 28px 20px 20px;
-    text-align: center;
+  /* PAGE HEADER */
+  .page-hero {
+    background: linear-gradient(135deg,#00c6fb 0%,#005bea 100%);
+    padding: 36px 0 0;
     position: relative;
-}
+    overflow: hidden;
+  }
+  .page-hero-inner { max-width:1200px;margin:0 auto;padding:0 28px;position:relative;z-index:2;}
+  .page-hero-bg { position:absolute;inset:0;pointer-events:none; }
+  .ph-title {
+    font-size:28px;font-weight:800;color:#fff;display:flex;align-items:center;gap:12px;margin-bottom:4px;
+  }
+  .ph-sub { font-size:14px;color:rgba(255,255,255,.76);margin-bottom:24px; }
+  .ph-icon-wrap {
+    width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.18);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  }
+  .hero-wave { display:block;width:100%;height:40px; }
 
-.pc-avatar {
-    width: 72px; height: 72px;
-    background: linear-gradient(135deg, var(--primary), #0078ba);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Outfit', sans-serif; font-size: 30px; font-weight: 800;
-    color: white; margin: 0 auto 12px;
-    border: 3px solid white;
-    box-shadow: var(--shadow-md);
-}
+  /* TOOLBAR */
+  .toolbar-wrap { max-width:1200px;margin:0 auto;padding:0 28px; }
+  .toolbar {
+    display:flex;align-items:center;justify-content:space-between;
+    margin:28px 0 24px;flex-wrap:wrap;gap:14px;
+  }
+  .search-wrap { position:relative;max-width:320px;width:100%; }
+  .search-wrap input {
+    width:100%;padding:10px 14px 10px 42px;border:1.5px solid var(--gray-200);
+    border-radius:var(--radius);font-size:14px;font-family:'Outfit',sans-serif;
+    background:var(--white);color:var(--gray-800);outline:none;
+    transition:border-color .2s,box-shadow .2s;
+  }
+  .search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,173,238,.12);}
+  .search-icon-svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);width:17px;height:17px;color:var(--gray-400);}
+  .toolbar-right{display:flex;align-items:center;gap:12px;}
+  .count-badge {
+    display:inline-flex;align-items:center;gap:7px;padding:7px 14px;
+    background:var(--primary-light);border-radius:20px;font-size:13px;font-weight:700;color:var(--primary);
+  }
+  .btn-add {
+    display:inline-flex;align-items:center;gap:8px;padding:10px 20px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;
+    border:none;border-radius:var(--radius);font-size:14px;font-weight:700;
+    font-family:'Outfit',sans-serif;cursor:pointer;text-decoration:none;
+    box-shadow:0 4px 14px rgba(0,120,186,.28);transition:all .2s;
+  }
+  .btn-add:hover{transform:translateY(-1px);opacity:.92;}
 
-.pc-name { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--gray-800); }
-.pc-label { font-size: 12px; color: var(--gray-500); margin-top: 4px; font-family: monospace; }
+  /* GRID */
+  .persons-grid { display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:20px; }
 
-.person-card-body { padding: 16px 20px; }
+  /* PERSON CARD */
+  .person-card {
+    background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);
+    overflow:hidden;box-shadow:var(--shadow-sm);transition:all .25s;
+    animation:cardIn .5s ease both;
+  }
+  @keyframes cardIn{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+  .person-card:hover{box-shadow:var(--shadow-md);transform:translateY(-3px);}
 
-.pc-detail { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--gray-100); font-size: 14px; }
-.pc-detail:last-of-type { border-bottom: none; }
-.pc-detail-icon { font-size: 16px; width: 22px; text-align: center; flex-shrink: 0; }
-.pc-detail-value { color: var(--gray-700); }
-.pc-detail-value.muted { color: var(--gray-400); }
+  .person-card-top {
+    background:linear-gradient(135deg,var(--primary-light) 0%,#f0f9ff 100%);
+    padding:28px 20px 20px;text-align:center;position:relative;overflow:hidden;
+  }
+  .card-bg-svg{position:absolute;inset:0;width:100%;height:100%;opacity:.06;pointer-events:none;}
 
-.person-card-footer {
-    padding: 12px 20px;
-    border-top: 1px solid var(--gray-100);
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--gray-50);
-}
+  .pc-avatar {
+    width:76px;height:76px;border-radius:50%;
+    background:linear-gradient(135deg,var(--primary),#0078ba);
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px;font-weight:800;color:#fff;
+    margin:0 auto 12px;border:3px solid #fff;box-shadow:var(--shadow-md);
+    position:relative;z-index:1;
+  }
+  .pc-avatar-ring {
+    position:absolute;inset:-6px;border-radius:50%;
+    border:2px dashed rgba(0,173,238,.3);animation:spinRing 12s linear infinite;
+  }
+  @keyframes spinRing{to{transform:rotate(360deg);}}
+  .pc-name{font-size:19px;font-weight:800;color:var(--gray-800);position:relative;z-index:1;}
+  .pc-label{font-size:11px;color:var(--gray-500);margin-top:4px;font-weight:600;letter-spacing:.4px;position:relative;z-index:1;}
 
-.empty-state { text-align: center; padding: 80px 20px; }
-.empty-icon { font-size: 72px; margin-bottom: 16px; }
+  .person-card-body{padding:16px 20px;}
+  .pc-detail{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--gray-100);font-size:14px;}
+  .pc-detail:last-of-type{border-bottom:none;}
+  .pc-detail-icon{width:30px;height:30px;border-radius:8px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .pc-detail-icon svg{width:15px;height:15px;color:var(--primary);}
+  .pc-detail-value{color:var(--gray-700);font-weight:500;}
+  .pc-detail-value.muted{color:var(--gray-400);}
 
-.search-bar { position: relative; max-width: 320px; }
-.search-bar input { padding-left: 40px; }
-.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--gray-400); }
+  .person-card-footer{
+    padding:12px 20px;border-top:1px solid var(--gray-100);
+    display:flex;align-items:center;justify-content:space-between;background:var(--gray-50);
+  }
+  .badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+  .badge svg{width:11px;height:11px;}
+  .badge-success{background:#f0fdf4;color:var(--success);}
+  .badge-warning{background:#fffbeb;color:var(--warning);}
+  .badge-danger{background:#fef2f2;color:var(--danger);}
+  .badge-primary{background:var(--primary-light);color:var(--primary);}
 
-.toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+  .foot-btns{display:flex;gap:8px;}
+  .btn-sm{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:9px;font-size:13px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;border:none;text-decoration:none;transition:all .2s;}
+  .btn-sec-sm{background:var(--gray-100);color:var(--gray-700);}
+  .btn-sec-sm:hover{background:var(--gray-200);}
+  .btn-del{background:#fef2f2;color:var(--danger);}
+  .btn-del:hover{background:#fee2e2;}
+  .btn-sm svg{width:14px;height:14px;}
 
-/* Delete confirm modal */
-#deleteModal .modal { max-width: 420px; }
+  /* EMPTY */
+  .empty-state{text-align:center;padding:80px 20px;}
+  .empty-svg-wrap{width:110px;height:110px;margin:0 auto 20px;opacity:.18;}
+  .empty-title{font-size:22px;font-weight:800;color:var(--gray-700);margin-bottom:8px;}
+  .empty-sub{color:var(--gray-400);font-size:14px;margin-bottom:28px;}
+
+  /* ALERT */
+  #alertBox .alert{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+  .alert-danger{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+
+  /* MODAL */
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;
+    z-index:1000;backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .2s;
+  }
+  .modal-overlay.open{opacity:1;pointer-events:all;}
+  .modal{background:#fff;border-radius:24px;width:90%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.18);transform:scale(.9);transition:transform .2s;padding:32px;}
+  .modal-overlay.open .modal{transform:scale(1);}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .modal-head-title{font-size:20px;font-weight:800;color:var(--gray-800);display:flex;align-items:center;gap:8px;}
+  .modal-close-btn{width:32px;height:32px;border:none;background:var(--gray-100);border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--gray-500);transition:all .2s;}
+  .modal-close-btn:hover{background:var(--gray-200);}
+  .modal-close-btn svg{width:16px;height:16px;}
+  .modal-body p{font-size:14px;color:var(--gray-600);line-height:1.6;}
+  .modal-actions{display:flex;gap:10px;margin-top:24px;}
+  .btn-modal{flex:1;padding:11px;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;}
+  .btn-modal-cancel{background:var(--gray-100);color:var(--gray-700);}
+  .btn-modal-cancel:hover{background:var(--gray-200);}
+  .btn-modal-delete{background:var(--danger);color:#fff;display:flex;align-items:center;justify-content:center;gap:6px;}
+  .btn-modal-delete:hover{background:#dc2626;}
+  .spinner-sm{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:spin .7s linear infinite;display:inline-block;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  /* CONTAINER */
+  .main-wrap{max-width:1200px;margin:0 auto;padding:0 28px 48px;}
 </style>
 </head>
 <body>
 <div id="mainNav"></div>
-<div class="page-container">
-    <div class="page-header">
-        <h1 class="page-title">👥 Registered Persons</h1>
-        <p class="page-subtitle">Manage all persons registered in your face recognition database</p>
-    </div>
 
-    <div id="alertBox"></div>
-
-    <div class="toolbar">
-        <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input type="text" class="form-control" placeholder="Search persons..." id="searchInput" oninput="filterPersons()">
-        </div>
-        <div style="display:flex; align-items:center; gap:12px;">
-            <span id="personCount" class="badge badge-primary">0 persons</span>
-            <a href="/register-face" class="btn btn-primary">➕ Register New Face</a>
-        </div>
+<!-- PAGE HERO -->
+<div class="page-hero">
+  <svg class="page-hero-bg" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="pg" width="48" height="48" patternUnits="userSpaceOnUse">
+        <path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" stroke-width="0.5"/>
+      </pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#pg)" opacity=".08"/>
+    <!-- floating orbs -->
+    <circle cx="1100" cy="30" r="90" fill="rgba(255,255,255,.06)"/>
+    <circle cx="80" cy="120" r="60" fill="rgba(255,255,255,.05)"/>
+    <circle cx="600" cy="160" r="120" fill="rgba(255,255,255,.04)"/>
+  </svg>
+  <div class="page-hero-inner">
+    <div class="ph-title">
+      <div class="ph-icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      </div>
+      Registered Persons
     </div>
+    <p class="ph-sub">Manage all persons registered in your face recognition database</p>
+  </div>
+  <!-- Wave -->
+  <svg class="hero-wave" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,40 C300,0 900,0 1200,40 L1200,40 L0,40Z" fill="#f9fafb"/>
+  </svg>
+</div>
 
-    <div id="personsContainer">
-        <div class="empty-state">
-            <div class="empty-icon">⏳</div>
-            <p>Loading persons...</p>
-        </div>
+<div class="main-wrap">
+  <div id="alertBox"></div>
+
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg class="search-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" placeholder="Search persons..." id="searchInput" oninput="filterPersons()">
     </div>
+    <div class="toolbar-right">
+      <div class="count-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span id="personCount">0 persons</span>
+      </div>
+      <a href="/register-face" class="btn-add">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Register New Face
+      </a>
+    </div>
+  </div>
+
+  <div id="personsContainer">
+    <div class="empty-state">
+      <div class="empty-svg-wrap">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="var(--primary)" stroke-width="3">
+          <circle cx="50" cy="35" r="22"/>
+          <path d="M10 90 Q10 65 50 65 Q90 65 90 90"/>
+        </svg>
+      </div>
+      <div class="empty-title">Loading persons…</div>
+    </div>
+  </div>
 </div>
 
 <!-- Delete Modal -->
 <div class="modal-overlay" id="deleteModal">
-    <div class="modal">
-        <div class="modal-header">
-            <span class="modal-title">🗑️ Delete Person</span>
-            <button class="modal-close" onclick="closeDeleteModal()">✕</button>
-        </div>
-        <div class="modal-body">
-            <p style="font-size:15px; color:var(--gray-700); margin-bottom:8px;">Are you sure you want to delete <strong id="deletePersonName"></strong>?</p>
-            <p style="font-size:13px; color:var(--gray-500); margin-bottom:24px;">This will permanently remove all their face samples and data. This cannot be undone.</p>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-secondary flex-1" onclick="closeDeleteModal()">Cancel</button>
-                <button class="btn btn-danger flex-1" onclick="confirmDelete()" id="confirmDeleteBtn">Delete Person</button>
-            </div>
-        </div>
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        Delete Person
+      </div>
+      <button class="modal-close-btn" onclick="closeDeleteModal()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
     </div>
+    <div class="modal-body">
+      <p>Are you sure you want to delete <strong id="deletePersonName"></strong>? This will permanently remove all their face samples and data. This cannot be undone.</p>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-modal btn-modal-cancel" onclick="closeDeleteModal()">Cancel</button>
+      <button class="btn-modal btn-modal-delete" onclick="confirmDelete()" id="confirmDeleteBtn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+        Delete Person
+      </button>
+    </div>
+  </div>
 </div>
 
 <script src="/js/auth.js"></script>
 <script src="/js/navbar.js"></script>
 <script>
-let allPersons = [];
-let deleteTargetId = null;
+let allPersons=[];
+let deleteTargetId=null;
 
-async function loadPersons() {
-    const res = await fetch('/api/persons/list');
-    const data = await res.json();
-    if (!data.success) return showAlert('Failed to load persons.', 'danger');
-
-    allPersons = data.persons;
+async function loadPersons(){
+  try{
+    const res=await fetch('/api/persons/list');
+    const data=await res.json();
+    if(!data.success)return showAlert('Failed to load persons.','danger');
+    allPersons=data.persons;
     renderPersons(allPersons);
+  }catch(e){showAlert('Network error.','danger');}
 }
 
-function renderPersons(persons) {
-    document.getElementById('personCount').textContent = `${persons.length} person${persons.length !== 1 ? 's' : ''}`;
-    const container = document.getElementById('personsContainer');
-
-    if (persons.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-icon">👤</div>
-                <h3 style="font-family:'Outfit',sans-serif; font-size:24px; margin-bottom:10px;">No persons registered yet</h3>
-                <p style="color:var(--gray-500); margin-bottom:28px;">Start by registering your first person with their face samples.</p>
-                <a href="/register-face" class="btn btn-primary btn-lg">➕ Register First Person</a>
-            </div>`;
-        return;
-    }
-
-    container.innerHTML = `<div class="persons-grid">${persons.map(p => personCard(p)).join('')}</div>`;
+function renderPersons(persons){
+  document.getElementById('personCount').textContent=`${persons.length} person${persons.length!==1?'s':''}`;
+  const c=document.getElementById('personsContainer');
+  if(persons.length===0){
+    c.innerHTML=`<div class="empty-state">
+      <div class="empty-svg-wrap">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="var(--primary)" stroke-width="3">
+          <circle cx="50" cy="35" r="22"/><path d="M10 90 Q10 65 50 65 Q90 65 90 90"/>
+        </svg>
+      </div>
+      <div class="empty-title">No persons registered yet</div>
+      <div class="empty-sub">Start by registering your first person with their face samples.</div>
+      <a href="/register-face" class="btn-add" style="display:inline-flex">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Register First Person
+      </a></div>`;
+    return;
+  }
+  c.innerHTML=`<div class="persons-grid">${persons.map((p,i)=>personCard(p,i)).join('')}</div>`;
 }
 
-function personCard(p) {
-    const initial = p.name.charAt(0).toUpperCase();
-    const sampleStatus = p.sample_count === 0
-        ? `<span class="badge badge-danger">No samples</span>`
-        : p.sample_count < 3
-        ? `<span class="badge badge-warning">${p.sample_count} samples</span>`
-        : `<span class="badge badge-success">${p.sample_count} samples ✓</span>`;
-
-    const registeredDate = new Date(p.created_at).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
-
-    return `
-    <div class="person-card" id="pc_${p.id}">
-        <div class="person-card-top">
-            <div class="pc-avatar">${initial}</div>
-            <div class="pc-name">${escHtml(p.name)}</div>
-            <div class="pc-label">ID: ${p.id} · ${registeredDate}</div>
-        </div>
-        <div class="person-card-body">
-            <div class="pc-detail">
-                <span class="pc-detail-icon">🎂</span>
-                <span class="pc-detail-value ${!p.age ? 'muted' : ''}">${p.age ? p.age + ' years old' : 'Age not provided'}</span>
-            </div>
-            <div class="pc-detail">
-                <span class="pc-detail-icon">📧</span>
-                <span class="pc-detail-value ${!p.email ? 'muted' : ''}">${p.email ? escHtml(p.email) : 'No email'}</span>
-            </div>
-            <div class="pc-detail">
-                <span class="pc-detail-icon">📱</span>
-                <span class="pc-detail-value ${!p.mobile ? 'muted' : ''}">${p.mobile ? escHtml(p.mobile) : 'No mobile'}</span>
-            </div>
-        </div>
-        <div class="person-card-footer">
-            ${sampleStatus}
-            <div style="display:flex; gap:8px;">
-                <a href="/register-face" class="btn btn-secondary btn-sm" title="Add more samples">➕ Add Samples</a>
-                <button class="btn btn-danger btn-sm" onclick="deletePerson(${p.id}, '${escHtml(p.name)}')">🗑️</button>
-            </div>
-        </div>
-    </div>`;
+function personCard(p,idx){
+  const initial=p.name.charAt(0).toUpperCase();
+  const sampleBadge=p.sample_count===0
+    ?`<span class="badge badge-danger"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>No samples</span>`
+    :p.sample_count<3
+    ?`<span class="badge badge-warning"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>${p.sample_count} samples</span>`
+    :`<span class="badge badge-success"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>${p.sample_count} samples</span>`;
+  const date=new Date(p.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'});
+  return `<div class="person-card" style="animation-delay:${idx*0.05}s">
+    <div class="person-card-top">
+      <!-- card BG pattern -->
+      <svg class="card-bg-svg" viewBox="0 0 290 140" xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id="cp${p.id}" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="14" cy="14" r="1.5" fill="var(--primary)"/></pattern></defs>
+        <rect width="100%" height="100%" fill="url(#cp${p.id})"/>
+      </svg>
+      <div class="pc-avatar" style="position:relative;">
+        <div class="pc-avatar-ring"></div>
+        ${initial}
+      </div>
+      <div class="pc-name">${escHtml(p.name)}</div>
+      <div class="pc-label">ID #${p.id} &middot; ${date}</div>
+    </div>
+    <div class="person-card-body">
+      <div class="pc-detail">
+        <div class="pc-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+        <span class="pc-detail-value ${!p.age?'muted':''}">${p.age?p.age+' years old':'Age not provided'}</span>
+      </div>
+      <div class="pc-detail">
+        <div class="pc-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></div>
+        <span class="pc-detail-value ${!p.email?'muted':''}">${p.email?escHtml(p.email):'No email'}</span>
+      </div>
+      <div class="pc-detail">
+        <div class="pc-detail-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></div>
+        <span class="pc-detail-value ${!p.mobile?'muted':''}">${p.mobile?escHtml(p.mobile):'No mobile'}</span>
+      </div>
+    </div>
+    <div class="person-card-footer">
+      ${sampleBadge}
+      <div class="foot-btns">
+        <a href="/register-face" class="btn-sm btn-sec-sm" title="Add more samples">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Samples
+        </a>
+        <button class="btn-sm btn-del" onclick="deletePerson(${p.id},'${escHtml(p.name)}')" title="Delete">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+        </button>
+      </div>
+    </div>
+  </div>`;
 }
 
-function filterPersons() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    const filtered = allPersons.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        (p.email || '').toLowerCase().includes(q) ||
-        (p.mobile || '').includes(q)
-    );
-    renderPersons(filtered);
+function filterPersons(){
+  const q=document.getElementById('searchInput').value.toLowerCase();
+  const f=allPersons.filter(p=>p.name.toLowerCase().includes(q)||(p.email||'').toLowerCase().includes(q)||(p.mobile||'').includes(q));
+  renderPersons(f);
 }
-
-function deletePerson(id, name) {
-    deleteTargetId = id;
-    document.getElementById('deletePersonName').textContent = name;
-    document.getElementById('deleteModal').classList.add('open');
+function deletePerson(id,name){
+  deleteTargetId=id;
+  document.getElementById('deletePersonName').textContent=name;
+  document.getElementById('deleteModal').classList.add('open');
 }
-
-function closeDeleteModal() {
-    document.getElementById('deleteModal').classList.remove('open');
-    deleteTargetId = null;
+function closeDeleteModal(){
+  document.getElementById('deleteModal').classList.remove('open');
+  deleteTargetId=null;
 }
-
-async function confirmDelete() {
-    if (!deleteTargetId) return;
-    const btn = document.getElementById('confirmDeleteBtn');
-    btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Deleting...';
-
-    const res = await fetch(`/api/persons/${deleteTargetId}`, { method: 'DELETE' });
-    const data = await res.json();
-    btn.disabled = false; btn.innerHTML = 'Delete Person';
-    closeDeleteModal();
-
-    if (data.success) {
-        showAlert('Person deleted successfully.', 'success');
-        await loadPersons();
-    } else {
-        showAlert('Failed to delete person.', 'danger');
-    }
+async function confirmDelete(){
+  if(!deleteTargetId)return;
+  const btn=document.getElementById('confirmDeleteBtn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner-sm"></span> Deleting…';
+  const res=await fetch(`/api/persons/${deleteTargetId}`,{method:'DELETE'});
+  const data=await res.json();
+  btn.disabled=false;btn.innerHTML='<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/></svg> Delete Person';
+  closeDeleteModal();
+  if(data.success){showAlert('Person deleted successfully.','success');await loadPersons();}
+  else showAlert('Failed to delete person.','danger');
 }
-
-function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function showAlert(m,t){
+  const icons={success:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',danger:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>'};
+  document.getElementById('alertBox').innerHTML=`<div class="alert alert-${t}">${icons[t]||''} ${m}</div>`;
 }
-
-// Close modal on overlay click
-document.getElementById('deleteModal').addEventListener('click', function(e) {
-    if (e.target === this) closeDeleteModal();
-});
-
-Auth.setupNav().then(() => {});
+document.getElementById('deleteModal').addEventListener('click',function(e){if(e.target===this)closeDeleteModal();});
+Auth.setupNav().then(()=>{});
 loadPersons();
 </script>
 </body>
