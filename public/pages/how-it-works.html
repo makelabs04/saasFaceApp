@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How Face Recognition Works — FaceID SaaS</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#00adee;--primary-dark:#0078ba;--primary-light:#e0f5fd;
+    --accent:#7effa0;--accent2:#b3f0ff;
+    --white:#ffffff;--gray-50:#f8fafc;--gray-100:#f1f5f9;
+    --gray-200:#e2e8f0;--gray-400:#94a3b8;--gray-500:#64748b;
+    --gray-700:#334155;--gray-900:#0f172a;
+    --success:#22c55e;--shadow-md:0 4px 24px rgba(0,0,0,.08);
+    --radius:14px;--radius-lg:22px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:'Outfit',sans-serif;background:var(--white);color:var(--gray-700);overflow-x:hidden;}
+
+  /* ===== NAVBAR ===== */
+  .nav{
+    position:fixed;top:0;left:0;right:0;z-index:100;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:0 40px;height:66px;
+    background:rgba(255,255,255,.88);backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--gray-200);
+  }
+  .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .nav-brand-icon{
+    width:38px;height:38px;border-radius:12px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+    display:flex;align-items:center;justify-content:center;
+  }
+  .nav-brand-icon svg{width:20px;height:20px;color:#fff;}
+  .nav-brand-name{font-size:19px;font-weight:800;color:var(--gray-900);}
+  .nav-brand-name span{color:var(--primary);}
+  .nav-cta{
+    display:inline-flex;align-items:center;gap:7px;padding:9px 20px;
+    background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;
+    border-radius:var(--radius);font-size:14px;font-weight:700;text-decoration:none;
+    box-shadow:0 4px 14px rgba(0,120,186,.28);transition:all .2s;
+  }
+  .nav-cta:hover{transform:translateY(-1px);opacity:.92;}
+  .nav-cta svg{width:15px;height:15px;}
+
+  /* ===== HERO ===== */
+  .hero{
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:120px 40px 80px;
+    background:linear-gradient(160deg,#00c6fb 0%,#005bea 55%,#003399 100%);
+    position:relative;overflow:hidden;
+  }
+  .hero-bg{position:absolute;inset:0;pointer-events:none;}
+  .hero-grid-svg{position:absolute;inset:0;width:100%;height:100%;opacity:.06;}
+  .hero-orb{position:absolute;border-radius:50%;background:rgba(255,255,255,.07);}
+  .orb-a{width:500px;height:500px;top:-150px;right:-100px;animation:orbPulse 9s ease-in-out infinite;}
+  .orb-b{width:320px;height:320px;bottom:-100px;left:-80px;animation:orbPulse 9s ease-in-out infinite;animation-delay:-3s;}
+  .orb-c{width:180px;height:180px;top:40%;right:8%;animation:orbPulse 9s ease-in-out infinite;animation-delay:-6s;}
+  @keyframes orbPulse{0%,100%{transform:scale(1);}50%{transform:scale(1.06) translate(8px,-10px);}}
+
+  .hero-inner{position:relative;z-index:2;text-align:center;max-width:900px;}
+  .hero-eyebrow{
+    display:inline-flex;align-items:center;gap:9px;
+    background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.22);
+    border-radius:50px;padding:7px 18px;margin-bottom:28px;
+    font-size:12px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#fff;
+    backdrop-filter:blur(8px);animation:fadeUp .7s ease both;
+  }
+  .eyebrow-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotBlink 2s ease-in-out infinite;}
+  @keyframes dotBlink{0%,100%{box-shadow:0 0 4px var(--accent);}50%{box-shadow:0 0 12px var(--accent),0 0 24px rgba(126,255,160,.4));}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+
+  .hero-h1{font-size:clamp(36px,6vw,68px);font-weight:900;color:#fff;line-height:1.08;margin-bottom:18px;letter-spacing:-.5px;animation:fadeUp .7s ease .1s both;}
+  .hero-h1 .hl{color:var(--accent2);}
+  .hero-h1 .hl2{color:var(--accent);}
+  .hero-desc{font-size:17px;color:rgba(255,255,255,.82);line-height:1.7;max-width:620px;margin:0 auto 48px;animation:fadeUp .7s ease .2s both;}
+
+  /* ===== FACE SCAN SVG (hero center) ===== */
+  .face-scan-center{animation:fadeUp .7s ease .3s both;margin-bottom:48px;}
+  .face-scan-svg-big{width:280px;height:280px;filter:drop-shadow(0 0 32px rgba(0,194,255,.55));animation:floatFace 5s ease-in-out infinite;}
+  @keyframes floatFace{0%,100%{transform:translateY(0);}50%{transform:translateY(-14px);}}
+  .scan-line-big{animation:scanBig 2.6s ease-in-out infinite;}
+  @keyframes scanBig{0%{transform:translateY(-80px);opacity:0;}8%{opacity:1;}92%{opacity:1;}100%{transform:translateY(80px);opacity:0;}}
+  .corners-anim{animation:cornerGlow 2.5s ease-in-out infinite;}
+  .c2{animation-delay:.15s;}.c3{animation-delay:.3s;}.c4{animation-delay:.45s;}
+  @keyframes cornerGlow{0%,100%{opacity:.45;}50%{opacity:1;filter:drop-shadow(0 0 6px #00c6fb);}}
+  .orbit1{animation:oSpin1 10s linear infinite;transform-origin:140px 140px;transform-box:fill-box;}
+  .orbit2{animation:oSpin1 16s linear infinite reverse;transform-origin:140px 140px;transform-box:fill-box;}
+  @keyframes oSpin1{to{transform:rotate(360deg);}}
+  .pulser{animation:pulserExp 2.8s ease-out infinite;transform-origin:140px 130px;transform-box:fill-box;}
+  .pulser2{animation:pulserExp 2.8s ease-out infinite;animation-delay:-1.4s;transform-origin:140px 130px;transform-box:fill-box;}
+  @keyframes pulserExp{0%{transform:scale(.8);opacity:.65;}100%{transform:scale(1.28);opacity:0;}}
+  .lm-dot{animation:lmBlink 3s ease-in-out infinite;}
+  .lm-dot:nth-child(2){animation-delay:.4s;}.lm-dot:nth-child(3){animation-delay:.8s;}
+  .lm-dot:nth-child(4){animation-delay:1.2s;}.lm-dot:nth-child(5){animation-delay:1.6s;}
+  .lm-dot:nth-child(6){animation-delay:.2s;}.lm-dot:nth-child(7){animation-delay:.6s;}
+  @keyframes lmBlink{0%,100%{opacity:0;transform:scale(0);}15%,85%{opacity:1;transform:scale(1);}}
+  .data-stream-line{animation:dsFlow 2s ease-in-out infinite;stroke-dasharray:6 8;}
+  .ds2{animation-delay:.3s;}.ds3{animation-delay:.6s;}.ds4{animation-delay:.15s;}.ds5{animation-delay:.45s;}.ds6{animation-delay:.75s;}
+  @keyframes dsFlow{0%,100%{stroke-dashoffset:0;opacity:.2;}50%{stroke-dashoffset:-28;opacity:.9;}}
+
+  /* ===== HERO SCROLL CTA ===== */
+  .hero-scroll{display:flex;flex-direction:column;align-items:center;gap:6px;color:rgba(255,255,255,.6);font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;animation:fadeUp .7s ease .5s both;cursor:pointer;}
+  .hero-scroll svg{animation:scrollBounce 2s ease-in-out infinite;}
+  @keyframes scrollBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}
+
+  /* ===== SECTION BASE ===== */
+  .section{padding:96px 40px;}
+  .section-inner{max-width:1100px;margin:0 auto;}
+  .section-tag{display:inline-flex;align-items:center;gap:8px;background:var(--primary-light);color:var(--primary);padding:6px 16px;border-radius:50px;font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase;margin-bottom:16px;}
+  .section-tag svg{width:13px;height:13px;}
+  .section-h2{font-size:clamp(28px,4vw,44px);font-weight:900;color:var(--gray-900);line-height:1.15;margin-bottom:14px;}
+  .section-h2 .c{color:var(--primary);}
+  .section-desc{font-size:16px;color:var(--gray-500);line-height:1.7;max-width:580px;}
+
+  /* ===== STEPS SECTION ===== */
+  .steps-section{background:var(--gray-50);}
+  .steps-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:28px;margin-top:56px;}
+  .step-card{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);
+    padding:32px 24px;position:relative;overflow:hidden;
+    box-shadow:var(--shadow-md);transition:all .3s;
+  }
+  .step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--primary),var(--accent2));}
+  .step-card:hover{transform:translateY(-4px);box-shadow:0 12px 40px rgba(0,0,0,.12);}
+  .step-num{font-size:11px;font-weight:800;letter-spacing:.8px;color:var(--gray-400);text-transform:uppercase;margin-bottom:16px;}
+  .step-icon-wrap{
+    width:56px;height:56px;border-radius:16px;margin-bottom:18px;
+    background:linear-gradient(135deg,var(--primary-light),#dbeafe);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .step-icon-wrap svg{width:26px;height:26px;color:var(--primary);}
+  .step-title{font-size:18px;font-weight:800;color:var(--gray-900);margin-bottom:8px;}
+  .step-desc{font-size:14px;color:var(--gray-500);line-height:1.65;}
+
+  /* ===== HOW IT ACTUALLY WORKS (visual explainer) ===== */
+  .explainer-section{background:var(--white);}
+  .explainer-row{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;margin-bottom:80px;}
+  .explainer-row.reverse{direction:rtl;}
+  .explainer-row.reverse > *{direction:ltr;}
+  @media(max-width:768px){.explainer-row{grid-template-columns:1fr;}.explainer-row.reverse{direction:ltr;}}
+  .explainer-img-wrap{
+    position:relative;border-radius:var(--radius-lg);overflow:hidden;
+    background:linear-gradient(135deg,var(--gray-100),var(--gray-200));
+    aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
+    box-shadow:0 16px 48px rgba(0,0,0,.1);
+  }
+  .explainer-img-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .img-placeholder{
+    text-align:center;color:var(--gray-400);padding:20px;
+    position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  }
+  .img-placeholder svg{width:48px;height:48px;margin-bottom:10px;opacity:.4;}
+  .img-placeholder p{font-size:13px;font-weight:700;opacity:.6;}
+  .img-placeholder small{font-size:11px;opacity:.5;margin-top:4px;display:block;}
+  .img-overlay-badge{
+    position:absolute;bottom:14px;left:14px;
+    background:rgba(0,0,0,.62);backdrop-filter:blur(8px);
+    color:#fff;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:700;
+    display:flex;align-items:center;gap:6px;
+  }
+  .img-overlay-badge svg{width:13px;height:13px;}
+  .exp-content{}
+  .exp-step-num{font-size:13px;font-weight:800;color:var(--primary);letter-spacing:.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+  .exp-step-num::before{content:'';display:inline-block;width:28px;height:2px;background:var(--primary);border-radius:2px;}
+  .exp-h3{font-size:28px;font-weight:900;color:var(--gray-900);line-height:1.15;margin-bottom:14px;}
+  .exp-h3 .c{color:var(--primary);}
+  .exp-desc{font-size:15px;color:var(--gray-500);line-height:1.7;margin-bottom:22px;}
+  .exp-tags{display:flex;flex-wrap:wrap;gap:8px;}
+  .exp-tag{background:var(--gray-100);color:var(--gray-700);padding:6px 13px;border-radius:20px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:5px;}
+  .exp-tag svg{width:12px;height:12px;color:var(--primary);}
+
+  /* ===== HOW IT WORKS ANIMATED DIAGRAM ===== */
+  .diagram-section{background:linear-gradient(160deg,#00c6fb 0%,#005bea 100%);padding:96px 40px;position:relative;overflow:hidden;}
+  .diag-inner{max-width:1000px;margin:0 auto;position:relative;z-index:2;}
+  .diag-title{font-size:clamp(26px,4vw,42px);font-weight:900;color:#fff;text-align:center;margin-bottom:12px;}
+  .diag-sub{font-size:15px;color:rgba(255,255,255,.76);text-align:center;margin-bottom:64px;}
+  .diag-flow{display:flex;align-items:center;justify-content:center;gap:0;flex-wrap:wrap;}
+  .diag-node{
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+    background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+    border-radius:var(--radius-lg);padding:24px 20px;width:150px;
+    backdrop-filter:blur(8px);transition:all .3s;animation:nodeIn .6s ease both;
+  }
+  .diag-node:hover{background:rgba(255,255,255,.2);transform:translateY(-4px);}
+  .diag-node:nth-child(1){animation-delay:.1s;}.diag-node:nth-child(3){animation-delay:.2s;}
+  .diag-node:nth-child(5){animation-delay:.3s;}.diag-node:nth-child(7){animation-delay:.4s;}
+  .diag-node:nth-child(9){animation-delay:.5s;}
+  @keyframes nodeIn{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+  .diag-node-icon{
+    width:52px;height:52px;border-radius:15px;
+    background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;
+  }
+  .diag-node-icon svg{width:26px;height:26px;color:#fff;}
+  .diag-node-label{font-size:12px;font-weight:700;color:#fff;text-align:center;line-height:1.4;}
+  .diag-arrow{
+    display:flex;align-items:center;color:rgba(255,255,255,.5);margin:0 8px;
+    animation:arrowPulse 2s ease-in-out infinite;
+  }
+  .diag-arrow:nth-child(4){animation-delay:.5s;}.diag-arrow:nth-child(6){animation-delay:1s;}.diag-arrow:nth-child(8){animation-delay:1.5s;}
+  @keyframes arrowPulse{0%,100%{opacity:.4;}50%{opacity:1;}}
+  .diag-arrow svg{width:28px;height:28px;}
+
+  /* ===== ESP32 SECTION ===== */
+  .esp-section{background:var(--gray-50);padding:96px 40px;}
+  .esp-inner{max-width:1000px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;}
+  @media(max-width:768px){.esp-inner{grid-template-columns:1fr;}}
+  .esp-led-viz{display:flex;flex-direction:column;gap:20px;}
+  .led-card{
+    background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);
+    padding:22px 24px;display:flex;align-items:center;gap:18px;
+    box-shadow:var(--shadow-md);transition:all .3s;
+  }
+  .led-card:hover{transform:translateY(-2px);}
+  .led-indicator{width:52px;height:52px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .led-indicator svg{width:26px;height:26px;}
+  .led-green .led-indicator{background:#f0fdf4;animation:greenGlow 2s ease-in-out infinite;}
+  .led-red .led-indicator{background:#fef2f2;animation:redGlow 2s ease-in-out infinite;}
+  .led-off .led-indicator{background:var(--gray-100);}
+  @keyframes greenGlow{0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.3);}50%{box-shadow:0 0 0 8px rgba(34,197,94,.15);}}
+  @keyframes redGlow{0%,100%{box-shadow:0 0 0 0 rgba(239,68,68,.3);}50%{box-shadow:0 0 0 8px rgba(239,68,68,.15);}}
+  .led-green .led-indicator svg{color:#22c55e;}
+  .led-red .led-indicator svg{color:#ef4444;}
+  .led-off .led-indicator svg{color:var(--gray-400);}
+  .led-label{font-size:16px;font-weight:800;color:var(--gray-800);margin-bottom:4px;}
+  .led-desc{font-size:13px;color:var(--gray-500);line-height:1.5;}
+  .esp-img-wrap{border-radius:var(--radius-lg);overflow:hidden;aspect-ratio:4/3;background:var(--gray-100);display:flex;align-items:center;justify-content:center;box-shadow:0 12px 40px rgba(0,0,0,.1);}
+  .esp-img-wrap img{width:100%;height:100%;object-fit:cover;}
+
+  /* ===== ACCURACY SECTION ===== */
+  .accuracy-section{padding:96px 40px;background:var(--white);}
+  .acc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:24px;margin-top:52px;}
+  .acc-card{
+    background:var(--gray-50);border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);
+    padding:28px 20px;text-align:center;transition:all .3s;position:relative;overflow:hidden;
+  }
+  .acc-card:hover{border-color:var(--primary);transform:translateY(-3px);box-shadow:0 12px 36px rgba(0,173,238,.12);}
+  .acc-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(0,173,238,.04),transparent);pointer-events:none;}
+  .acc-num{font-size:44px;font-weight:900;color:var(--primary);line-height:1;margin-bottom:6px;}
+  .acc-unit{font-size:18px;}
+  .acc-label{font-size:13px;font-weight:700;color:var(--gray-500);}
+  .acc-icon-wrap{width:48px;height:48px;border-radius:14px;background:var(--primary-light);display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
+  .acc-icon-wrap svg{width:22px;height:22px;color:var(--primary);}
+
+  /* ===== CTA SECTION ===== */
+  .cta-section{
+    background:linear-gradient(135deg,#00c6fb 0%,#005bea 100%);
+    padding:96px 40px;text-align:center;position:relative;overflow:hidden;
+  }
+  .cta-section::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");}
+  .cta-inner{position:relative;z-index:2;}
+  .cta-h2{font-size:clamp(28px,5vw,52px);font-weight:900;color:#fff;margin-bottom:14px;}
+  .cta-desc{font-size:16px;color:rgba(255,255,255,.78);margin-bottom:36px;max-width:500px;margin-left:auto;margin-right:auto;}
+  .cta-btns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;}
+  .cta-btn-primary{
+    display:inline-flex;align-items:center;gap:8px;padding:15px 32px;
+    background:#fff;color:var(--primary);border-radius:var(--radius);
+    font-size:15px;font-weight:800;text-decoration:none;
+    box-shadow:0 8px 24px rgba(0,0,0,.2);transition:all .2s;
+  }
+  .cta-btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.25);}
+  .cta-btn-primary svg{width:17px;height:17px;}
+  .cta-btn-sec{
+    display:inline-flex;align-items:center;gap:8px;padding:15px 32px;
+    background:rgba(255,255,255,.16);color:#fff;border-radius:var(--radius);border:1.5px solid rgba(255,255,255,.3);
+    font-size:15px;font-weight:700;text-decoration:none;backdrop-filter:blur(6px);transition:all .2s;
+  }
+  .cta-btn-sec:hover{background:rgba(255,255,255,.24);}
+  .cta-btn-sec svg{width:17px;height:17px;}
+
+  /* ===== FOOTER ===== */
+  .footer{background:var(--gray-900);padding:40px;text-align:center;}
+  .footer p{font-size:13px;color:var(--gray-400);}
+  .footer a{color:var(--primary);text-decoration:none;font-weight:700;}
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:600px){
+    .section{padding:64px 20px;}
+    .hero{padding:100px 20px 64px;}
+    .face-scan-svg-big{width:200px;height:200px;}
+    .diagram-section{padding:64px 20px;}
+    .diag-flow{gap:4px;}
+    .diag-node{width:120px;padding:18px 14px;}
+    .cta-section{padding:64px 20px;}
+    .nav{padding:0 20px;}
+  }
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="nav">
+  <a href="/pages/index.html" class="nav-brand">
+    <div class="nav-brand-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+    </div>
+    <span class="nav-brand-name">FaceID <span>SaaS</span></span>
+  </a>
+  <a href="/pages/index.html" class="nav-cta">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+    Get Started
+  </a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-bg">
+    <svg class="hero-grid-svg" viewBox="0 0 1200 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><pattern id="hg" width="52" height="52" patternUnits="userSpaceOnUse"><path d="M 52 0 L 0 0 0 52" fill="none" stroke="white" stroke-width="0.6"/></pattern></defs>
+      <rect width="100%" height="100%" fill="url(#hg)"/>
+      <!-- animated scan lines -->
+      <line x1="0" y1="0" x2="1200" y2="0" stroke="white" stroke-width="1.5" stroke-dasharray="12 24" opacity="0">
+        <animate attributeName="y1" values="0;900;0" dur="16s" repeatCount="indefinite"/>
+        <animate attributeName="y2" values="0;900;0" dur="16s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0;0.5;0" dur="16s" repeatCount="indefinite"/>
+      </line>
+    </svg>
+    <div class="hero-orb orb-a"></div>
+    <div class="hero-orb orb-b"></div>
+    <div class="hero-orb orb-c"></div>
+  </div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-dot"></span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+      AI-Powered Technology
+    </div>
+
+    <!-- BIG FACE SCAN SVG -->
+    <div class="face-scan-center">
+      <svg class="face-scan-svg-big" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="fg2" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#c8f4ff" stop-opacity="0.94"/>
+            <stop offset="100%" stop-color="#00c6fb" stop-opacity="0.72"/>
+          </linearGradient>
+          <linearGradient id="sg2" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#00c6fb" stop-opacity="0"/>
+            <stop offset="50%" stop-color="#00c6fb" stop-opacity="0.94"/>
+            <stop offset="100%" stop-color="#00c6fb" stop-opacity="0"/>
+          </linearGradient>
+          <radialGradient id="bgG2" cx="50%" cy="46%" r="48%">
+            <stop offset="0%" stop-color="#00c6fb" stop-opacity="0.16"/>
+            <stop offset="100%" stop-color="#00c6fb" stop-opacity="0"/>
+          </radialGradient>
+          <filter id="gw1"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="gw2"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <clipPath id="fc2">
+            <path d="M140 52 C164 52 188 67 196 90 C204 113 204 136 202 153 C200 170 193 184 183 194 C173 204 159 210 146 212 C144 212 142 212 140 212 C138 212 136 212 134 212 C121 210 107 204 97 194 C87 184 80 170 78 153 C76 136 76 113 84 90 C92 67 116 52 140 52Z"/>
+          </clipPath>
+        </defs>
+
+        <!-- BG glow -->
+        <circle cx="140" cy="130" r="124" fill="url(#bgG2)"/>
+
+        <!-- Orbit rings -->
+        <g class="orbit1">
+          <circle cx="140" cy="140" r="130" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="3 10"/>
+          <circle cx="140" cy="10" r="6" fill="#7effa0" filter="url(#gw1)"/>
+          <circle cx="270" cy="140" r="5" fill="#00c6fb" filter="url(#gw1)"/>
+          <circle cx="140" cy="270" r="6" fill="#b3f0ff" filter="url(#gw1)"/>
+          <circle cx="10" cy="140" r="5" fill="#7effa0" filter="url(#gw1)"/>
+        </g>
+        <g class="orbit2">
+          <circle cx="140" cy="140" r="110" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="1" stroke-dasharray="2 16"/>
+          <rect x="135" y="30" width="10" height="10" rx="2" fill="rgba(255,255,255,0.4)" transform="rotate(45 140 35)"/>
+        </g>
+
+        <!-- Pulse rings -->
+        <ellipse class="pulser" cx="140" cy="130" rx="78" ry="88" fill="none" stroke="rgba(0,198,251,0.42)" stroke-width="1.5"/>
+        <ellipse class="pulser2" cx="140" cy="130" rx="78" ry="88" fill="none" stroke="rgba(0,198,251,0.28)" stroke-width="1.5"/>
+
+        <!-- Corner brackets -->
+        <g class="corners-anim"><line x1="53" y1="64" x2="53" y2="44" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/><line x1="53" y1="44" x2="73" y2="44" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/></g>
+        <g class="corners-anim c2"><line x1="227" y1="64" x2="227" y2="44" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/><line x1="227" y1="44" x2="207" y2="44" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/></g>
+        <g class="corners-anim c3"><line x1="53" y1="208" x2="53" y2="228" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/><line x1="53" y1="228" x2="73" y2="228" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/></g>
+        <g class="corners-anim c4"><line x1="227" y1="208" x2="227" y2="228" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/><line x1="227" y1="228" x2="207" y2="228" stroke="#00c6fb" stroke-width="3.5" stroke-linecap="round"/></g>
+
+        <!-- NECK + SHOULDERS -->
+        <path d="M124 206 Q122 220 118 228 L162 228 Q158 220 156 206" fill="url(#fg2)" opacity="0.42"/>
+        <path d="M90 234 Q116 224 140 223 Q164 224 190 234 Q206 242 212 260 L68 260 Q74 242 90 234Z" fill="url(#fg2)" opacity="0.24"/>
+
+        <!-- FACE OVAL -->
+        <path d="M140 52 C164 52 188 67 196 90 C204 113 204 136 202 153 C200 170 193 184 183 194 C173 204 159 210 146 212 C144 212 142 212 140 212 C138 212 136 212 134 212 C121 210 107 204 97 194 C87 184 80 170 78 153 C76 136 76 113 84 90 C92 67 116 52 140 52Z" fill="url(#fg2)" stroke="rgba(255,255,255,0.66)" stroke-width="1.8" opacity="0.92"/>
+
+        <!-- EARS -->
+        <path d="M76 118 Q62 118 60 133 Q58 148 68 154 Q74 157 80 152" fill="url(#fg2)" stroke="rgba(255,255,255,0.44)" stroke-width="1.3" opacity="0.65"/>
+        <path d="M70 126 Q66 133 67 142 Q69 147 72 145" fill="none" stroke="rgba(255,255,255,0.26)" stroke-width="0.9"/>
+        <path d="M204 118 Q218 118 220 133 Q222 148 212 154 Q206 157 200 152" fill="url(#fg2)" stroke="rgba(255,255,255,0.44)" stroke-width="1.3" opacity="0.65"/>
+        <path d="M210 126 Q214 133 213 142 Q211 147 208 145" fill="none" stroke="rgba(255,255,255,0.26)" stroke-width="0.9"/>
+
+        <!-- HAIR -->
+        <path d="M97 74 Q106 54 140 52 Q174 50 183 74 Q168 60 140 60 Q112 60 97 74Z" fill="rgba(255,255,255,0.24)"/>
+        <path d="M80 88 Q77 74 91 64" fill="none" stroke="rgba(255,255,255,0.17)" stroke-width="2"/>
+        <path d="M200 88 Q203 74 189 64" fill="none" stroke="rgba(255,255,255,0.17)" stroke-width="2"/>
+
+        <!-- EYEBROWS -->
+        <path d="M99 117 Q113 111 130 114" fill="none" stroke="rgba(255,255,255,0.84)" stroke-width="2.6" stroke-linecap="round"/>
+        <path d="M150 114 Q167 111 181 117" fill="none" stroke="rgba(255,255,255,0.84)" stroke-width="2.6" stroke-linecap="round"/>
+
+        <!-- LEFT EYE -->
+        <g filter="url(#gw1)">
+          <path d="M99 129 Q115 120 130 129 Q115 138 99 129Z" fill="rgba(255,255,255,0.16)"/>
+          <path d="M99 129 Q115 121 130 129" fill="none" stroke="rgba(255,255,255,0.94)" stroke-width="2.3" stroke-linecap="round"/>
+          <path d="M99 129 Q115 137 130 129" fill="none" stroke="rgba(255,255,255,0.46)" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="115" cy="129" r="6.5" fill="rgba(0,190,255,0.74)" stroke="rgba(255,255,255,0.94)" stroke-width="1.6"/>
+          <circle cx="115" cy="129" r="2.9" fill="rgba(0,35,110,0.96)"/>
+          <circle cx="117" cy="126.5" r="1.5" fill="rgba(255,255,255,0.97)"/>
+          <circle cx="112.5" cy="130.8" r="0.7" fill="rgba(255,255,255,0.6)"/>
+          <line x1="101" y1="124" x2="100" y2="120" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="108" y1="122" x2="108" y2="118" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="115" y1="121" x2="115" y2="117" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="122" y1="122" x2="123" y2="118" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="128" y1="124" x2="129" y2="120" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+        </g>
+
+        <!-- RIGHT EYE -->
+        <g filter="url(#gw1)">
+          <path d="M150 129 Q165 120 181 129 Q165 138 150 129Z" fill="rgba(255,255,255,0.16)"/>
+          <path d="M150 129 Q165 121 181 129" fill="none" stroke="rgba(255,255,255,0.94)" stroke-width="2.3" stroke-linecap="round"/>
+          <path d="M150 129 Q165 137 181 129" fill="none" stroke="rgba(255,255,255,0.46)" stroke-width="1.3" stroke-linecap="round"/>
+          <circle cx="165" cy="129" r="6.5" fill="rgba(0,190,255,0.74)" stroke="rgba(255,255,255,0.94)" stroke-width="1.6"/>
+          <circle cx="165" cy="129" r="2.9" fill="rgba(0,35,110,0.96)"/>
+          <circle cx="167" cy="126.5" r="1.5" fill="rgba(255,255,255,0.97)"/>
+          <circle cx="162.5" cy="130.8" r="0.7" fill="rgba(255,255,255,0.6)"/>
+          <line x1="152" y1="124" x2="151" y2="120" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="158" y1="122" x2="158" y2="118" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="165" y1="121" x2="165" y2="117" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="172" y1="122" x2="173" y2="118" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+          <line x1="179" y1="124" x2="180" y2="120" stroke="rgba(255,255,255,0.52)" stroke-width="1.2"/>
+        </g>
+
+        <!-- NOSE -->
+        <g opacity="0.84">
+          <path d="M129 140 L127 158" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M151 140 L153 158" fill="none" stroke="rgba(255,255,255,0.42)" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M124 166 Q140 173 156 166" fill="none" stroke="rgba(255,255,255,0.64)" stroke-width="1.6" stroke-linecap="round"/>
+          <path d="M129 140 Q140 137 151 140" fill="none" stroke="rgba(255,255,255,0.26)" stroke-width="1.1" stroke-linecap="round"/>
+          <ellipse cx="125" cy="167" rx="4.5" ry="2.8" fill="rgba(0,35,100,0.42)" stroke="rgba(255,255,255,0.46)" stroke-width="1" transform="rotate(-14 125 167)"/>
+          <ellipse cx="155" cy="167" rx="4.5" ry="2.8" fill="rgba(0,35,100,0.42)" stroke="rgba(255,255,255,0.46)" stroke-width="1" transform="rotate(14 155 167)"/>
+          <circle cx="140" cy="169" r="2.2" fill="rgba(255,255,255,0.16)"/>
+        </g>
+
+        <!-- LIPS -->
+        <g opacity="0.89">
+          <path d="M123 177 Q131 170 140 173 Q149 170 157 177" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.82)" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M123 177 Q140 189 157 177" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.7)" stroke-width="1.7" stroke-linecap="round"/>
+          <path d="M123 177 Q140 179 157 177" fill="none" stroke="rgba(255,255,255,0.28)" stroke-width="0.9"/>
+          <circle cx="123" cy="177" r="1.4" fill="rgba(255,255,255,0.44)"/>
+          <circle cx="157" cy="177" r="1.4" fill="rgba(255,255,255,0.44)"/>
+          <ellipse cx="140" cy="185" rx="9" ry="3.5" fill="rgba(255,255,255,0.1)"/>
+        </g>
+
+        <!-- Chin + jaw shadows + cheek highlights -->
+        <path d="M132 202 Q140 208 148 202" fill="none" stroke="rgba(255,255,255,0.18)" stroke-width="1"/>
+        <ellipse cx="90" cy="148" rx="14" ry="8" fill="rgba(255,255,255,0.055)" transform="rotate(-18 90 148)"/>
+        <ellipse cx="190" cy="148" rx="14" ry="8" fill="rgba(255,255,255,0.055)" transform="rotate(18 190 148)"/>
+        <ellipse cx="140" cy="80" rx="26" ry="10" fill="rgba(255,255,255,0.065)"/>
+
+        <!-- AI landmark dots -->
+        <g class="lm-dot"><circle cx="115" cy="129" r="9" fill="none" stroke="#7effa0" stroke-width="2.2" filter="url(#gw1)"/></g>
+        <g class="lm-dot"><circle cx="165" cy="129" r="9" fill="none" stroke="#7effa0" stroke-width="2.2" filter="url(#gw1)"/></g>
+        <g class="lm-dot"><circle cx="140" cy="163" r="7" fill="none" stroke="#7effa0" stroke-width="2.2" filter="url(#gw1)"/></g>
+        <g class="lm-dot"><circle cx="123" cy="177" r="6" fill="none" stroke="#7effa0" stroke-width="2" filter="url(#gw1)"/></g>
+        <g class="lm-dot"><circle cx="157" cy="177" r="6" fill="none" stroke="#7effa0" stroke-width="2" filter="url(#gw1)"/></g>
+        <g class="lm-dot"><circle cx="99" cy="117" r="5" fill="none" stroke="#b3f0ff" stroke-width="1.6" filter="url(#gw1)"/></g>
+        <g class="lm-dot"><circle cx="181" cy="117" r="5" fill="none" stroke="#b3f0ff" stroke-width="1.6" filter="url(#gw1)"/></g>
+
+        <!-- Landmark mesh -->
+        <g opacity="0.2" stroke="#00c6fb" stroke-width="1" stroke-dasharray="2 6">
+          <line x1="115" y1="129" x2="165" y2="129"/>
+          <line x1="115" y1="129" x2="140" y2="163"/>
+          <line x1="165" y1="129" x2="140" y2="163"/>
+          <line x1="140" y1="163" x2="123" y2="177"/>
+          <line x1="140" y1="163" x2="157" y2="177"/>
+          <line x1="123" y1="177" x2="157" y2="177"/>
+          <line x1="115" y1="129" x2="99" y2="117"/>
+          <line x1="165" y1="129" x2="181" y2="117"/>
+          <line x1="99" y1="117" x2="140" y2="66"/>
+          <line x1="181" y1="117" x2="140" y2="66"/>
+        </g>
+
+        <!-- Data streams -->
+        <g>
+          <line class="data-stream-line" x1="53" y1="129" x2="20" y2="129" stroke="#00c6fb" stroke-width="2"/>
+          <line class="data-stream-line ds2" x1="227" y1="129" x2="260" y2="129" stroke="#00c6fb" stroke-width="2"/>
+          <line class="data-stream-line ds3" x1="53" y1="145" x2="20" y2="156" stroke="#7effa0" stroke-width="1.3"/>
+          <line class="data-stream-line ds4" x1="227" y1="145" x2="260" y2="156" stroke="#7effa0" stroke-width="1.3"/>
+          <line class="data-stream-line ds5" x1="53" y1="113" x2="20" y2="102" stroke="#b3f0ff" stroke-width="1.3"/>
+          <line class="data-stream-line ds6" x1="227" y1="113" x2="260" y2="102" stroke="#b3f0ff" stroke-width="1.3"/>
+        </g>
+
+        <!-- Scan line clipped to face -->
+        <g clip-path="url(#fc2)">
+          <rect class="scan-line-big" x="60" y="92" width="160" height="28" fill="url(#sg2)" opacity="0.74"/>
+        </g>
+
+        <!-- Status badge -->
+        <rect x="82" y="234" width="116" height="26" rx="13" fill="rgba(126,255,160,0.18)" stroke="rgba(126,255,160,0.62)" stroke-width="1.2"/>
+        <circle cx="98" cy="247" r="4" fill="#7effa0" filter="url(#gw1)"/>
+        <text x="153" y="250.5" text-anchor="middle" fill="#7effa0" font-size="9.5" font-family="Outfit,sans-serif" font-weight="800" letter-spacing="1.4">SCANNING…</text>
+      </svg>
+    </div>
+
+    <h1 class="hero-h1">How <span class="hl">Face Recognition</span><br>Actually <span class="hl2">Works</span></h1>
+    <p class="hero-desc">A visual deep-dive into the AI pipeline that powers FaceID SaaS — from camera capture to real-time identification and ESP32 hardware response.</p>
+    <button class="hero-scroll" onclick="document.getElementById('steps').scrollIntoView({behavior:'smooth'})">
+      EXPLORE
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>
+    </button>
+  </div>
+</section>
+
+<!-- STEPS OVERVIEW -->
+<section class="section steps-section" id="steps">
+  <div class="section-inner">
+    <div class="section-tag">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      The Process
+    </div>
+    <h2 class="section-h2">4 Steps from <span class="c">Face to Identity</span></h2>
+    <p class="section-desc">FaceID SaaS uses a deep learning pipeline that converts human faces into unique mathematical fingerprints for instant identification.</p>
+    <div class="steps-grid">
+      <div class="step-card">
+        <div class="step-num">Step 01</div>
+        <div class="step-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="step-title">Face Detection</div>
+        <div class="step-desc">The SSD MobileNetV1 model scans every video frame in real-time, drawing bounding boxes around every human face it finds — no matter the lighting or angle.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">Step 02</div>
+        <div class="step-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="step-title">Landmark Detection</div>
+        <div class="step-desc">68 precise facial landmark points are mapped onto each detected face — eyes, nose, mouth, jaw, eyebrows — creating a structural skeleton of your face.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">Step 03</div>
+        <div class="step-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="step-title">Feature Extraction</div>
+        <div class="step-desc">A deep neural network converts the face into a 128-dimensional vector — a mathematical fingerprint unique to every individual, stored in your database.</div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">Step 04</div>
+        <div class="step-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="step-title">Identity Matching</div>
+        <div class="step-desc">Euclidean distance between the live face vector and stored vectors determines if it's a match. Below 0.55 threshold = recognized person with confidence score.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EXPLAINER ROWS WITH IMAGE PLACEHOLDERS -->
+<section class="section explainer-section">
+  <div class="section-inner">
+
+    <!-- ROW 1: Registration -->
+    <div class="explainer-row">
+      <div class="explainer-img-wrap">
+        <!--
+          IMAGE PROMPT 1:
+          "A modern person sitting at a laptop looking at a webcam, with a clean glowing blue AI face-detection overlay box around their face on the screen.
+          The background is a bright white tech office. The face detection box should show green landmark dots.
+          Ultra-realistic, cinematic lighting, editorial photography style."
+        -->
+        <img src="" alt="" style="display:none" id="img1">
+        <div class="img-placeholder" id="img1ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <p>Registration Photo</p>
+          <small>Person sitting in front of webcam<br>with AI face detection overlay</small>
+        </div>
+        <div class="img-overlay-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Step 1 — Registration
+        </div>
+      </div>
+      <div class="exp-content">
+        <div class="exp-step-num">Step 1 of 4</div>
+        <h3 class="exp-h3">Register Your <span class="c">Face Samples</span></h3>
+        <p class="exp-desc">Point your webcam or upload photos of the person you want to register. FaceID SaaS captures 10 face samples, each processed by the AI to extract a 128-point descriptor vector unique to that individual.</p>
+        <p class="exp-desc" style="margin-bottom:22px;">Multiple samples from different angles ensure the model can recognize the person reliably even with slight head rotation or varying lighting conditions.</p>
+        <div class="exp-tags">
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Live webcam capture</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Image upload support</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>10 samples per person</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Auto-capture mode</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2: AI Analysis (reverse) -->
+    <div class="explainer-row reverse">
+      <div class="explainer-img-wrap">
+        <!--
+          IMAGE PROMPT 2:
+          "A close-up visualization of a human face with a glowing cyan-blue neural network mesh overlaid on it.
+          Small glowing green dots mark facial landmark points (eyes, nose, mouth corners, jaw).
+          Dark background with a futuristic sci-fi aesthetic. 4K render, cinematic quality."
+        -->
+        <img src="" alt="" style="display:none" id="img2">
+        <div class="img-placeholder" id="img2ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          <p>AI Landmark Mapping</p>
+          <small>68 facial landmark points visualized<br>as glowing dots on a face mesh</small>
+        </div>
+        <div class="img-overlay-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          Step 2 — AI Landmark Mapping
+        </div>
+      </div>
+      <div class="exp-content">
+        <div class="exp-step-num">Step 2 of 4</div>
+        <h3 class="exp-h3">68-Point <span class="c">Facial Mapping</span></h3>
+        <p class="exp-desc">Once a face is detected, face-api.js's landmark model places 68 precise points across your face — covering the eye contours, eyebrow arches, nose bridge, nostril positions, lip edges, and jawline.</p>
+        <p class="exp-desc" style="margin-bottom:22px;">These landmarks are used to align the face, compensating for rotation and slight tilt, before passing it to the recognition neural network.</p>
+        <div class="exp-tags">
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>68 landmark points</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Rotation invariant</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Sub-pixel accuracy</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Real-time at 5 FPS+</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 3: Recognition -->
+    <div class="explainer-row">
+      <div class="explainer-img-wrap">
+        <!--
+          IMAGE PROMPT 3:
+          "A split-screen showing: on the left, a person's face with a blue 'IDENTIFIED' box labeled with their name and 94% confidence.
+          On the right, an abstract visualization of two 128-dimensional vectors being compared with glowing lines and a match percentage.
+          Dark blue gradient background, futuristic UI, clean minimal style."
+        -->
+        <img src="" alt="" style="display:none" id="img3">
+        <div class="img-placeholder" id="img3ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          <p>Face Matching Result</p>
+          <small>Person identified with confidence score<br>shown alongside vector comparison</small>
+        </div>
+        <div class="img-overlay-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Step 3 — Identity Confirmed
+        </div>
+      </div>
+      <div class="exp-content">
+        <div class="exp-step-num">Step 3 of 4</div>
+        <h3 class="exp-h3">Real-time <span class="c">Identity Matching</span></h3>
+        <p class="exp-desc">The recognized face descriptor (128 numbers) is compared against all stored descriptors using Euclidean distance. The closest match below 0.55 distance is declared the recognized person.</p>
+        <p class="exp-desc" style="margin-bottom:22px;">Confidence % = (1 - distance) × 100. A score above 45% with distance below threshold means the person is identified. Results update every 200ms for seamless live recognition.</p>
+        <div class="exp-tags">
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>128-dim vectors</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Euclidean distance</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>0.55 threshold</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>200ms refresh</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 4: ESP32 (reverse) -->
+    <div class="explainer-row reverse">
+      <div class="explainer-img-wrap">
+        <!--
+          IMAGE PROMPT 4:
+          "An ESP32 microcontroller board with a bright green LED glowing on it, placed on a clean desk.
+          Next to it, a small buzzer. The background shows a blurred monitor with a face recognition dashboard.
+          Product photography style, dramatic side lighting, tech aesthetic."
+        -->
+        <img src="" alt="" style="display:none" id="img4">
+        <div class="img-placeholder" id="img4ph">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          <p>ESP32 Hardware Response</p>
+          <small>ESP32 board with glowing green LED<br>indicating successful identification</small>
+        </div>
+        <div class="img-overlay-badge">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          Step 4 — ESP32 Response
+        </div>
+      </div>
+      <div class="exp-content">
+        <div class="exp-step-num">Step 4 of 4</div>
+        <h3 class="exp-h3">Hardware <span class="c">ESP32 Integration</span></h3>
+        <p class="exp-desc">Recognition results are instantly sent to your ESP32 microcontroller via HTTP. Known faces trigger the green LED. Unknown faces trigger the red LED plus a buzzer alert for security awareness.</p>
+        <p class="exp-desc" style="margin-bottom:22px;">A smart debounce system prevents rapid-fire signals, ensuring the ESP32 receives clear, stable commands — even when multiple faces are in frame simultaneously.</p>
+        <div class="exp-tags">
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>HTTP real-time signal</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Green / Red LED</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Buzzer alert</span>
+          <span class="exp-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>Smart debounce</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- AI PIPELINE DIAGRAM -->
+<section class="diagram-section">
+  <svg style="position:absolute;inset:0;width:100%;height:100%;opacity:.07;pointer-events:none;" viewBox="0 0 1200 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="dpg" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" stroke-width="0.6"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#dpg)"/>
+  </svg>
+  <div class="diag-inner">
+    <div class="diag-title">The AI Pipeline</div>
+    <p class="diag-sub">How data flows from camera to identity in under 200ms</p>
+    <div class="diag-flow">
+      <div class="diag-node">
+        <div class="diag-node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+        </div>
+        <div class="diag-node-label">Camera<br>Frame</div>
+      </div>
+      <div class="diag-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="diag-node">
+        <div class="diag-node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        </div>
+        <div class="diag-node-label">Face<br>Detection</div>
+      </div>
+      <div class="diag-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="diag-node">
+        <div class="diag-node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        </div>
+        <div class="diag-node-label">68 Landmark<br>Points</div>
+      </div>
+      <div class="diag-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="diag-node">
+        <div class="diag-node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+        </div>
+        <div class="diag-node-label">128-dim<br>Descriptor</div>
+      </div>
+      <div class="diag-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></div>
+      <div class="diag-node">
+        <div class="diag-node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
+        <div class="diag-node-label">Identity<br>Matched</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ESP32 LED EXPLAINER -->
+<section class="esp-section">
+  <div class="esp-inner">
+    <div>
+      <div class="section-tag">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        Hardware Response
+      </div>
+      <h2 class="section-h2" style="margin-bottom:32px;">ESP32 <span class="c">LED & Buzzer</span></h2>
+      <div class="esp-led-viz">
+        <div class="led-card led-green">
+          <div class="led-indicator">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div class="led-label">Green LED</div>
+            <div class="led-desc">Pulses when a registered person is identified with sufficient confidence. Access granted signal.</div>
+          </div>
+        </div>
+        <div class="led-card led-red">
+          <div class="led-indicator">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+          <div>
+            <div class="led-label">Red LED + Buzzer</div>
+            <div class="led-desc">Activates when an unregistered face is detected. Alert for unknown person in frame.</div>
+          </div>
+        </div>
+        <div class="led-card led-off">
+          <div class="led-indicator">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          </div>
+          <div>
+            <div class="led-label">No Signal</div>
+            <div class="led-desc">Both LEDs off when no face is detected in the camera frame. Idle state.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="esp-img-wrap">
+      <!--
+        IMAGE PROMPT 5:
+        "An ESP32 development board on a dark surface. A bright green LED glowing intensely.
+        A small passive buzzer next to the board. Thin jumper wires connecting components.
+        Shallow depth of field, dark moody background, product photography, high contrast."
+      -->
+      <img src="" alt="" style="display:none" id="img5">
+      <div style="text-align:center;color:var(--gray-400);padding:20px;">
+        <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" style="opacity:.35;display:block;margin:0 auto 10px"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+        <p style="font-size:13px;font-weight:700;opacity:.55;">ESP32 Hardware Photo</p>
+        <small style="font-size:11px;opacity:.4;display:block;margin-top:4px;">Board with green LED glowing</small>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ACCURACY STATS -->
+<section class="accuracy-section">
+  <div class="section-inner" style="text-align:center;">
+    <div class="section-tag" style="margin:0 auto 16px;">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Performance
+    </div>
+    <h2 class="section-h2">Built for <span class="c">Speed & Accuracy</span></h2>
+    <p class="section-desc" style="margin:0 auto 0;">face-api.js runs entirely in-browser — no server round-trip needed for recognition. Your face data never leaves your infrastructure.</p>
+    <div class="acc-grid">
+      <div class="acc-card">
+        <div class="acc-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></div>
+        <div class="acc-num">200<span class="acc-unit">ms</span></div>
+        <div class="acc-label">Recognition Loop</div>
+      </div>
+      <div class="acc-card">
+        <div class="acc-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+        <div class="acc-num">99<span class="acc-unit">%+</span></div>
+        <div class="acc-label">Detection Accuracy</div>
+      </div>
+      <div class="acc-card">
+        <div class="acc-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/></svg></div>
+        <div class="acc-num">128</div>
+        <div class="acc-label">Descriptor Dimensions</div>
+      </div>
+      <div class="acc-card">
+        <div class="acc-icon-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></div>
+        <div class="acc-num">68</div>
+        <div class="acc-label">Facial Landmarks</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-h2">Ready to Try It?</h2>
+    <p class="cta-desc">Create your account and start registering faces in under 2 minutes. No hardware required to begin.</p>
+    <div class="cta-btns">
+      <a href="/pages/index.html" class="cta-btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        Create Free Account
+      </a>
+      <a href="/pages/index.html" class="cta-btn-sec">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Sign In
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <p>FaceID SaaS &mdash; Powered by <a href="https://github.com/justadudewhohacks/face-api.js" target="_blank">face-api.js</a> &middot; Built with privacy in mind</p>
+</footer>
+
+</body>
+</html>
