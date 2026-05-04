@@ -6,7 +6,7 @@
 <title>Recognize Faces — FaceID SaaS</title>
 <link rel="stylesheet" href="/css/style.css">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
-<script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
 <style>
   :root{
     --primary:#00adee;--primary-dark:#0078ba;--primary-light:#e0f5fd;
@@ -319,36 +319,15 @@
 <script src="/js/navbar.js"></script>
 <script src="/js/esp32-notify.js"></script>
 <script>
-const MODEL_URL='https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
+const MODEL_URL='https://justadudewhohacks.github.io/face-api.js/models';
 let labeledDescriptors=[],faceMatcher=null,stream=null,detectionLoop=null,personMap={};
 let frameCount=0,lastFpsTime=Date.now();
 
-function updateModelStatus(msg, sub=''){
-  document.getElementById('modelStatus').innerHTML=`
-    <div class="status-icon-wrap">
-      <svg class="spin-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
-    </div>
-    <div><div>${msg}</div>${sub?`<div style="font-size:12px;font-weight:500;opacity:.7;margin-top:2px;">${sub}</div>`:''}</div>`;
-}
-
-async function loadModels(attempt=1){
-  const MAX=3;
+async function loadModels(){
   try{
-    updateModelStatus(`Loading AI models… (attempt ${attempt}/${MAX})`, 'Downloading face detection weights');
-    // Wait for faceapi to be defined (deferred script)
-    let waited=0;
-    while(typeof faceapi==='undefined'&&waited<10000){
-      await new Promise(r=>setTimeout(r,200)); waited+=200;
-    }
-    if(typeof faceapi==='undefined') throw new Error('face-api library not loaded');
-
-    updateModelStatus('Loading face detector…','Step 1 of 3');
     await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
-    updateModelStatus('Loading landmark detector…','Step 2 of 3');
     await faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL);
-    updateModelStatus('Loading recognition model…','Step 3 of 3');
     await faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL);
-
     document.getElementById('modelStatus').innerHTML=`
       <div class="status-icon-wrap" style="background:#f0fdf4;">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
@@ -357,20 +336,7 @@ async function loadModels(attempt=1){
     setTimeout(()=>document.getElementById('modelStatus').style.display='none',2500);
     await loadDescriptors();
   }catch(e){
-    console.error('Model load error:',e);
-    if(attempt<MAX){
-      updateModelStatus(`Retrying… (${attempt}/${MAX})`, 'Previous attempt failed, trying again');
-      await new Promise(r=>setTimeout(r,2000));
-      return loadModels(attempt+1);
-    }
-    document.getElementById('modelStatus').innerHTML=`
-      <div class="status-icon-wrap" style="background:#fef2f2;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--danger)" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      </div>
-      <div style="color:var(--danger)">
-        <div style="font-weight:800;">Failed to load AI models after ${MAX} attempts</div>
-        <div style="font-size:12px;margin-top:4px;">Check your internet connection, then <a href="javascript:location.reload()" style="color:var(--danger);font-weight:700;text-decoration:underline;">reload the page</a></div>
-      </div>`;
+    document.getElementById('modelStatus').innerHTML=`<div style="color:var(--danger);font-weight:700;">Failed to load AI models. Check internet connection.</div>`;
   }
 }
 
@@ -554,277 +520,6 @@ function showAlert(m,t){
 
 Auth.setupNav().then(()=>{});
 window.addEventListener('load',loadModels);
-
-/* ─────────────────────────────────────────────
-   ATTENDANCE AUDIO ANNOUNCEMENT SYSTEM
-   Speaks: "[Name]! [motivational quote]"
-   - 200+ quotes, shuffled, no repeat until all used
-   - Per-person cooldown: 30 seconds
-   - Queue so voices don't overlap
-───────────────────────────────────────────── */
-const QUOTES = [
-  "You're a star — keep shining!",
-  "Every day is a new chance to be great!",
-  "You've got this — believe in yourself!",
-  "Your effort today writes tomorrow's success!",
-  "Champions show up. And you just did!",
-  "Smile big — today is going to be amazing!",
-  "You are braver than you think!",
-  "Learning is your superpower!",
-  "Keep going — progress is progress!",
-  "Your curiosity is your greatest strength!",
-  "One step at a time leads to great places!",
-  "You make this class better just by being here!",
-  "Hard work always pays off — keep it up!",
-  "Mistakes are proof you are trying!",
-  "Today's effort is tomorrow's achievement!",
-  "You were born to do amazing things!",
-  "Believe you can and you're halfway there!",
-  "Your smile lights up the room!",
-  "Be the best version of you — every single day!",
-  "Great things take time — and you have what it takes!",
-  "Show up, work hard, be kind — that's the formula!",
-  "You are capable of incredible things!",
-  "Every expert was once a beginner — keep learning!",
-  "Your potential is limitless!",
-  "Today is a perfect day to learn something new!",
-  "Focus, effort, repeat — you've got the secret!",
-  "Small steps lead to big dreams!",
-  "You are exactly where you need to be!",
-  "Confidence grows with every try!",
-  "Dream big and dare to begin!",
-  "Your hard work is being noticed!",
-  "Stay curious — the best is yet to come!",
-  "Kindness and effort — wear them every day!",
-  "You are stronger than any challenge!",
-  "Progress, not perfection — and you're making progress!",
-  "Rise and shine — greatness is ahead!",
-  "You inspire the people around you!",
-  "Never stop growing, never stop glowing!",
-  "Today's attendance is tomorrow's success story!",
-  "You've already taken the first step — keep going!",
-  "Brilliant minds show up every day — just like you!",
-  "Your future is as bright as your attitude!",
-  "Persistence is your secret weapon!",
-  "Every lesson learned is a gift to your future self!",
-  "Keep pushing — breakthroughs are just ahead!",
-  "You are full of possibilities!",
-  "Showing up is courage — and you showed up!",
-  "You are growing stronger every single day!",
-  "Your effort matters more than you know!",
-  "Chase knowledge like it's your favourite adventure!",
-  "Difficult roads lead to beautiful destinations!",
-  "Make today so awesome that yesterday gets jealous!",
-  "Your best is always good enough — keep giving it!",
-  "Challenges are just opportunities wearing disguise!",
-  "You are more talented than you realise!",
-  "Every question you ask makes you smarter!",
-  "Persistence beats perfection every time!",
-  "You belong here and you are valued!",
-  "Work hard in silence — let success make the noise!",
-  "You are building something amazing, one day at a time!",
-  "Keep your head up — great things are coming!",
-  "Today you showed courage just by walking in!",
-  "You are a problem-solver in the making!",
-  "Your unique mind is your greatest treasure!",
-  "Be proud of how far you've come!",
-  "The best investment is in yourself — and you're doing it!",
-  "Every great journey starts with showing up!",
-  "You have the power to change your world!",
-  "Attitude is everything — and yours is amazing!",
-  "Stay focused — your goals are within reach!",
-  "You have the energy to make today great!",
-  "Learning never exhausts the mind — it feeds it!",
-  "You were made to overcome and achieve!",
-  "Effort today, excellence tomorrow!",
-  "You are unstoppable when you believe in yourself!",
-  "Your presence makes a difference — always!",
-  "Keep blooming — you're just getting started!",
-  "Be bold, be brave, be brilliantly you!",
-  "Setbacks are just setups for comebacks!",
-  "The future belongs to those who believe in their dreams!",
-  "You are a champion in the making!",
-  "Everything you need to succeed is already inside you!",
-  "Today, focus on what you can do — not what you can't!",
-  "Your dreams are valid and achievable!",
-  "Push a little harder — you won't regret it!",
-  "Success is built one present moment at a time!",
-  "Your creativity has no limits!",
-  "Be the reason someone smiles in class today!",
-  "You radiate positivity — keep it up!",
-  "Believe in your abilities — they are real!",
-  "You are writing your success story right now!",
-  "Good things come to those who work for them!",
-  "You are never too young to make a big impact!",
-  "Stay consistent — your reward is coming!",
-  "Every page of learning is a step toward greatness!",
-  "You are a diamond — shine bright!",
-  "Effort is the magic ingredient — and you have plenty!",
-  "You turn up, you try — that's the winner's way!",
-  "Each day you grow wiser, kinder, and stronger!",
-  "Think big, dream bigger, act boldest!",
-  "You are exactly the hero of your own story!",
-  "Your journey is unique — embrace every step!",
-  "Keep showing up — legends are built daily!",
-  "You add value just by being who you are!",
-  "Patience and persistence — your two superpowers!",
-  "Teamwork and kindness make you unstoppable!",
-  "Your success is built on days just like today!",
-  "Never doubt how amazing you truly are!",
-  "You make learning look exciting!",
-  "Great ideas start in curious minds like yours!",
-  "Your character is your greatest achievement!",
-  "Today you chose growth — that's everything!",
-  "Give your best and the rest will follow!",
-  "Your voice matters — share it with confidence!",
-  "You inspire excellence in everyone around you!",
-  "Stay humble, stay hungry, keep growing!",
-  "You are a ray of light in every room you enter!",
-  "Dedication today, distinction tomorrow!",
-  "Your goals are waiting — go get them!",
-  "Effort makes dreams come true — keep going!",
-  "You have the grit to get through anything!",
-  "Success loves those who never stop trying!",
-  "Look how far you've already come — incredible!",
-  "Every new day is a new beginning just for you!",
-  "You are brave enough to keep trying — always!",
-  "Your story is just getting to the best part!",
-  "Kindness costs nothing — but means everything!",
-  "You are gifted, guided, and going places!",
-  "Believe in your spark — it can light the world!",
-  "Keep your dreams alive by working on them daily!",
-  "You have a heart full of courage!",
-  "The world needs your brilliance — share it!",
-  "You are proof that hard work is beautiful!",
-  "Stay positive — your mindset shapes your destiny!",
-  "You are ready for more greatness than you know!",
-  "Your determination is truly inspiring!",
-  "Every challenge you face makes you stronger!",
-  "Trust the process — you are right on track!",
-  "You are a masterpiece still being created!",
-  "Excellence is a habit — and you're building it!",
-  "Your passion for learning is your superpower!",
-  "Be the change you wish to see — starting today!",
-  "You lift others up just by being positive!",
-  "The best chapters of your life are ahead!",
-  "Keep watering your potential — it will bloom!",
-  "You are more than enough, exactly as you are!",
-  "Today is your canvas — paint it with effort!",
-  "Your future self will thank today's you!",
-  "Celebrate your progress — every bit counts!",
-  "You were born ready for this!",
-  "Every great student was once where you are now!",
-  "Your dreams deserve your daily dedication!",
-  "Rise higher — you have unlimited altitude!",
-  "Cheerful hearts do the hardest work best!",
-  "You are worthy of every success ahead!",
-  "Your resilience is your real power!",
-  "Stay strong — the most beautiful things take time!",
-  "You bring energy and light wherever you go!",
-  "Learning is an adventure — and you're living it!",
-  "You are built for extraordinary things!",
-  "Your attitude today sets the tone for everything!",
-  "Every lesson mastered is a victory — celebrate it!",
-  "You grow a little more each day — that's beautiful!",
-  "Keep asking questions — that's how geniuses are made!",
-  "You are creating your legacy one day at a time!",
-  "Mistakes are stepping stones — step boldly!",
-  "You have already shown you can do hard things!",
-  "Today's focus is tomorrow's foundation!",
-  "Aim high — you are capable of hitting it!",
-  "Your enthusiasm is absolutely contagious!",
-  "Ordinary effort leads to extraordinary results!",
-  "There is greatness in you — let it out!",
-  "The classroom is your launchpad to the stars!",
-  "You show courage every time you try something new!",
-  "Hustle with heart — that combination is unbeatable!",
-  "Stay kind, stay curious, stay wonderful!",
-  "Your work ethic is building an amazing future!",
-  "You are someone worth cheering for — we cheer for you!",
-  "Every day in school is a day invested in your future!",
-  "Believe in the power of your own mind!",
-  "You are planting seeds today that will grow into wonders!",
-  "Your best ideas are still ahead of you!",
-  "Show the world what a motivated student looks like!",
-  "You face each day with courage — that's admirable!",
-  "Keep building — you're constructing something great!",
-  "Your diligence today shapes your destiny tomorrow!",
-  "You bring your whole heart to everything you do!",
-  "The journey of learning is the greatest adventure!",
-  "You are fuelled by purpose — and that's powerful!",
-  "Being yourself is your greatest strength!",
-  "You turn challenges into stepping stones effortlessly!",
-  "Today you grow, tomorrow you glow!",
-  "Your energy and spirit are truly infectious!",
-  "Never underestimate what you can achieve!",
-  "You are a future leader taking the first steps!",
-  "Each day you practise becoming your best self!",
-  "Showing up is step one — and you nailed it!",
-  "Your focus today creates your freedom tomorrow!",
-  "You are exactly what this class needed today!",
-  "Keep dreaming, keep doing, keep winning!",
-  "You have a rare combination of heart and intelligence!",
-  "The fire within you is brighter than any obstacle!",
-  "You are the author of an amazing story — write it boldly!",
-  "Stay the course — your breakthrough moment is coming!",
-  "Enthusiasm is your rocket fuel — use it!",
-  "You learn, you grow, you shine — every single day!",
-  "Your presence here today makes all the difference!",
-  "Keep believing — the best is absolutely yet to come!",
-];
-
-// Shuffle quotes into a non-repeating pool
-let _quotePool = [];
-function _nextQuote() {
-  if (_quotePool.length === 0) {
-    // Refill with a fresh shuffle
-    _quotePool = [...QUOTES].sort(() => Math.random() - 0.5);
-  }
-  return _quotePool.pop();
-}
-
-// Per-person cooldown map  (name → timestamp of last announcement)
-const _announcedAt = {};
-const ANNOUNCE_COOLDOWN_MS = 30000; // 30 seconds per person
-
-// Speech queue so announcements don't overlap
-let _speechBusy = false;
-const _speechQueue = [];
-
-function _processSpeechQueue() {
-  if (_speechBusy || _speechQueue.length === 0) return;
-  _speechBusy = true;
-  const text = _speechQueue.shift();
-  const utt = new SpeechSynthesisUtterance(text);
-  utt.rate = 0.95;
-  utt.pitch = 1.05;
-  utt.volume = 1;
-  utt.onend = () => { _speechBusy = false; _processSpeechQueue(); };
-  utt.onerror = () => { _speechBusy = false; _processSpeechQueue(); };
-  window.speechSynthesis.speak(utt);
-}
-
-function announceAttendance(name) {
-  if (!('speechSynthesis' in window)) return;
-  const now = Date.now();
-  if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
-  _announcedAt[name] = now;
-  const quote = _nextQuote();
-  const text = `${name}! ${quote}`;
-  _speechQueue.push(text);
-  _processSpeechQueue();
-}
-
-// ── Hook into the recognition loop ──────────────────────────────────────────
-// Patch updateResultsPanel to trigger audio for every newly detected known face
-const _origUpdateResultsPanel = updateResultsPanel;
-window.updateResultsPanel = function(recognized, totalCount) {
-  _origUpdateResultsPanel(recognized, totalCount);
-  const known = recognized.filter(r => !r.isUnknown && r.person && r.person.name);
-  for (const r of known) {
-    announceAttendance(r.person.name);
-  }
-};
-
+</script>
 </body>
 </html>
