@@ -9,11 +9,10 @@ function injectNavbar() {
             <span class="brand-name">Face<span>ID</span></span>
         </a>
         <div class="nav-links">
-            <a href="/dashboard"     class="nav-link" data-page="dashboard">🏠 Dashboard</a>
+            <a href="/dashboard" class="nav-link" data-page="dashboard">🏠 Dashboard</a>
             <a href="/register-face" class="nav-link" data-page="register-face">➕ Register Face</a>
-            <a href="/recognize"     class="nav-link" data-page="recognize">🔍 Recognize</a>
-            <a href="/persons"       class="nav-link" data-page="persons">👥 Persons</a>
-            <a href="/attendance"    class="nav-link" data-page="attendance">📅 Attendance</a>
+            <a href="/recognize" class="nav-link" data-page="recognize">🔍 Recognize</a>
+            <a href="/persons" class="nav-link" data-page="persons">👥 Persons</a>
         </div>
         <div class="nav-right">
             <div class="user-badge">
