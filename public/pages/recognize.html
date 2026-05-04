@@ -158,56 +158,6 @@
   .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
 
   #uploadCanvas{max-width:100%;border-radius:var(--radius-lg);display:none;margin-top:12px;}
-
-  /* ── CAPTURED PHOTO PANEL (shown after recognition) ── */
-  #capturePanel{display:none;margin-top:16px;}
-
-  /* QUOTE CARD below captured photo */
-  .quote-card{
-    margin-top:14px;padding:20px 22px;
-    background:linear-gradient(135deg,#f0f9ff 0%,#e0f5fd 100%);
-    border:1.5px solid #bae6fd;border-radius:var(--radius-lg);
-    position:relative;overflow:hidden;
-  }
-  .quote-card::before{
-    content:'❝';position:absolute;top:-8px;left:14px;
-    font-size:64px;color:var(--primary);opacity:.12;line-height:1;font-family:serif;
-  }
-  .quote-person{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-  .quote-person-avatar{
-    width:40px;height:40px;border-radius:50%;
-    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-    display:flex;align-items:center;justify-content:center;
-    font-size:17px;font-weight:800;color:#fff;flex-shrink:0;
-  }
-  .quote-person-name{font-size:16px;font-weight:800;color:var(--gray-800);}
-  .quote-person-conf{font-size:12px;color:var(--gray-500);margin-top:2px;}
-  .quote-text{
-    font-size:15px;font-weight:600;color:var(--gray-700);
-    line-height:1.6;font-style:italic;position:relative;z-index:1;
-    margin-bottom:16px;
-  }
-  /* next recognition button */
-  .next-btn{
-    width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
-    padding:13px;border:none;border-radius:var(--radius);
-    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-    color:#fff;font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;
-    cursor:pointer;transition:all .2s;
-    box-shadow:0 4px 14px rgba(0,120,186,.28);
-  }
-  .next-btn:hover{transform:translateY(-1px);opacity:.92;}
-  .next-btn svg{width:17px;height:17px;}
-
-  /* face-guide toast */
-  #faceGuideToast{
-    display:none;position:absolute;bottom:14px;left:50%;transform:translateX(-50%);
-    background:rgba(0,0,0,.78);color:#fff;padding:9px 18px;border-radius:24px;
-    font-size:13px;font-weight:700;white-space:nowrap;backdrop-filter:blur(6px);
-    border:1px solid rgba(255,255,255,.12);z-index:10;
-    animation:toastIn .3s ease;
-  }
-  @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(8px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
 </style>
 </head>
 <body>
@@ -287,8 +237,6 @@
             <div class="scan-corner sc-bl"></div>
             <div class="scan-corner sc-br"></div>
           </div>
-          <!-- Face guide toast inside cam-box -->
-          <div id="faceGuideToast">📷 Please centre your face in the frame</div>
         </div>
         <div class="cam-controls">
           <button class="ctrl-btn start" onclick="startRecogCamera()" id="startBtn">
@@ -302,18 +250,19 @@
         </div>
 
         <!-- CAPTURED PHOTO + QUOTE (shown after recognition) -->
-        <div id="capturePanel">
-          <div class="quote-card" id="quoteCard">
-            <div class="quote-person">
-              <div class="quote-person-avatar" id="quoteAvatar">?</div>
+        <div id="capturePanel" style="display:none;margin-top:16px;">
+          <div style="padding:20px 22px;background:linear-gradient(135deg,#f0f9ff 0%,#e0f5fd 100%);border:1.5px solid #bae6fd;border-radius:20px;position:relative;overflow:hidden;">
+            <div style="content:'❝';position:absolute;top:-8px;left:14px;font-size:64px;color:var(--primary);opacity:.12;line-height:1;font-family:serif;pointer-events:none;">❝</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+              <div id="quoteAvatar" style="width:42px;height:42px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;color:#fff;flex-shrink:0;">?</div>
               <div>
-                <div class="quote-person-name" id="quoteName">—</div>
-                <div class="quote-person-conf" id="quoteConf"></div>
+                <div id="quoteName" style="font-size:17px;font-weight:800;color:var(--gray-800);">—</div>
+                <div id="quoteConf" style="font-size:12px;color:var(--gray-500);margin-top:2px;"></div>
               </div>
             </div>
-            <div class="quote-text" id="quoteText"></div>
-            <button class="next-btn" onclick="resumeRecognition()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <div id="quoteText" style="font-size:15px;font-weight:600;color:var(--gray-700);line-height:1.6;font-style:italic;margin-bottom:16px;position:relative;z-index:1;"></div>
+            <button onclick="resumeRecognition()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:9px;padding:13px;border:none;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,120,186,.28);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" width="17" height="17"><polygon points="5 3 19 12 5 21 5 3"/></svg>
               Next Recognition
             </button>
           </div>
@@ -393,9 +342,6 @@ const MODEL_URL='https://justadudewhohacks.github.io/face-api.js/models';
 let labeledDescriptors=[],faceMatcher=null,stream=null,detectionLoop=null,personMap={};
 let frameCount=0,lastFpsTime=Date.now();
 
-/* ── recognition-pause state ── */
-let recognitionPaused = false;
-
 async function loadModels(){
   try{
     await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
@@ -453,9 +399,6 @@ async function startRecogCamera(){
     document.getElementById('scanOverlay').style.display='block';
     document.getElementById('startBtn').disabled=true;
     document.getElementById('stopBtn').disabled=false;
-    // hide capture panel if visible
-    document.getElementById('capturePanel').style.display='none';
-    recognitionPaused = false;
     startRecognitionLoop();
   }catch(e){showAlert('Camera access denied.','danger');}
 }
@@ -463,7 +406,7 @@ async function startRecogCamera(){
 function stopCamera(){
   if(stream)stream.getTracks().forEach(t=>t.stop());
   if(detectionLoop)clearInterval(detectionLoop);
-  stream=null;detectionLoop=null;recognitionPaused=false;
+  stream=null;detectionLoop=null;
   document.getElementById('recogVideo').style.display='none';
   document.getElementById('camPlaceholder').style.display='';
   const canvas=document.getElementById('recogCanvas');
@@ -473,61 +416,13 @@ function stopCamera(){
   document.getElementById('liveBadge').style.display='none';
   document.getElementById('fpsBadge').style.display='none';
   document.getElementById('scanOverlay').style.display='none';
-  hideFaceGuideToast();
   if(typeof stopESP32Notify==='function')stopESP32Notify();
-}
-
-/* ── Face placement guide toast ── */
-let _guideToastTimer=null;
-function showFaceGuideToast(msg){
-  const t=document.getElementById('faceGuideToast');
-  t.textContent=msg;t.style.display='block';
-  clearTimeout(_guideToastTimer);
-  _guideToastTimer=setTimeout(()=>{t.style.display='none';},3500);
-}
-function hideFaceGuideToast(){
-  clearTimeout(_guideToastTimer);
-  document.getElementById('faceGuideToast').style.display='none';
-}
-
-/* ── Guide speech cooldown ── */
-let _lastGuideSpeech=0;
-const GUIDE_COOLDOWN_MS=5000;
-function speakGuide(msg){
-  if(!('speechSynthesis' in window))return;
-  const now=Date.now();
-  if(now-_lastGuideSpeech<GUIDE_COOLDOWN_MS)return;
-  _lastGuideSpeech=now;
-  window.speechSynthesis.cancel();
-  const u=new SpeechSynthesisUtterance(msg);
-  u.rate=0.95;u.pitch=1.05;u.volume=1;
-  window.speechSynthesis.speak(u);
-}
-
-/* ── Show the capture panel with quote ── */
-function showCapturePanel(name, confidence, quote){
-  const panel=document.getElementById('capturePanel');
-  document.getElementById('quoteAvatar').textContent=(name||'?').charAt(0).toUpperCase();
-  document.getElementById('quoteName').textContent=name||'Unknown';
-  document.getElementById('quoteConf').textContent=`Confidence: ${confidence}%`;
-  document.getElementById('quoteText').textContent=quote;
-  panel.style.display='block';
-}
-
-/* ── Resume recognition after user clicks Next ── */
-function resumeRecognition(){
-  document.getElementById('capturePanel').style.display='none';
-  recognitionPaused=false;
 }
 
 function startRecognitionLoop(){
   const video=document.getElementById('recogVideo');
   const canvas=document.getElementById('recogCanvas');
-  let _noFaceFrames=0; // consecutive frames with no face
-  let _partialFaceFrames=0; // consecutive frames with too-small / edge face
-
   detectionLoop=setInterval(async()=>{
-    if(recognitionPaused)return; // paused — skip processing
     if(video.readyState<2)return;
     canvas.width=video.videoWidth;canvas.height=video.videoHeight;
     try{
@@ -536,36 +431,6 @@ function startRecognitionLoop(){
       const resized=faceapi.resizeResults(detections,dims);
       const ctx=canvas.getContext('2d');
       ctx.clearRect(0,0,canvas.width,canvas.height);
-
-      /* ── face placement guidance ── */
-      if(detections.length===0){
-        _noFaceFrames++;_partialFaceFrames=0;
-        if(_noFaceFrames===12){// ~2.4 s with 200ms interval
-          showFaceGuideToast('📷 Please place your face in front of the camera');
-          speakGuide('Please place your face in front of the camera');
-        }
-      } else {
-        _noFaceFrames=0;
-        // check if face is too small or near edges
-        const box=detections[0].detection.box;
-        const vw=video.videoWidth,vh=video.videoHeight;
-        const tooSmall=(box.width/vw)<0.15||(box.height/vh)<0.15;
-        const nearEdge=box.x<vw*0.05||box.y<vh*0.05||(box.x+box.width)>vw*0.95||(box.y+box.height)>vh*0.95;
-        if(tooSmall||nearEdge){
-          _partialFaceFrames++;
-          if(_partialFaceFrames===10){
-            const msg=tooSmall
-              ?'Please move closer to the camera'
-              :'Please centre your face in the frame';
-            showFaceGuideToast('📷 '+msg);
-            speakGuide(msg);
-          }
-        } else {
-          _partialFaceFrames=0;
-          hideFaceGuideToast();
-        }
-      }
-
       const recognized={};
       for(const det of resized){
         const match=faceMatcher.findBestMatch(det.descriptor);
@@ -675,13 +540,94 @@ function showAlert(m,t){
 Auth.setupNav().then(()=>{});
 window.addEventListener('load',loadModels);
 
-/* ─────────────────────────────────────────────
-   ATTENDANCE AUDIO ANNOUNCEMENT SYSTEM
-   Speaks: "[Name]! [motivational quote]"
-   - 200+ quotes, shuffled, no repeat until all used
+/* ═══════════════════════════════════════════════════════════════
+   ATTENDANCE + AUDIO ANNOUNCEMENT SYSTEM
+   - Auto-detects active shift by current time
+   - Marks attendance via /api/attendance/mark
+   - Speaks "[Name]! [motivational quote]"
+   - 200+ quotes, shuffled, never repeat until all used
    - Per-person cooldown: 30 seconds
-   - Queue so voices don't overlap
-───────────────────────────────────────────── */
+═══════════════════════════════════════════════════════════════ */
+
+/* ── recognition-pause state ── */
+let recognitionPaused = false;
+
+/* ── Active shift (auto-fetched on camera start) ── */
+let _activeShift = null;
+
+async function fetchActiveShift() {
+  try {
+    const res  = await fetch('/api/attendance/shifts/active');
+    const data = await res.json();
+    _activeShift = data.shift || null;
+    if (_activeShift) {
+      showShiftToast(`📅 Shift: ${_activeShift.name}`);
+    } else {
+      showShiftToast('⚠️ No active shift — attendance will not be marked');
+    }
+  } catch(e) { _activeShift = null; }
+}
+
+function showShiftToast(msg) {
+  let el = document.getElementById('shiftToast');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'shiftToast';
+    el.style.cssText = `
+      position:fixed;bottom:24px;right:24px;z-index:999;
+      background:rgba(0,0,0,.82);color:#fff;padding:11px 20px;
+      border-radius:24px;font-size:13px;font-weight:700;
+      backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.12);
+      animation:toastIn .3s ease;max-width:300px;`;
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.style.display = 'block';
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.style.display = 'none', 4000);
+}
+
+/* ── Patch startRecogCamera to fetch shift + handle capturePanel ── */
+const _origStartRecogCamera = startRecogCamera;
+window.startRecogCamera = async function() {
+  await _origStartRecogCamera();
+  await fetchActiveShift();
+  // hide capture panel if re-starting
+  document.getElementById('capturePanel').style.display = 'none';
+  recognitionPaused = false;
+};
+
+/* ── Resume recognition after "Next Recognition" button ── */
+function resumeRecognition() {
+  document.getElementById('capturePanel').style.display = 'none';
+  recognitionPaused = false;
+}
+
+/* ── Show the capture panel with quote ── */
+function showCapturePanel(name, confidence, quote) {
+  const panel = document.getElementById('capturePanel');
+  document.getElementById('quoteAvatar').textContent = (name||'?').charAt(0).toUpperCase();
+  document.getElementById('quoteName').textContent   = name || 'Unknown';
+  document.getElementById('quoteConf').textContent   = `Confidence: ${confidence}%`;
+  document.getElementById('quoteText').textContent   = quote;
+  panel.style.display = 'block';
+}
+
+/* ── Guide speech cooldown ── */
+let _lastGuideSpeech = 0;
+const GUIDE_COOLDOWN_MS = 5000;
+function speakGuide(msg) {
+  if (!('speechSynthesis' in window)) return;
+  const now = Date.now();
+  if (now - _lastGuideSpeech < GUIDE_COOLDOWN_MS) return;
+  _lastGuideSpeech = now;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(msg);
+  u.rate = 0.95; u.pitch = 1.05; u.volume = 1;
+  window.speechSynthesis.speak(u);
+}
+
+/* ── QUOTES (208 entries, non-repeating shuffle) ── */
 const QUOTES = [
   "You're a star — keep shining!","Every day is a new chance to be great!","You've got this — believe in yourself!",
   "Your effort today writes tomorrow's success!","Champions show up. And you just did!","Smile big — today is going to be amazing!",
@@ -791,65 +737,70 @@ function _nextQuote() {
   return _quotePool.pop();
 }
 
-const _announcedAt = {};
+/* ── Speech queue ── */
+const _announcedAt   = {};
 const ANNOUNCE_COOLDOWN_MS = 30000;
-let _speechBusy = false;
-const _speechQueue = [];
+let _speechBusy      = false;
+const _speechQueue   = [];
 
 function _processSpeechQueue() {
   if (_speechBusy || _speechQueue.length === 0) return;
   _speechBusy = true;
   const utt = new SpeechSynthesisUtterance(_speechQueue.shift());
   utt.rate = 0.95; utt.pitch = 1.05; utt.volume = 1;
-  utt.onend = () => { _speechBusy = false; _processSpeechQueue(); };
-  utt.onerror = () => { _speechBusy = false; _processSpeechQueue(); };
+  utt.onend  = () => { _speechBusy = false; _processSpeechQueue(); };
+  utt.onerror= () => { _speechBusy = false; _processSpeechQueue(); };
   window.speechSynthesis.speak(utt);
 }
 
-function announceAttendance(name) {
-  if (!('speechSynthesis' in window)) return;
-  const now = Date.now();
-  if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
-  _announcedAt[name] = now;
-
-  const quote = _nextQuote();
-
-  /* ── pause detection & show capture panel ── */
-  recognitionPaused = true;
-  // hide live overlays temporarily (video stays on so capture works)
-  document.getElementById('scanOverlay').style.display='none';
-
-  // small delay so the last canvas frame (with box) is visible in capture
-  setTimeout(()=>{
-    showCapturePanel(name, Math.round((_announcedAt[name] ? 65 : 65)), quote);
-    // speak
-    _speechQueue.push(`${name}! ${quote}`);
-    _processSpeechQueue();
-  }, 120);
+/* ── Mark attendance via API ── */
+async function markAttendance(person, confidence) {
+  if (!_activeShift) return; // no active shift, silently skip
+  try {
+    const res  = await fetch('/api/attendance/mark', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({
+        person_id : person.personId || person.id,
+        shift_id  : _activeShift.id,
+        confidence: confidence
+      })
+    });
+    const data = await res.json();
+    if (data.success && !data.alreadyMarked) {
+      showShiftToast(`✅ Attendance marked: ${person.name} — ${_activeShift.name}`);
+    }
+  } catch(e) { /* silently ignore network errors */ }
 }
 
-/* patch announceAttendance to pass correct confidence */
+/* ── Patch updateResultsPanel ── */
 const _origUpdateResultsPanel = updateResultsPanel;
 window.updateResultsPanel = function(recognized, totalCount) {
   _origUpdateResultsPanel(recognized, totalCount);
+
   recognized.filter(r => !r.isUnknown && r.person && r.person.name)
-            .forEach(r => {
-              if (!('speechSynthesis' in window)) return;
-              const now = Date.now();
-              const name = r.person.name;
-              if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
-              _announcedAt[name] = now;
+    .forEach(r => {
+      if (!('speechSynthesis' in window)) return;
+      const now  = Date.now();
+      const name = r.person.name;
+      if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
+      _announcedAt[name] = now;
 
-              const quote = _nextQuote();
-              recognitionPaused = true;
-              document.getElementById('scanOverlay').style.display='none';
+      const quote = _nextQuote();
 
-              setTimeout(()=>{
-                showCapturePanel(name, r.confidence, quote);
-                _speechQueue.push(`${name}! ${quote}`);
-                _processSpeechQueue();
-              }, 120);
-            });
+      // Mark attendance in DB
+      markAttendance(r.person, r.confidence);
+
+      // Pause detection, show capture panel
+      recognitionPaused = true;
+      document.getElementById('scanOverlay').style.display = 'none';
+
+      setTimeout(() => {
+        showCapturePanel(name, r.confidence, quote);
+        _speechQueue.push(`${name}! ${quote}`);
+        _processSpeechQueue();
+      }, 120);
+    });
 };
 </script>
 </body>
