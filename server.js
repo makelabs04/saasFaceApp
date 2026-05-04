@@ -27,9 +27,10 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── Routes ──────────────────────────────────────────────────────────────────
-app.use('/api/auth',    require('./routes/auth'));
-app.use('/api/persons', require('./routes/persons'));
-app.use('/api/esp32',   require('./routes/esp32'));   // ← ESP32 integration
+app.use('/api/auth',       require('./routes/auth'));
+app.use('/api/persons',    require('./routes/persons'));
+app.use('/api/esp32',      require('./routes/esp32'));
+app.use('/api/attendance', require('./routes/attendance'));   // ← NEW
 
 // ── Page routes ──────────────────────────────────────────────────────────────
 app.get('/',              (req, res) => res.sendFile(path.join(__dirname, 'public', 'pages', 'index.html')));
@@ -37,9 +38,11 @@ app.get('/dashboard',     (req, res) => res.sendFile(path.join(__dirname, 'publi
 app.get('/register-face', (req, res) => res.sendFile(path.join(__dirname, 'public', 'pages', 'register-face.html')));
 app.get('/recognize',     (req, res) => res.sendFile(path.join(__dirname, 'public', 'pages', 'recognize.html')));
 app.get('/persons',       (req, res) => res.sendFile(path.join(__dirname, 'public', 'pages', 'persons.html')));
+app.get('/attendance',    (req, res) => res.sendFile(path.join(__dirname, 'public', 'pages', 'attendance.html')));  // ← NEW
 
 app.listen(PORT, () => {
     console.log(`\n✅ Face Recognition SaaS running at: http://localhost:${PORT}`);
     console.log(`🤖 ESP32 endpoint: http://localhost:${PORT}/api/esp32/status`);
-    console.log(`📁 Make sure to run database.sql to set up MySQL database\n`);
+    console.log(`📅 Attendance page: http://localhost:${PORT}/attendance`);
+    console.log(`📁 Make sure to run database.sql + attendance_tables.sql\n`);
 });
