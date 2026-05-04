@@ -161,11 +161,6 @@
 
   /* ── CAPTURED PHOTO PANEL (shown after recognition) ── */
   #capturePanel{display:none;margin-top:16px;}
-  .capture-img-wrap{
-    position:relative;border-radius:var(--radius-lg);overflow:hidden;
-    box-shadow:0 8px 32px rgba(0,0,0,.18);background:#0f0f23;
-  }
-  #capturedPhoto{width:100%;display:block;border-radius:var(--radius-lg);}
 
   /* QUOTE CARD below captured photo */
   .quote-card{
@@ -308,9 +303,6 @@
 
         <!-- CAPTURED PHOTO + QUOTE (shown after recognition) -->
         <div id="capturePanel">
-          <div class="capture-img-wrap">
-            <img id="capturedPhoto" src="" alt="Captured face">
-          </div>
           <div class="quote-card" id="quoteCard">
             <div class="quote-person">
               <div class="quote-person-avatar" id="quoteAvatar">?</div>
@@ -512,22 +504,9 @@ function speakGuide(msg){
   window.speechSynthesis.speak(u);
 }
 
-/* ── Capture a still frame from the video + canvas overlay ── */
-function captureFrame(){
-  const video=document.getElementById('recogVideo');
-  const overlay=document.getElementById('recogCanvas');
-  const out=document.createElement('canvas');
-  out.width=video.videoWidth;out.height=video.videoHeight;
-  const ctx=out.getContext('2d');
-  ctx.drawImage(video,0,0);
-  ctx.drawImage(overlay,0,0);
-  return out.toDataURL('image/jpeg',0.92);
-}
-
 /* ── Show the capture panel with quote ── */
 function showCapturePanel(name, confidence, quote){
   const panel=document.getElementById('capturePanel');
-  document.getElementById('capturedPhoto').src=captureFrame();
   document.getElementById('quoteAvatar').textContent=(name||'?').charAt(0).toUpperCase();
   document.getElementById('quoteName').textContent=name||'Unknown';
   document.getElementById('quoteConf').textContent=`Confidence: ${confidence}%`;
