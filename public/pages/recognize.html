@@ -512,7 +512,6 @@ function showCapturePanel(name, confidence, quote){
   document.getElementById('quoteConf').textContent=`Confidence: ${confidence}%`;
   document.getElementById('quoteText').textContent=quote;
   panel.style.display='block';
-  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
 }
 
 /* ── Resume recognition after user clicks Next ── */
