@@ -828,7 +828,41 @@ function announceAttendance(name) {
   }, 120);
 }
 
-/* patch announceAttendance to pass correct confidence */
+/* ── Active shift (fetched when camera starts) ── */
+let _activeShift = null;
+
+async function fetchActiveShift() {
+  try {
+    const res  = await fetch('/api/attendance/shifts/active');
+    const data = await res.json();
+    _activeShift = data.shift || null;
+  } catch(e) { _activeShift = null; }
+}
+
+/* ── Mark attendance via API ── */
+async function markAttendance(person, confidence) {
+  if (!_activeShift) return;
+  try {
+    await fetch('/api/attendance/mark', {
+      method : 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body   : JSON.stringify({
+        person_id : person.personId || person.id,
+        shift_id  : _activeShift.id,
+        confidence: confidence
+      })
+    });
+  } catch(e) {}
+}
+
+/* ── Patch startRecogCamera to fetch active shift on start ── */
+const _origStartRecogCamera = startRecogCamera;
+window.startRecogCamera = async function() {
+  await _origStartRecogCamera();
+  fetchActiveShift();
+};
+
+/* patch updateResultsPanel — audio + attendance */
 const _origUpdateResultsPanel = updateResultsPanel;
 window.updateResultsPanel = function(recognized, totalCount) {
   _origUpdateResultsPanel(recognized, totalCount);
@@ -839,6 +873,9 @@ window.updateResultsPanel = function(recognized, totalCount) {
               const name = r.person.name;
               if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
               _announcedAt[name] = now;
+
+              // Mark attendance in DB
+              markAttendance(r.person, r.confidence);
 
               const quote = _nextQuote();
               recognitionPaused = true;
