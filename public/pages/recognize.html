@@ -456,6 +456,8 @@ async function startRecogCamera(){
     // hide capture panel if visible
     document.getElementById('capturePanel').style.display='none';
     recognitionPaused = false;
+    // fetch active shift BEFORE starting loop so it's ready on first detection
+    await fetchActiveShift();
     startRecognitionLoop();
   }catch(e){showAlert('Camera access denied.','danger');}
 }
@@ -847,20 +849,13 @@ async function markAttendance(person, confidence) {
       method : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body   : JSON.stringify({
-        person_id : person.personId || person.id,
+        person_id : person.personId,   // descriptors API always returns personId
         shift_id  : _activeShift.id,
         confidence: confidence
       })
     });
   } catch(e) {}
 }
-
-/* ── Patch startRecogCamera to fetch active shift on start ── */
-const _origStartRecogCamera = startRecogCamera;
-window.startRecogCamera = async function() {
-  await _origStartRecogCamera();
-  fetchActiveShift();
-};
 
 /* patch updateResultsPanel — audio + attendance */
 const _origUpdateResultsPanel = updateResultsPanel;
