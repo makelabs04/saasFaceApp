@@ -830,7 +830,7 @@ function announceAttendance(name) {
   }, 120);
 }
 
-/* ── Active shift (fetched when camera starts) ── */
+/* ── Active shift (re-fetched fresh before every attendance mark) ── */
 let _activeShift = null;
 
 async function fetchActiveShift() {
@@ -838,23 +838,48 @@ async function fetchActiveShift() {
     const res  = await fetch('/api/attendance/shifts/active');
     const data = await res.json();
     _activeShift = data.shift || null;
-  } catch(e) { _activeShift = null; }
+    if (_activeShift) {
+      console.log('[Attendance] Active shift:', _activeShift.name,
+                  _activeShift.start_time, '–', _activeShift.end_time);
+    } else {
+      console.warn('[Attendance] No active shift found at this time.');
+    }
+  } catch(e) {
+    console.error('[Attendance] fetchActiveShift error:', e);
+    _activeShift = null;
+  }
 }
 
 /* ── Mark attendance via API ── */
 async function markAttendance(person, confidence) {
-  if (!_activeShift) return;
+  // Always re-fetch shift so we get the correct shift even if page was
+  // opened before shift started, or after a shift change.
+  await fetchActiveShift();
+
+  if (!_activeShift) {
+    console.warn('[Attendance] Skipping mark — no active shift right now.');
+    return;
+  }
+
   try {
-    await fetch('/api/attendance/mark', {
+    const res  = await fetch('/api/attendance/mark', {
       method : 'POST',
       headers: { 'Content-Type': 'application/json' },
       body   : JSON.stringify({
-        person_id : person.personId,   // descriptors API always returns personId
+        person_id : person.personId,
         shift_id  : _activeShift.id,
         confidence: confidence
       })
     });
-  } catch(e) {}
+    const data = await res.json();
+    if (data.success) {
+      console.log('[Attendance]', data.message);
+    } else {
+      console.warn('[Attendance] Mark failed:', data.message);
+    }
+  } catch(e) {
+    console.error('[Attendance] markAttendance fetch error:', e);
+  }
 }
 
 /* patch updateResultsPanel — audio + attendance */
