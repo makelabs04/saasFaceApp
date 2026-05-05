@@ -3,6 +3,23 @@ const router  = express.Router();
 const db      = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
+// ── Helper: get current IST time string "HH:MM" ───────────────────────────────
+function getISTTime() {
+    const now = new Date();
+    const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    return ist.toTimeString().slice(0, 5); // "HH:MM"
+}
+
+// ── Helper: get current IST date string "YYYY-MM-DD" ──────────────────────────
+function getISTDate() {
+    const now = new Date();
+    const ist = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+    const yyyy = ist.getFullYear();
+    const mm   = String(ist.getMonth() + 1).padStart(2, '0');
+    const dd   = String(ist.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+}
+
 // ── SHIFTS ────────────────────────────────────────────────────────────────────
 
 // GET all shifts for logged-in user
@@ -14,16 +31,17 @@ router.get('/shifts', requireAuth, async (req, res) => {
         );
         res.json({ success: true, shifts: rows });
     } catch (err) {
-        console.error(err);
+        console.error('[attendance/shifts GET]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
 
-// GET active shift based on current time
+// GET active shift based on current IST time
 router.get('/shifts/active', requireAuth, async (req, res) => {
     try {
-        const now  = new Date();
-        const hhmm = now.toTimeString().slice(0, 5);
+        const hhmm = getISTTime();
+        console.log(`[shifts/active] IST time=${hhmm} userId=${req.session.userId}`);
+
         const [rows] = await db.query(
             `SELECT * FROM attendance_shifts
              WHERE user_id = ? AND active = 1
@@ -31,9 +49,12 @@ router.get('/shifts/active', requireAuth, async (req, res) => {
              ORDER BY start_time LIMIT 1`,
             [req.session.userId, hhmm, hhmm]
         );
-        res.json({ success: true, shift: rows[0] || null });
+
+        const shift = rows[0] || null;
+        console.log(`[shifts/active] found shift:`, shift ? shift.name : 'none');
+        res.json({ success: true, shift });
     } catch (err) {
-        console.error(err);
+        console.error('[shifts/active]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
@@ -51,7 +72,7 @@ router.post('/shifts', requireAuth, async (req, res) => {
         );
         res.json({ success: true, shiftId: result.insertId, message: 'Shift created!' });
     } catch (err) {
-        console.error(err);
+        console.error('[shifts POST]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
@@ -66,7 +87,7 @@ router.put('/shifts/:id', requireAuth, async (req, res) => {
         );
         res.json({ success: true, message: 'Shift updated!' });
     } catch (err) {
-        console.error(err);
+        console.error('[shifts PUT]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
@@ -80,7 +101,7 @@ router.delete('/shifts/:id', requireAuth, async (req, res) => {
         );
         res.json({ success: true });
     } catch (err) {
-        console.error(err);
+        console.error('[shifts DELETE]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
@@ -94,8 +115,7 @@ router.post('/mark', requireAuth, async (req, res) => {
         if (!person_id || !shift_id)
             return res.json({ success: false, message: 'person_id and shift_id required.' });
 
-        // Verify person exists (no user_id restriction — the logged-in user marks
-        // attendance for any registered person, regardless of who registered them)
+        // Verify person exists
         const [persons] = await db.query(
             'SELECT id, name FROM persons WHERE id = ?',
             [person_id]
@@ -111,7 +131,9 @@ router.post('/mark', requireAuth, async (req, res) => {
         if (shifts.length === 0)
             return res.json({ success: false, message: 'Shift not found.' });
 
-        const today = new Date().toISOString().slice(0, 10);
+        // Use IST date so the record goes to the correct calendar day
+        const today = getISTDate();
+        console.log(`[attendance/mark] person=${persons[0].name} shift=${shifts[0].name} date(IST)=${today}`);
 
         // Check max_students cap
         if (shifts[0].max_students > 0) {
@@ -131,6 +153,8 @@ router.post('/mark', requireAuth, async (req, res) => {
         );
 
         const alreadyMarked = result.affectedRows === 0;
+        console.log(`[attendance/mark] alreadyMarked=${alreadyMarked}`);
+
         res.json({
             success: true,
             alreadyMarked,
@@ -141,7 +165,7 @@ router.post('/mark', requireAuth, async (req, res) => {
                 : `Attendance marked: ${persons[0].name} — ${shifts[0].name}`
         });
     } catch (err) {
-        console.error(err);
+        console.error('[attendance/mark]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
@@ -165,7 +189,7 @@ router.get('/records', requireAuth, async (req, res) => {
         const [rows] = await db.query(sql, params);
         res.json({ success: true, records: rows });
     } catch (err) {
-        console.error(err);
+        console.error('[attendance/records]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
@@ -173,7 +197,8 @@ router.get('/records', requireAuth, async (req, res) => {
 // GET daily summary per shift
 router.get('/summary', requireAuth, async (req, res) => {
     try {
-        const date = req.query.date || new Date().toISOString().slice(0, 10);
+        // Default to today in IST
+        const date = req.query.date || getISTDate();
         const [rows] = await db.query(
             `SELECT s.id, s.name, s.start_time, s.end_time, s.max_students,
                     COUNT(ar.id) as marked_count
@@ -187,7 +212,7 @@ router.get('/summary', requireAuth, async (req, res) => {
         );
         res.json({ success: true, date, summary: rows });
     } catch (err) {
-        console.error(err);
+        console.error('[attendance/summary]', err);
         res.json({ success: false, message: 'Server error.' });
     }
 });
