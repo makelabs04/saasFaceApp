@@ -94,10 +94,11 @@ router.post('/mark', requireAuth, async (req, res) => {
         if (!person_id || !shift_id)
             return res.json({ success: false, message: 'person_id and shift_id required.' });
 
-        // Verify person belongs to this user
+        // Verify person exists (no user_id restriction — the logged-in user marks
+        // attendance for any registered person, regardless of who registered them)
         const [persons] = await db.query(
-            'SELECT id, name FROM persons WHERE id = ? AND user_id = ?',
-            [person_id, req.session.userId]
+            'SELECT id, name FROM persons WHERE id = ?',
+            [person_id]
         );
         if (persons.length === 0)
             return res.json({ success: false, message: 'Person not found.' });
