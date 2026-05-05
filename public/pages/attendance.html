@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance — FaceID SaaS</title>
+<link rel="stylesheet" href="/css/style.css">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#00adee;--primary-dark:#0078ba;--primary-light:#e0f5fd;
+    --white:#fff;--gray-50:#f9fafb;--gray-100:#f3f4f6;--gray-200:#e5e7eb;
+    --gray-300:#d1d5db;--gray-400:#9ca3af;--gray-500:#6b7280;--gray-600:#4b5563;
+    --gray-700:#374151;--gray-800:#1f2937;
+    --success:#22c55e;--warning:#f59e0b;--danger:#ef4444;
+    --shadow-sm:0 1px 3px rgba(0,0,0,.08);--shadow-md:0 4px 16px rgba(0,0,0,.10);
+    --radius:12px;--radius-lg:20px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Outfit',sans-serif;background:var(--gray-50);color:var(--gray-700);min-height:100vh;}
+
+  .page-hero{background:linear-gradient(135deg,#00c6fb 0%,#005bea 100%);padding:36px 0 0;position:relative;overflow:hidden;}
+  .page-hero-bg{position:absolute;inset:0;pointer-events:none;}
+  .page-hero-inner{max-width:1200px;margin:0 auto;padding:0 28px;position:relative;z-index:2;}
+  .ph-title{font-size:28px;font-weight:800;color:#fff;display:flex;align-items:center;gap:12px;margin-bottom:4px;}
+  .ph-sub{font-size:14px;color:rgba(255,255,255,.76);margin-bottom:24px;}
+  .ph-icon-wrap{width:44px;height:44px;border-radius:13px;background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .hero-wave{display:block;width:100%;height:40px;}
+  .main-wrap{max-width:1200px;margin:0 auto;padding:28px 28px 60px;}
+
+  .page-tabs{display:flex;gap:4px;background:var(--gray-100);padding:4px;border-radius:14px;margin-bottom:28px;width:fit-content;}
+  .page-tab{padding:10px 22px;border:none;background:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s;color:var(--gray-500);font-family:'Outfit',sans-serif;}
+  .page-tab.active{background:var(--white);color:var(--primary);box-shadow:var(--shadow-sm);}
+
+  .card{background:var(--white);border:1px solid var(--gray-200);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm);overflow:hidden;margin-bottom:24px;}
+  .card-header{padding:18px 24px;border-bottom:1px solid var(--gray-100);display:flex;align-items:center;justify-content:space-between;}
+  .card-title{font-size:16px;font-weight:800;color:var(--gray-800);display:flex;align-items:center;gap:8px;}
+  .card-body{padding:24px;}
+
+  .form-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group label{font-size:13px;font-weight:700;color:var(--gray-600);}
+  .form-group input,.form-group select{padding:10px 14px;border:1.5px solid var(--gray-200);border-radius:10px;font-size:14px;font-family:'Outfit',sans-serif;background:var(--white);color:var(--gray-800);transition:border-color .2s;}
+  .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--primary);}
+
+  .btn{padding:10px 20px;border:none;border-radius:var(--radius);font-size:14px;font-weight:700;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:7px;}
+  .btn svg{width:15px;height:15px;}
+  .btn-primary{background:linear-gradient(135deg,var(--primary),var(--primary-dark));color:#fff;box-shadow:0 4px 14px rgba(0,120,186,.25);}
+  .btn-primary:hover{transform:translateY(-1px);opacity:.92;}
+  .btn-secondary{background:var(--gray-100);color:var(--gray-700);}
+  .btn-secondary:hover{background:var(--gray-200);}
+  .btn-danger{background:#fef2f2;color:var(--danger);}
+  .btn-danger:hover{background:#fee2e2;}
+  .btn-sm{padding:7px 14px;font-size:13px;}
+
+  .shifts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .shift-card{border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);padding:20px;background:var(--white);transition:box-shadow .2s;}
+  .shift-card:hover{box-shadow:var(--shadow-md);}
+  .shift-card.inactive{opacity:.55;}
+  .shift-card-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
+  .shift-name{font-size:16px;font-weight:800;color:var(--gray-800);}
+  .shift-time{font-size:13px;color:var(--gray-500);margin-top:3px;}
+  .shift-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800;background:var(--primary-light);color:var(--primary);}
+  .shift-badge.off{background:var(--gray-100);color:var(--gray-400);}
+  .shift-chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;color:var(--gray-500);background:var(--gray-50);padding:4px 10px;border-radius:8px;margin-top:8px;}
+  .shift-actions{display:flex;gap:8px;margin-top:14px;}
+
+  .empty-state{text-align:center;padding:48px 20px;color:var(--gray-400);}
+  .empty-state svg{width:48px;height:48px;display:block;margin:0 auto 12px;opacity:.4;}
+  .empty-state h3{font-size:15px;font-weight:800;color:var(--gray-500);margin-bottom:4px;}
+
+  .alert{padding:12px 16px;border-radius:10px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:8px;margin-bottom:16px;}
+  .alert-success{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;}
+  .alert-danger{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;}
+  .alert-warning{background:#fffbeb;border:1px solid #fde68a;color:#92400e;}
+
+  .filters-bar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px;}
+  .filters-bar .form-group{min-width:160px;}
+
+  .table-wrap{overflow-x:auto;}
+  table{width:100%;border-collapse:collapse;font-size:14px;}
+  thead th{background:var(--gray-50);padding:12px 16px;font-weight:800;font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--gray-500);border-bottom:1.5px solid var(--gray-200);text-align:left;white-space:nowrap;}
+  tbody td{padding:13px 16px;border-bottom:1px solid var(--gray-100);vertical-align:middle;}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover td{background:var(--gray-50);}
+  .badge{display:inline-flex;align-items:center;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;}
+  .badge-blue{background:var(--primary-light);color:var(--primary-dark);}
+  .badge-green{background:#dcfce7;color:#166534;}
+
+  .summary-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px;}
+  .summary-card{flex:1;min-width:160px;background:var(--white);border:1.5px solid var(--gray-200);border-radius:var(--radius-lg);padding:18px 20px;}
+  .summary-card .sv{font-size:28px;font-weight:800;color:var(--primary);}
+  .summary-card .sl{font-size:11px;color:var(--gray-400);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-top:2px;}
+  .summary-card .sn{font-size:14px;font-weight:700;color:var(--gray-700);margin-top:6px;}
+  .progress-bg{height:6px;background:var(--gray-100);border-radius:99px;overflow:hidden;margin-top:8px;}
+  .progress-fill{height:100%;background:linear-gradient(90deg,var(--primary),var(--primary-dark));border-radius:99px;}
+  .progress-label{font-size:11px;color:var(--gray-400);font-weight:700;margin-top:4px;}
+
+  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;}
+  .modal-overlay.open{display:flex;}
+  .modal{background:var(--white);border-radius:var(--radius-lg);padding:28px;width:100%;max-width:480px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
+  .modal-title{font-size:18px;font-weight:800;color:var(--gray-800);margin-bottom:20px;}
+  .modal-actions{display:flex;gap:10px;margin-top:24px;justify-content:flex-end;}
+</style>
+</head>
+<body>
+<div id="mainNav"></div>
+
+<div class="page-hero">
+  <svg class="page-hero-bg" viewBox="0 0 1200 160" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+    <defs><pattern id="pg" width="48" height="48" patternUnits="userSpaceOnUse"><path d="M 48 0 L 0 0 0 48" fill="none" stroke="white" stroke-width="0.5"/></pattern></defs>
+    <rect width="100%" height="100%" fill="url(#pg)" opacity=".08"/>
+    <circle cx="1050" cy="20" r="100" fill="rgba(255,255,255,.05)"/>
+    <circle cx="200" cy="140" r="80" fill="rgba(255,255,255,.04)"/>
+  </svg>
+  <div class="page-hero-inner">
+    <div class="ph-title">
+      <div class="ph-icon-wrap">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      </div>
+      Attendance
+    </div>
+    <p class="ph-sub">Manage attendance shifts and view daily records</p>
+  </div>
+  <svg class="hero-wave" viewBox="0 0 1200 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M0,40 C300,0 900,0 1200,40 L1200,40 L0,40Z" fill="#f9fafb"/>
+  </svg>
+</div>
+
+<div class="main-wrap">
+  <div id="alertBox"></div>
+
+  <div class="page-tabs">
+    <button class="page-tab active" onclick="switchTab('shifts')" id="tabShifts">⏰ Shifts</button>
+    <button class="page-tab" onclick="switchTab('records')" id="tabRecords">📋 Records</button>
+  </div>
+
+  <!-- ══ SHIFTS TAB ══ -->
+  <div id="shiftsTab">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Add New Shift
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="form-group" style="grid-column:1/-1">
+            <label>Shift Name</label>
+            <input type="text" id="shiftName" placeholder="e.g. Morning Session, Period 1…">
+          </div>
+          <div class="form-group">
+            <label>Start Time</label>
+            <input type="time" id="shiftStart">
+          </div>
+          <div class="form-group">
+            <label>End Time</label>
+            <input type="time" id="shiftEnd">
+          </div>
+          <div class="form-group">
+            <label>Max Students <span style="color:var(--gray-400);font-weight:500">(0 = unlimited)</span></label>
+            <input type="number" id="shiftMax" value="0" min="0">
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <button class="btn btn-primary" onclick="createShift()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Shift
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          Your Shifts
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="loadShifts()">↻ Refresh</button>
+      </div>
+      <div class="card-body">
+        <div class="shifts-grid" id="shiftsGrid">
+          <div class="empty-state" style="grid-column:1/-1">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            <h3>No shifts yet</h3>
+            <p>Add your first shift above</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ RECORDS TAB ══ -->
+  <div id="recordsTab" style="display:none">
+    <div class="summary-row" id="summaryRow"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="18" height="18"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          Attendance Records
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Export CSV
+        </button>
+      </div>
+      <div class="card-body">
+        <div class="filters-bar">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="filterDate" onchange="loadRecords()">
+          </div>
+          <div class="form-group">
+            <label>Shift</label>
+            <select id="filterShift" onchange="loadRecords()">
+              <option value="">All Shifts</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="loadRecords()">Search</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Student Name</th>
+                <th>Shift</th>
+                <th>Marked At</th>
+                <th>Date</th>
+                <th>Confidence</th>
+              </tr>
+            </thead>
+            <tbody id="recordsTbody">
+              <tr><td colspan="6" style="text-align:center;padding:36px;color:var(--gray-400);">Select a date to view records</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ Edit Shift</div>
+    <input type="hidden" id="editShiftId">
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Shift Name</label>
+        <input type="text" id="editName">
+      </div>
+      <div class="form-group">
+        <label>Start Time</label>
+        <input type="time" id="editStart">
+      </div>
+      <div class="form-group">
+        <label>End Time</label>
+        <input type="time" id="editEnd">
+      </div>
+      <div class="form-group">
+        <label>Max Students (0 = unlimited)</label>
+        <input type="number" id="editMax" min="0">
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="editActive">
+          <option value="1">Active</option>
+          <option value="0">Inactive</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeEdit()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEdit()">Save Changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script src="/js/navbar.js"></script>
+<script>
+Auth.setupNav().then(()=>{});
+
+let allShifts = [];
+
+function switchTab(tab) {
+  document.getElementById('shiftsTab').style.display  = tab === 'shifts'  ? '' : 'none';
+  document.getElementById('recordsTab').style.display = tab === 'records' ? '' : 'none';
+  document.getElementById('tabShifts').classList.toggle('active',  tab === 'shifts');
+  document.getElementById('tabRecords').classList.toggle('active', tab === 'records');
+  if (tab === 'records') { populateShiftFilter(); loadSummary(); loadRecords(); }
+}
+
+/* ── FORMAT TIME ── */
+function fmt(t) {
+  if (!t) return '';
+  const [h, m] = t.split(':');
+  const hh = parseInt(h);
+  return `${hh % 12 || 12}:${m} ${hh >= 12 ? 'PM' : 'AM'}`;
+}
+
+/* ── SHIFTS ── */
+async function loadShifts() {
+  const res  = await fetch('/api/attendance/shifts');
+  const data = await res.json();
+  allShifts  = data.shifts || [];
+  renderShifts(allShifts);
+}
+
+function renderShifts(shifts) {
+  const grid = document.getElementById('shiftsGrid');
+  if (!shifts.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <h3>No shifts yet</h3><p>Add your first shift above</p></div>`;
+    return;
+  }
+  grid.innerHTML = shifts.map(s => `
+    <div class="shift-card ${!s.active ? 'inactive' : ''}">
+      <div class="shift-card-top">
+        <div>
+          <div class="shift-name">${s.name}</div>
+          <div class="shift-time">${fmt(s.start_time)} – ${fmt(s.end_time)}</div>
+        </div>
+        <span class="shift-badge ${!s.active ? 'off' : ''}">${s.active ? 'Active' : 'Inactive'}</span>
+      </div>
+      <div class="shift-chip">👥 ${s.max_students > 0 ? 'Max ' + s.max_students + ' students' : 'Unlimited'}</div>
+      <div class="shift-actions">
+        <button class="btn btn-secondary btn-sm" onclick="openEdit(${s.id})">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteShift(${s.id})">🗑 Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+async function createShift() {
+  const name  = document.getElementById('shiftName').value.trim();
+  const start = document.getElementById('shiftStart').value;
+  const end   = document.getElementById('shiftEnd').value;
+  const max   = parseInt(document.getElementById('shiftMax').value) || 0;
+  if (!name || !start || !end) return showAlert('Please fill in all required fields.', 'danger');
+  if (start >= end)            return showAlert('End time must be after start time.', 'danger');
+
+  const res  = await fetch('/api/attendance/shifts', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, start_time: start, end_time: end, max_students: max })
+  });
+  const data = await res.json();
+  if (data.success) {
+    showAlert('Shift created!', 'success');
+    document.getElementById('shiftName').value = '';
+    document.getElementById('shiftStart').value = '';
+    document.getElementById('shiftEnd').value = '';
+    document.getElementById('shiftMax').value = '0';
+    loadShifts();
+  } else {
+    showAlert(data.message, 'danger');
+  }
+}
+
+async function deleteShift(id) {
+  if (!confirm('Delete this shift and all its records?')) return;
+  await fetch(`/api/attendance/shifts/${id}`, { method: 'DELETE' });
+  showAlert('Shift deleted.', 'success');
+  loadShifts();
+}
+
+/* ── EDIT MODAL ── */
+function openEdit(id) {
+  const s = allShifts.find(x => x.id === id);
+  if (!s) return;
+  document.getElementById('editShiftId').value = s.id;
+  document.getElementById('editName').value    = s.name;
+  document.getElementById('editStart').value   = s.start_time.slice(0, 5);
+  document.getElementById('editEnd').value     = s.end_time.slice(0, 5);
+  document.getElementById('editMax').value     = s.max_students;
+  document.getElementById('editActive').value  = s.active;
+  document.getElementById('editModal').classList.add('open');
+}
+function closeEdit() { document.getElementById('editModal').classList.remove('open'); }
+
+async function saveEdit() {
+  const id     = document.getElementById('editShiftId').value;
+  const name   = document.getElementById('editName').value.trim();
+  const start  = document.getElementById('editStart').value;
+  const end    = document.getElementById('editEnd').value;
+  const max    = parseInt(document.getElementById('editMax').value) || 0;
+  const active = parseInt(document.getElementById('editActive').value);
+  if (!name || !start || !end) return showAlert('Fill all fields.', 'danger');
+  const res  = await fetch(`/api/attendance/shifts/${id}`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, start_time: start, end_time: end, max_students: max, active })
+  });
+  const data = await res.json();
+  if (data.success) { closeEdit(); showAlert('Shift updated!', 'success'); loadShifts(); }
+  else showAlert(data.message, 'danger');
+}
+
+/* ── RECORDS ── */
+async function populateShiftFilter() {
+  const sel = document.getElementById('filterShift');
+  sel.innerHTML = '<option value="">All Shifts</option>';
+  allShifts.forEach(s => { sel.innerHTML += `<option value="${s.id}">${s.name}</option>`; });
+}
+
+async function loadSummary() {
+  const date = document.getElementById('filterDate').value || new Date().toISOString().slice(0, 10);
+  const res  = await fetch(`/api/attendance/summary?date=${date}`);
+  const data = await res.json();
+  const row  = document.getElementById('summaryRow');
+  if (!data.summary || !data.summary.length) { row.innerHTML = ''; return; }
+  row.innerHTML = data.summary.map(s => {
+    const pct = s.max_students > 0 ? Math.min(Math.round((s.marked_count / s.max_students) * 100), 100) : null;
+    return `<div class="summary-card">
+      <div class="sv">${s.marked_count}</div>
+      <div class="sl">Marked</div>
+      <div class="sn">${s.name}</div>
+      <div style="font-size:12px;color:var(--gray-400);margin-top:2px;">${fmt(s.start_time)} – ${fmt(s.end_time)}</div>
+      ${pct !== null
+        ? `<div class="progress-bg"><div class="progress-fill" style="width:${pct}%"></div></div>
+           <div class="progress-label">${s.marked_count} / ${s.max_students} students</div>`
+        : `<div style="font-size:11px;color:var(--gray-400);margin-top:6px;">Unlimited capacity</div>`}
+    </div>`;
+  }).join('');
+}
+
+async function loadRecords() {
+  const date    = document.getElementById('filterDate').value;
+  const shiftId = document.getElementById('filterShift').value;
+  if (!date) return;
+  loadSummary();
+  let url = `/api/attendance/records?date=${date}`;
+  if (shiftId) url += `&shift_id=${shiftId}`;
+  const res   = await fetch(url);
+  const data  = await res.json();
+  const tbody = document.getElementById('recordsTbody');
+  if (!data.records || !data.records.length) {
+    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:36px;color:var(--gray-400);">No records found</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = data.records.map((r, i) => `
+    <tr>
+      <td style="color:var(--gray-400);font-weight:700">${i + 1}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--primary),var(--primary-dark));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">${(r.person_name || '?').charAt(0).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:700;color:var(--gray-800)">${r.person_name}</div>
+            ${r.email ? `<div style="font-size:12px;color:var(--gray-400)">${r.email}</div>` : ''}
+          </div>
+        </div>
+      </td>
+      <td><span class="badge badge-blue">${r.shift_name}</span></td>
+      <td style="font-weight:700">${new Date(r.marked_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+      <td>${r.date}</td>
+      <td><span class="badge badge-green">${r.confidence}%</span></td>
+    </tr>`).join('');
+}
+
+function exportCSV() {
+  const date    = document.getElementById('filterDate').value || new Date().toISOString().slice(0, 10);
+  const shiftId = document.getElementById('filterShift').value;
+  const tbody   = document.getElementById('recordsTbody');
+  const rows    = Array.from(tbody.querySelectorAll('tr'))
+    .map(tr => Array.from(tr.querySelectorAll('td')).map(td => td.innerText.trim()))
+    .filter(r => r.length > 1);
+  if (!rows.length) return showAlert('No records to export.', 'warning');
+  const csv  = [['#', 'Student Name', 'Shift', 'Marked At', 'Date', 'Confidence'], ...rows].map(r => r.join(',')).join('\n');
+  const a    = document.createElement('a');
+  a.href     = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `attendance_${date}${shiftId ? '_shift' + shiftId : ''}.csv`;
+  a.click();
+}
+
+function showAlert(msg, type) {
+  const icons = {
+    success: '✅', danger: '❌', warning: '⚠️'
+  };
+  document.getElementById('alertBox').innerHTML =
+    `<div class="alert alert-${type}">${icons[type] || ''} ${msg}</div>`;
+  setTimeout(() => document.getElementById('alertBox').innerHTML = '', 4000);
+}
+
+document.getElementById('filterDate').value = new Date().toISOString().slice(0, 10);
+loadShifts();
+</script>
+</body>
+</html>
