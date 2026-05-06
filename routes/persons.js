@@ -77,19 +77,42 @@ router.post('/register', requireAuth, async (req, res) => {
                 return res.json({ success: false, message: 'Phone number must be exactly 10 digits (e.g. 9876543210).' });
         }
 
-        // Duplicate person check — same name + mobile within this user's account
-        if (mobile && mobile.trim() !== '') {
-            const cleanMobile = mobile.replace(/[\s\-\(\)]/g, '');
-            const [dup] = await db.query(
-                'SELECT id FROM persons WHERE user_id = ? AND name = ? AND mobile = ?',
-                [req.session.userId, name.trim(), cleanMobile]
+        // ── Duplicate person check ────────────────────────────────────────────
+        // Within this user's account, the same person cannot be re-registered
+        // if they share the same mobile number OR the same email address.
+        const cleanMobile = mobile ? mobile.replace(/[\s\-\(\)\+]/g, '') : null;
+        const cleanEmail  = email  ? email.trim().toLowerCase() : null;
+
+        if (cleanMobile) {
+            // Normalise stored mobiles too (strip all non-digits for comparison)
+            const [dupMobile] = await db.query(
+                `SELECT id, name FROM persons
+                 WHERE user_id = ?
+                   AND REGEXP_REPLACE(mobile, '[^0-9]', '') = ?`,
+                [req.session.userId, cleanMobile.replace(/\D/g, '')]
             );
-            if (dup.length > 0)
-                return res.json({ success: false, message: 'A person with this name and phone number is already registered.' });
+            if (dupMobile.length > 0) {
+                return res.json({
+                    success: false,
+                    message: `A person with this phone number is already registered (${dupMobile[0].name}). Please use a different number.`
+                });
+            }
+        }
+
+        if (cleanEmail) {
+            const [dupEmail] = await db.query(
+                'SELECT id, name FROM persons WHERE user_id = ? AND LOWER(email) = ?',
+                [req.session.userId, cleanEmail]
+            );
+            if (dupEmail.length > 0) {
+                return res.json({
+                    success: false,
+                    message: `A person with this email is already registered (${dupEmail[0].name}). Please use a different email.`
+                });
+            }
         }
 
         const faceLabel = `${name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`;
-        const cleanMobile = mobile ? mobile.replace(/[\s\-\(\)]/g, '') : null;
         const [result] = await db.query(
             'INSERT INTO persons (user_id, name, age, email, mobile, face_label) VALUES (?, ?, ?, ?, ?, ?)',
             [req.session.userId, name.trim(), age || null, email ? email.trim().toLowerCase() : null, cleanMobile || null, faceLabel]
