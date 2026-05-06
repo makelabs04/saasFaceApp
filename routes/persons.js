@@ -7,6 +7,23 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
 
+// ── Validation helpers ────────────────────────────────────────────────────────
+function isValidPersonName(name) {
+    return /^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]{2,100}$/.test(name.trim());
+}
+function isValidAge(age) {
+    const n = parseInt(age, 10);
+    return Number.isInteger(n) && n >= 1 && n <= 120;
+}
+function isValidEmail(email) {
+    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+}
+function isValidMobile(mobile) {
+    // Strip spaces/dashes/parens, then must be exactly 10 digits (optionally prefixed with +CC)
+    const digits = mobile.replace(/[\s\-\(\)]/g, '');
+    return /^(\+\d{1,3})?[0-9]{10}$/.test(digits);
+}
+
 // Multer config
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -35,12 +52,47 @@ const upload = multer({
 router.post('/register', requireAuth, async (req, res) => {
     try {
         const { name, age, email, mobile } = req.body;
-        if (!name) return res.json({ success: false, message: 'Name is required.' });
+
+        // Name validation — required, no integers/symbols
+        if (!name || !name.trim())
+            return res.json({ success: false, message: 'Name is required.' });
+        if (!isValidPersonName(name))
+            return res.json({ success: false, message: 'Name must contain only letters and spaces (no numbers or symbols).' });
+
+        // Age validation — optional but if provided must be 1–120
+        if (age !== undefined && age !== null && age !== '') {
+            if (!isValidAge(age))
+                return res.json({ success: false, message: 'Age must be a number between 1 and 120.' });
+        }
+
+        // Email validation — optional but if provided must be valid format
+        if (email && email.trim() !== '') {
+            if (!isValidEmail(email))
+                return res.json({ success: false, message: 'Please enter a valid email address (e.g. user@example.com).' });
+        }
+
+        // Mobile validation — optional but if provided must be exactly 10 digits
+        if (mobile && mobile.trim() !== '') {
+            if (!isValidMobile(mobile))
+                return res.json({ success: false, message: 'Phone number must be exactly 10 digits (e.g. 9876543210).' });
+        }
+
+        // Duplicate person check — same name + mobile within this user's account
+        if (mobile && mobile.trim() !== '') {
+            const cleanMobile = mobile.replace(/[\s\-\(\)]/g, '');
+            const [dup] = await db.query(
+                'SELECT id FROM persons WHERE user_id = ? AND name = ? AND mobile = ?',
+                [req.session.userId, name.trim(), cleanMobile]
+            );
+            if (dup.length > 0)
+                return res.json({ success: false, message: 'A person with this name and phone number is already registered.' });
+        }
 
         const faceLabel = `${name.toLowerCase().replace(/\s+/g, '_')}_${Date.now()}`;
+        const cleanMobile = mobile ? mobile.replace(/[\s\-\(\)]/g, '') : null;
         const [result] = await db.query(
             'INSERT INTO persons (user_id, name, age, email, mobile, face_label) VALUES (?, ?, ?, ?, ?, ?)',
-            [req.session.userId, name, age || null, email || null, mobile || null, faceLabel]
+            [req.session.userId, name.trim(), age || null, email ? email.trim().toLowerCase() : null, cleanMobile || null, faceLabel]
         );
         res.json({ success: true, personId: result.insertId, faceLabel, message: 'Person registered!' });
     } catch (err) {
@@ -55,7 +107,6 @@ router.post('/sample', requireAuth, async (req, res) => {
         const { personId, imageData, descriptor } = req.body;
         if (!personId || !descriptor) return res.json({ success: false, message: 'Missing data.' });
 
-        // Verify person belongs to this user
         const [persons] = await db.query('SELECT id FROM persons WHERE id = ? AND user_id = ?', [personId, req.session.userId]);
         if (persons.length === 0) return res.json({ success: false, message: 'Person not found.' });
 
@@ -130,7 +181,6 @@ router.get('/descriptors', requireAuth, async (req, res) => {
             [req.session.userId]
         );
 
-        // Group by person
         const grouped = {};
         for (const s of samples) {
             if (!grouped[s.person_id]) {
