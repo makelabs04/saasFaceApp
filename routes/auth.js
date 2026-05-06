@@ -3,6 +3,17 @@ const router = express.Router();
 const bcrypt = require('bcryptjs');
 const db = require('../db');
 
+// ── Validation helpers ────────────────────────────────────────────────────────
+function isValidName(name) {
+    // Only letters (including accented), spaces, hyphens, apostrophes — no digits/symbols
+    return /^[A-Za-zÀ-ÖØ-öø-ÿ\s'\-]{2,100}$/.test(name);
+}
+
+function isValidEmail(email) {
+    // Standard email: local@domain.tld — must have proper structure
+    return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email);
+}
+
 // Register
 router.post('/register', async (req, res) => {
     try {
@@ -10,12 +21,24 @@ router.post('/register', async (req, res) => {
         if (!name || !email || !password)
             return res.json({ success: false, message: 'All fields are required.' });
 
-        const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
+        // Validate name — no integers or symbols
+        if (!isValidName(name.trim()))
+            return res.json({ success: false, message: 'Name must contain only letters and spaces (no numbers or symbols).' });
+
+        // Validate email format
+        if (!isValidEmail(email.trim()))
+            return res.json({ success: false, message: 'Please enter a valid email address (e.g. user@example.com).' });
+
+        if (password.length < 6)
+            return res.json({ success: false, message: 'Password must be at least 6 characters.' });
+
+        // Duplicate email check
+        const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email.trim().toLowerCase()]);
         if (existing.length > 0)
-            return res.json({ success: false, message: 'Email already registered.' });
+            return res.json({ success: false, message: 'This email is already registered. Please sign in.' });
 
         const hashed = await bcrypt.hash(password, 10);
-        await db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name, email, hashed]);
+        await db.query('INSERT INTO users (name, email, password) VALUES (?, ?, ?)', [name.trim(), email.trim().toLowerCase(), hashed]);
         res.json({ success: true, message: 'Registration successful! Please login.' });
     } catch (err) {
         console.error(err);
@@ -30,7 +53,7 @@ router.post('/login', async (req, res) => {
         if (!email || !password)
             return res.json({ success: false, message: 'All fields are required.' });
 
-        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email]);
+        const [rows] = await db.query('SELECT * FROM users WHERE email = ?', [email.trim().toLowerCase()]);
         if (rows.length === 0)
             return res.json({ success: false, message: 'Invalid credentials.' });
 
