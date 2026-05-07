@@ -19,9 +19,11 @@ function isValidEmail(email) {
     return /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/.test(email.trim());
 }
 function isValidMobile(mobile) {
-    // Strip spaces/dashes/parens, then must be exactly 10 digits (optionally prefixed with +CC)
     const digits = mobile.replace(/[\s\-\(\)]/g, '');
-    return /^(\+\d{1,3})?[0-9]{10}$/.test(digits);
+    if (!/^(\+\d{1,3})?[0-9]{10}$/.test(digits)) return false;
+    const onlyDigits = digits.replace(/^\+\d{1,3}/, ''); // strip country code
+    if (/^(\d)\1{9}$/.test(onlyDigits)) return false; // reject all-same-digit (e.g. 0000000000)
+    return true;
 }
 
 // Multer config
