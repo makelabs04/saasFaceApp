@@ -518,8 +518,11 @@ async function registerPerson(){
   // Mobile: optional; if provided must be exactly 10 digits (allowing optional +CC prefix)
   if(mobile !== ''){
     const digits = mobile.replace(/[\s\-\(\)]/g,'');
-    if(!/^(\+\d{1,3})?[0-9]{10}$/.test(digits))
-      return showAlert('Phone number must be exactly 10 digits (e.g. 9876543210).','danger');
+    if (!/^(\+\d{1,3})?[0-9]{10}$/.test(digits))
+      return showAlert('Phone number must be exactly 10 digits (e.g. 9876543210).', 'danger');
+    const onlyDigits = digits.replace(/^\+\d{1,3}/, '');
+    if (/^(\d)\1{9}$/.test(onlyDigits))
+        return showAlert('Phone number cannot be all the same digit (e.g. 0000000000 is not valid).', 'danger');  
   }
 
   const btn=document.getElementById('regPersonBtn');
