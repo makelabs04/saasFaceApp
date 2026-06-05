@@ -464,12 +464,7 @@ const MODEL_URL='https://justadudewhohacks.github.io/face-api.js/models';
 let labeledDescriptors=[],faceMatcher=null,stream=null,detectionLoop=null,personMap={};
 let frameCount=0,lastFpsTime=Date.now();
 
-/* ── Recognition queue state ──
-   Instead of a simple paused flag, we maintain a FIFO queue of persons
-   to announce. While announcing, detection continues but new recognised
-   persons are queued rather than interrupting. After each speech ends the
-   next person in queue is processed automatically — no manual click needed.
-*/
+/* ── Recognition queue state ── */
 let recognitionPaused = false;      // true while speaking / showing a quote
 let announcementQueue  = [];        // [{name, confidence, person, quote}]
 const _announcedAt     = {};        // name → timestamp, for per-person cooldown
@@ -477,6 +472,16 @@ const ANNOUNCE_COOLDOWN_MS = 30000;
 
 /* ── Fullscreen state ── */
 let isFullscreen = false;
+
+/* ── Canvas double-buffer to prevent flicker ── */
+let _offCanvas = null;
+let _offCtx    = null;
+
+function _getOffscreen(w, h) {
+  if (!_offCanvas) { _offCanvas = document.createElement('canvas'); _offCtx = _offCanvas.getContext('2d'); }
+  if (_offCanvas.width !== w || _offCanvas.height !== h) { _offCanvas.width = w; _offCanvas.height = h; }
+  return { canvas: _offCanvas, ctx: _offCtx };
+}
 
 /* ═══════════════════════════════════════════════
    FULLSCREEN TOGGLE
@@ -497,7 +502,6 @@ function toggleFullscreen() {
     fsIconExpand.style.display   = '';
     fsIconCompress.style.display = 'none';
     document.body.style.overflow = '';
-    // hide fs overlay when exiting fullscreen
     document.getElementById('fsQuoteOverlay').style.display = 'none';
   }
 }
@@ -596,7 +600,6 @@ function stopCamera(){
   document.getElementById('fsQuoteOverlay').style.display='none';
   hideFaceGuideToast();
   if(typeof stopESP32Notify==='function')stopESP32Notify();
-  // exit fullscreen if active
   if(isFullscreen)toggleFullscreen();
 }
 
@@ -633,16 +636,13 @@ function speakGuide(msg){
 ═══════════════════════════════════════════════ */
 function showQuotePanel(name, confidence, quote) {
   if (isFullscreen) {
-    // Show in-camera overlay (top-left)
     document.getElementById('fsQuoteAvatar').textContent = (name||'?').charAt(0).toUpperCase();
     document.getElementById('fsQuoteName').textContent   = name||'Unknown';
     document.getElementById('fsQuoteConf').textContent   = `Confidence: ${confidence}%`;
     document.getElementById('fsQuoteText').textContent   = quote;
     document.getElementById('fsQuoteOverlay').style.display = 'block';
-    // hide below-camera panel while in fullscreen
     document.getElementById('capturePanel').style.display = 'none';
   } else {
-    // Show below-camera quote card
     document.getElementById('fsQuoteOverlay').style.display = 'none';
     document.getElementById('quoteAvatar').textContent  = (name||'?').charAt(0).toUpperCase();
     document.getElementById('quoteName').textContent    = name||'Unknown';
@@ -670,36 +670,41 @@ function renderQueueChips() {
 }
 
 /* ═══════════════════════════════════════════════
-   SPEECH QUEUE — auto-advance after each utterance
+   SPEECH QUEUE — stop recognition while speaking,
+   restart after all announcements are done
 ═══════════════════════════════════════════════ */
 let _speechBusy = false;
 
 function _processNextInQueue() {
   if (announcementQueue.length === 0) {
-    // All done — resume detection
+    // All done — clear canvas, resume detection
+    const canvas = document.getElementById('recogCanvas');
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
     recognitionPaused = false;
     hideQuotePanel();
     document.getElementById('scanOverlay').style.display = 'block';
+    // Restart the detection loop
+    if (stream) startRecognitionLoop();
     return;
   }
-  const item = announcementQueue[0]; // peek, don't shift yet — keep visible
+
+  const item = announcementQueue[0];
   showQuotePanel(item.name, item.confidence, item.quote);
 
   if (!('speechSynthesis' in window)) {
-    // No TTS — auto-advance after 3s
     announcementQueue.shift();
     setTimeout(_processNextInQueue, 3000);
     return;
   }
+
   _speechBusy = true;
   window.speechSynthesis.cancel();
   const utt = new SpeechSynthesisUtterance(`${item.name}! ${item.quote}`);
   utt.rate = 0.95; utt.pitch = 1.05; utt.volume = 1;
   utt.onend = () => {
     _speechBusy = false;
-    announcementQueue.shift();     // remove announced item
+    announcementQueue.shift();
     renderQueueChips();
-    // Short pause between persons so it feels natural
     setTimeout(_processNextInQueue, 600);
   };
   utt.onerror = () => {
@@ -713,46 +718,61 @@ function _processNextInQueue() {
 /* ─── Enqueue a person (called from recognition loop) ─── */
 function enqueueAnnouncement(name, confidence, person) {
   const now = Date.now();
-  // Per-person cooldown check
   if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
-  // Don't queue the same person twice while they're already in queue
   if (announcementQueue.some(q => q.name === name)) return;
   _announcedAt[name] = now;
 
   const quote = _nextQuote();
   announcementQueue.push({ name, confidence, person, quote });
 
-  // Mark attendance
   markAttendance(person, confidence);
 
-  // If queue just started (not already running), kick it off
+  // Kick off queue: stop detection loop first, then process
   if (!recognitionPaused) {
     recognitionPaused = true;
+    // Stop the running detection loop to prevent blinking/flicker during quote
+    if (detectionLoop) { clearInterval(detectionLoop); detectionLoop = null; }
     document.getElementById('scanOverlay').style.display = 'none';
     setTimeout(_processNextInQueue, 120);
   }
 }
 
 /* ═══════════════════════════════════════════════
-   DETECTION LOOP
+   DETECTION LOOP  (only runs when NOT paused)
+   Uses off-screen canvas to prevent blinking
 ═══════════════════════════════════════════════ */
 function startRecognitionLoop(){
+  // Safety: don't double-start
+  if (detectionLoop) { clearInterval(detectionLoop); detectionLoop = null; }
+
   const video  = document.getElementById('recogVideo');
   const canvas = document.getElementById('recogCanvas');
   let _noFaceFrames=0;
   let _partialFaceFrames=0;
 
   detectionLoop=setInterval(async()=>{
+    // If paused (quote showing), do nothing — loop will be stopped by enqueueAnnouncement
+    if (recognitionPaused) return;
     if(video.readyState<2)return;
-    canvas.width=video.videoWidth;canvas.height=video.videoHeight;
+
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+    canvas.width = vw; canvas.height = vh;
+
     try{
       const detections=await faceapi.detectAllFaces(video,new faceapi.SsdMobilenetv1Options({minConfidence:0.45})).withFaceLandmarks().withFaceDescriptors();
+
+      // If paused mid-detection (race condition), discard result
+      if (recognitionPaused) return;
+
       const dims=faceapi.matchDimensions(canvas,video,true);
       const resized=faceapi.resizeResults(detections,dims);
-      const ctx=canvas.getContext('2d');
-      ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      /* ── face placement guidance (always active) ── */
+      /* Draw to off-screen canvas first, then blit — eliminates flash */
+      const { canvas: off, ctx } = _getOffscreen(vw, vh);
+      ctx.clearRect(0, 0, vw, vh);
+
+      /* ── face placement guidance ── */
       if(detections.length===0){
         _noFaceFrames++;_partialFaceFrames=0;
         if(_noFaceFrames===12){
@@ -762,7 +782,6 @@ function startRecognitionLoop(){
       }else{
         _noFaceFrames=0;
         const box=detections[0].detection.box;
-        const vw=video.videoWidth,vh=video.videoHeight;
         const tooSmall=(box.width/vw)<0.15||(box.height/vh)<0.15;
         const nearEdge=box.x<vw*0.05||box.y<vh*0.05||(box.x+box.width)>vw*0.95||(box.y+box.height)>vh*0.95;
         if(tooSmall||nearEdge){
@@ -774,7 +793,7 @@ function startRecognitionLoop(){
         }else{_partialFaceFrames=0;hideFaceGuideToast();}
       }
 
-      /* ── Always draw boxes (even while announcing) ── */
+      /* ── Draw boxes onto off-screen canvas ── */
       const recognized={};
       for(const det of resized){
         const match=faceMatcher.findBestMatch(det.descriptor);
@@ -792,6 +811,11 @@ function startRecognitionLoop(){
         if(isKnown&&confidence>40)recognized[name]={confidence,person:personMap[match.label]};
         else if(!isKnown)recognized['Unknown_'+Math.random()]={confidence:0,isUnknown:true};
       }
+
+      /* Blit off-screen → visible canvas in one atomic operation = no flicker */
+      const mainCtx = canvas.getContext('2d');
+      mainCtx.clearRect(0, 0, vw, vh);
+      mainCtx.drawImage(off, 0, 0);
 
       frameCount++;
       const now=Date.now();
@@ -841,7 +865,7 @@ function updateResultsPanel(recognized,totalCount){
   html+='</div>';
   document.getElementById('recogResults').innerHTML=html;
 
-  /* ── Enqueue all newly detected known persons (multi-person support) ── */
+  /* ── Enqueue all newly detected known persons ── */
   for(const r of known){
     if(r.person && r.person.name) {
       enqueueAnnouncement(r.person.name, r.confidence, r.person);
@@ -995,6 +1019,7 @@ async function markAttendance(person, confidence) {
 ═══════════════════════════════════════════════ */
 Auth.setupNav().then(()=>{});
 window.addEventListener('load', loadModels);
+
 </script>
 </body>
 </html>
