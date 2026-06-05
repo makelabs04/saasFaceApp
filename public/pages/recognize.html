@@ -836,35 +836,31 @@ function startRecognitionLoop(){
 
       /* ── Match faces & draw boxes ── */
       const recognized={};
-      let hasNewKnown = false;
 
       for(const det of resized){
         const match=faceMatcher.findBestMatch(det.descriptor);
         const isKnown=match.label!=='unknown';
-        const name=isKnown?match.label:'Unknown';
         const confidence=Math.round((1-match.distance)*100);
         const box=det.detection.box;
+        const inCooldown = isKnown && _announcedAt[match.label] &&
+                           (Date.now() - _announcedAt[match.label] < ANNOUNCE_COOLDOWN_MS);
 
-        // ── Skip drawing entirely for cooldown persons (they were just announced) ──
-        const inCooldown = isKnown && _announcedAt[name] &&
-                           (Date.now() - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS);
-
-        if (!inCooldown) {
-          // Only draw box + label for persons NOT yet announced
-          const color = isKnown ? '#00adee' : '#f59e0b';
-          ctx.strokeStyle = color; ctx.lineWidth = 2.5;
+        if(isKnown && confidence >= 55 && !inCooldown){
+          // Known + confident: draw blue box with name label
+          const name=match.label;
+          ctx.strokeStyle='#00adee'; ctx.lineWidth=2.5;
           ctx.strokeRect(box.x, box.y, box.width, box.height);
-          const label = `${name} ${isKnown ? confidence+'%' : ''}`;
+          const label=`${name} ${confidence}%`;
           ctx.font='bold 15px Outfit,sans-serif';
           const tw=ctx.measureText(label).width;
-          ctx.fillStyle=color;ctx.fillRect(box.x-1,box.y-28,tw+16,26);
-          ctx.fillStyle='white';ctx.fillText(label,box.x+7,box.y-9);
-        }
-
-        if(isKnown && confidence>40 && !inCooldown){
-          recognized[name]={confidence,person:personMap[match.label]};
-        } else if(!isKnown){
-          recognized['Unknown_'+Math.random()]={confidence:0,isUnknown:true};
+          ctx.fillStyle='#00adee'; ctx.fillRect(box.x-1,box.y-28,tw+16,26);
+          ctx.fillStyle='white'; ctx.fillText(label,box.x+7,box.y-9);
+          recognized[name]={confidence,person:personMap[name]};
+        } else if(!isKnown || inCooldown){
+          // Unknown or cooldown: draw plain orange box, no label
+          ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.5;
+          ctx.strokeRect(box.x, box.y, box.width, box.height);
+          if(!isKnown) recognized['Unknown_'+Math.random()]={confidence:0,isUnknown:true};
         }
       }
 
