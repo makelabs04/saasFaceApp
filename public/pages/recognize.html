@@ -473,6 +473,11 @@ const ANNOUNCE_COOLDOWN_MS = 30000;
 /* ── Fullscreen state ── */
 let isFullscreen = false;
 
+/* ── Frozen frame: once someone is recognised, we freeze the canvas
+      and stop re-drawing until the quote is done + they leave frame ── */
+let _frozenResult = null;   // { name, confidence, box } — last confirmed detection
+let _frozenCanvas = null;   // ImageData snapshot of the frozen canvas frame
+
 /* ── Canvas double-buffer to prevent flicker ── */
 let _offCanvas = null;
 let _offCtx    = null;
@@ -677,14 +682,9 @@ let _speechBusy = false;
 
 function _processNextInQueue() {
   if (announcementQueue.length === 0) {
-    // All done — clear canvas, resume detection
-    const canvas = document.getElementById('recogCanvas');
-    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-    recognitionPaused = false;
+    // All done — hide quote panel, then wait for person to leave frame
     hideQuotePanel();
-    document.getElementById('scanOverlay').style.display = 'block';
-    // Restart the detection loop
-    if (stream) startRecognitionLoop();
+    _waitForPersonToLeave();
     return;
   }
 
@@ -713,6 +713,37 @@ function _processNextInQueue() {
     setTimeout(_processNextInQueue, 600);
   };
   window.speechSynthesis.speak(utt);
+}
+
+/* ─── Wait for the recognised person to leave frame before resuming ─── */
+let _waitLoop = null;
+function _waitForPersonToLeave() {
+  const video  = document.getElementById('recogVideo');
+  const canvas = document.getElementById('recogCanvas');
+
+  // Show a calm "waiting" state on canvas — no boxes
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+  document.getElementById('scanOverlay').style.display = 'none';
+
+  if (_waitLoop) clearInterval(_waitLoop);
+  _waitLoop = setInterval(async () => {
+    if (!stream || video.readyState < 2) return;
+    try {
+      // Lightweight detection — just check if any face is still present
+      const detections = await faceapi.detectAllFaces(
+        video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
+      );
+      if (detections.length === 0) {
+        // Frame is clear — resume normal recognition
+        clearInterval(_waitLoop); _waitLoop = null;
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        recognitionPaused = false;
+        document.getElementById('scanOverlay').style.display = 'block';
+        if (stream) startRecognitionLoop();
+      }
+      // else: person still there — keep waiting, canvas stays blank
+    } catch(e) {}
+  }, 400);
 }
 
 /* ─── Enqueue a person (called from recognition loop) ─── */
@@ -751,26 +782,36 @@ function startRecognitionLoop(){
   let _partialFaceFrames=0;
 
   detectionLoop=setInterval(async()=>{
-    // If paused (quote showing), do nothing — loop will be stopped by enqueueAnnouncement
-    if (recognitionPaused) return;
     if(video.readyState<2)return;
+
+    // ── While quote is showing: keep canvas completely blank & silent ──
+    if (recognitionPaused) {
+      const mainCtx = canvas.getContext('2d');
+      mainCtx.clearRect(0, 0, canvas.width, canvas.height);
+      return;
+    }
 
     const vw = video.videoWidth;
     const vh = video.videoHeight;
-    canvas.width = vw; canvas.height = vh;
+    // Only reset canvas dimensions when they actually change (avoids implicit clear flicker)
+    if (canvas.width !== vw) canvas.width = vw;
+    if (canvas.height !== vh) canvas.height = vh;
 
     try{
       const detections=await faceapi.detectAllFaces(video,new faceapi.SsdMobilenetv1Options({minConfidence:0.45})).withFaceLandmarks().withFaceDescriptors();
 
-      // If paused mid-detection (race condition), discard result
-      if (recognitionPaused) return;
+      // Discard stale result if paused started mid-detection
+      if (recognitionPaused) {
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+        return;
+      }
 
       const dims=faceapi.matchDimensions(canvas,video,true);
       const resized=faceapi.resizeResults(detections,dims);
 
-      /* Draw to off-screen canvas first, then blit — eliminates flash */
-      const { canvas: off, ctx } = _getOffscreen(vw, vh);
-      ctx.clearRect(0, 0, vw, vh);
+      /* Draw directly on main canvas — clear once then draw all boxes */
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       /* ── face placement guidance ── */
       if(detections.length===0){
@@ -793,29 +834,35 @@ function startRecognitionLoop(){
         }else{_partialFaceFrames=0;hideFaceGuideToast();}
       }
 
-      /* ── Draw boxes onto off-screen canvas ── */
+      /* ── Match faces & draw boxes ── */
       const recognized={};
+
       for(const det of resized){
         const match=faceMatcher.findBestMatch(det.descriptor);
         const isKnown=match.label!=='unknown';
-        const name=isKnown?match.label:'Unknown';
         const confidence=Math.round((1-match.distance)*100);
         const box=det.detection.box;
-        const color=isKnown?'#00adee':'#f59e0b';
-        ctx.strokeStyle=color;ctx.lineWidth=2.5;ctx.strokeRect(box.x,box.y,box.width,box.height);
-        const label=`${name} ${isKnown?confidence+'%':''}`;
-        ctx.font='bold 15px Outfit,sans-serif';
-        const tw=ctx.measureText(label).width;
-        ctx.fillStyle=color;ctx.fillRect(box.x-1,box.y-28,tw+16,26);
-        ctx.fillStyle='white';ctx.fillText(label,box.x+7,box.y-9);
-        if(isKnown&&confidence>40)recognized[name]={confidence,person:personMap[match.label]};
-        else if(!isKnown)recognized['Unknown_'+Math.random()]={confidence:0,isUnknown:true};
-      }
+        const inCooldown = isKnown && _announcedAt[match.label] &&
+                           (Date.now() - _announcedAt[match.label] < ANNOUNCE_COOLDOWN_MS);
 
-      /* Blit off-screen → visible canvas in one atomic operation = no flicker */
-      const mainCtx = canvas.getContext('2d');
-      mainCtx.clearRect(0, 0, vw, vh);
-      mainCtx.drawImage(off, 0, 0);
+        if(isKnown && confidence >= 55 && !inCooldown){
+          // Known + confident: blue box with name + confidence label
+          const name=match.label;
+          ctx.strokeStyle='#00adee'; ctx.lineWidth=2.5;
+          ctx.strokeRect(box.x, box.y, box.width, box.height);
+          const label=`${name} ${confidence}%`;
+          ctx.font='bold 15px Outfit,sans-serif';
+          const tw=ctx.measureText(label).width;
+          ctx.fillStyle='#00adee'; ctx.fillRect(box.x-1,box.y-28,tw+16,26);
+          ctx.fillStyle='white'; ctx.fillText(label,box.x+7,box.y-9);
+          recognized[name]={confidence,person:personMap[name]};
+        } else {
+          // Unknown or low-confidence or cooldown: plain orange box, no label
+          ctx.strokeStyle='#f59e0b'; ctx.lineWidth=2.5;
+          ctx.strokeRect(box.x, box.y, box.width, box.height);
+          if(!isKnown) recognized['Unknown_'+Math.random()]={confidence:0,isUnknown:true};
+        }
+      }
 
       frameCount++;
       const now=Date.now();
