@@ -60,16 +60,36 @@
     background:linear-gradient(135deg,#0f0f23 0%,#1a1a40 100%);
     aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
     box-shadow:0 8px 32px rgba(0,0,0,.18);
+    transition: border-radius 0.3s;
+  }
+  /* Fullscreen state for cam-box */
+  .cam-box.fullscreen-mode{
+    position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;
+    z-index:9999!important;border-radius:0!important;aspect-ratio:unset!important;
   }
   .cam-placeholder{text-align:center;color:rgba(255,255,255,.35);pointer-events:none;}
   .cam-placeholder svg{width:52px;height:52px;display:block;margin:0 auto 10px;opacity:.5;}
   .cam-placeholder p{font-size:13px;font-weight:600;}
   .camera-video{width:100%;height:100%;object-fit:cover;display:none;}
   .camera-canvas{position:absolute;top:0;left:0;width:100%;height:100%;}
-  .cam-overlay{position:absolute;top:12px;left:12px;display:flex;gap:8px;}
+  .cam-overlay{position:absolute;top:12px;left:12px;display:flex;gap:8px;z-index:10;}
   .cam-badge{background:rgba(0,0,0,.6);color:#fff;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:700;backdrop-filter:blur(4px);display:none;align-items:center;gap:6px;}
   .cam-badge.live{background:rgba(239,68,68,.85);}
   .cam-badge svg{width:10px;height:10px;}
+
+  /* Fullscreen button */
+  .fs-btn{
+    position:absolute;top:12px;right:12px;z-index:10;
+    background:rgba(0,0,0,.6);border:none;color:#fff;
+    width:36px;height:36px;border-radius:8px;
+    display:none;align-items:center;justify-content:center;
+    cursor:pointer;backdrop-filter:blur(4px);
+    transition:background .2s;
+  }
+  .fs-btn:hover{background:rgba(0,173,238,.8);}
+  .fs-btn svg{width:16px;height:16px;}
+  .fs-btn.visible{display:flex;}
+
   /* scan line overlay when live */
   .scan-overlay{position:absolute;inset:0;pointer-events:none;display:none;}
   .scan-bar{position:absolute;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--primary),transparent);animation:scanV 3s ease-in-out infinite;}
@@ -80,6 +100,34 @@
   .sc-bl{bottom:10px;left:10px;border-width:0 0 2px 2px;}
   .sc-br{bottom:10px;right:10px;border-width:0 2px 2px 0;}
   @keyframes cornerBlink{0%,100%{opacity:.4;}50%{opacity:1;filter:drop-shadow(0 0 4px var(--primary));}}
+
+  /* ── FULLSCREEN QUOTE OVERLAY (top-left corner, inside cam-box) ── */
+  #fsQuoteOverlay{
+    display:none;
+    position:absolute;top:16px;left:16px;z-index:20;
+    max-width:340px;
+    background:rgba(0,0,0,.72);
+    border:1.5px solid rgba(0,173,238,.6);
+    border-radius:14px;padding:14px 18px;
+    backdrop-filter:blur(8px);
+    animation:fsQuoteIn .4s ease;
+  }
+  @keyframes fsQuoteIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+  #fsQuoteOverlay .fq-name{font-size:16px;font-weight:800;color:var(--primary);margin-bottom:4px;display:flex;align-items:center;gap:8px;}
+  #fsQuoteOverlay .fq-conf{font-size:11px;color:rgba(255,255,255,.55);margin-bottom:8px;}
+  #fsQuoteOverlay .fq-text{font-size:13px;font-weight:600;color:#fff;line-height:1.55;font-style:italic;}
+  /* multi-person fullscreen queue list */
+  #fsPersonQueue{
+    display:none;
+    position:absolute;bottom:16px;left:50%;transform:translateX(-50%);z-index:20;
+    display:none;flex-direction:row;gap:8px;flex-wrap:wrap;justify-content:center;
+  }
+  .fs-queue-chip{
+    background:rgba(0,0,0,.65);border:1px solid rgba(0,173,238,.5);
+    color:#fff;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:700;
+    backdrop-filter:blur(4px);
+  }
+  .fs-queue-chip.active-chip{background:rgba(0,173,238,.85);}
 
   /* CONTROLS */
   .cam-controls{display:flex;gap:10px;margin-top:14px;}
@@ -159,10 +207,8 @@
 
   #uploadCanvas{max-width:100%;border-radius:var(--radius-lg);display:none;margin-top:12px;}
 
-  /* ── CAPTURED PHOTO PANEL (shown after recognition) ── */
+  /* QUOTE CARD below camera (normal mode) */
   #capturePanel{display:none;margin-top:16px;}
-
-  /* QUOTE CARD below captured photo */
   .quote-card{
     margin-top:14px;padding:20px 22px;
     background:linear-gradient(135deg,#f0f9ff 0%,#e0f5fd 100%);
@@ -187,17 +233,17 @@
     line-height:1.6;font-style:italic;position:relative;z-index:1;
     margin-bottom:16px;
   }
-  /* next recognition button */
-  .next-btn{
-    width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
-    padding:13px;border:none;border-radius:var(--radius);
-    background:linear-gradient(135deg,var(--primary),var(--primary-dark));
-    color:#fff;font-size:15px;font-weight:800;font-family:'Outfit',sans-serif;
-    cursor:pointer;transition:all .2s;
-    box-shadow:0 4px 14px rgba(0,120,186,.28);
+
+  /* Multi-person queue display (normal mode, below quote card) */
+  #queuePanel{display:none;margin-top:10px;}
+  .queue-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+  .queue-chip{
+    display:flex;align-items:center;gap:6px;
+    padding:6px 14px;border-radius:20px;font-size:13px;font-weight:700;
+    background:var(--gray-100);color:var(--gray-600);border:1.5px solid var(--gray-200);
   }
-  .next-btn:hover{transform:translateY(-1px);opacity:.92;}
-  .next-btn svg{width:17px;height:17px;}
+  .queue-chip.active-q{background:var(--primary-light);color:var(--primary);border-color:#bae6fd;}
+  .queue-label{font-size:12px;color:var(--gray-500);font-weight:700;margin-bottom:4px;}
 
   /* face-guide toast */
   #faceGuideToast{
@@ -279,6 +325,19 @@
             </div>
             <div class="cam-badge" id="fpsBadge">0 FPS</div>
           </div>
+
+          <!-- Fullscreen toggle button -->
+          <button class="fs-btn" id="fsBtn" onclick="toggleFullscreen()" title="Toggle fullscreen">
+            <svg id="fsIconExpand" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/>
+              <line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>
+            </svg>
+            <svg id="fsIconCompress" style="display:none" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/>
+              <line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>
+            </svg>
+          </button>
+
           <!-- Scan overlay (shown when live) -->
           <div class="scan-overlay" id="scanOverlay">
             <div class="scan-bar"></div>
@@ -287,6 +346,17 @@
             <div class="scan-corner sc-bl"></div>
             <div class="scan-corner sc-br"></div>
           </div>
+
+          <!-- Fullscreen quote overlay (top-left) -->
+          <div id="fsQuoteOverlay">
+            <div class="fq-name">
+              <span id="fsQuoteAvatar" style="width:28px;height:28px;border-radius:50%;background:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;flex-shrink:0;">?</span>
+              <span id="fsQuoteName">—</span>
+            </div>
+            <div class="fq-conf" id="fsQuoteConf"></div>
+            <div class="fq-text" id="fsQuoteText"></div>
+          </div>
+
           <!-- Face guide toast inside cam-box -->
           <div id="faceGuideToast">📷 Please centre your face in the frame</div>
         </div>
@@ -301,7 +371,7 @@
           </button>
         </div>
 
-        <!-- CAPTURED PHOTO + QUOTE (shown after recognition) -->
+        <!-- NORMAL MODE: Quote card shown below camera -->
         <div id="capturePanel">
           <div class="quote-card" id="quoteCard">
             <div class="quote-person">
@@ -312,10 +382,11 @@
               </div>
             </div>
             <div class="quote-text" id="quoteText"></div>
-            <button class="next-btn" onclick="resumeRecognition()">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-              Next Recognition
-            </button>
+          </div>
+          <!-- Queue display for multiple persons -->
+          <div id="queuePanel">
+            <div class="queue-label">Recognition Queue</div>
+            <div class="queue-chips" id="queueChips"></div>
           </div>
         </div>
       </div>
@@ -393,9 +464,52 @@ const MODEL_URL='https://justadudewhohacks.github.io/face-api.js/models';
 let labeledDescriptors=[],faceMatcher=null,stream=null,detectionLoop=null,personMap={};
 let frameCount=0,lastFpsTime=Date.now();
 
-/* ── recognition-pause state ── */
-let recognitionPaused = false;
+/* ── Recognition queue state ──
+   Instead of a simple paused flag, we maintain a FIFO queue of persons
+   to announce. While announcing, detection continues but new recognised
+   persons are queued rather than interrupting. After each speech ends the
+   next person in queue is processed automatically — no manual click needed.
+*/
+let recognitionPaused = false;      // true while speaking / showing a quote
+let announcementQueue  = [];        // [{name, confidence, person, quote}]
+const _announcedAt     = {};        // name → timestamp, for per-person cooldown
+const ANNOUNCE_COOLDOWN_MS = 30000;
 
+/* ── Fullscreen state ── */
+let isFullscreen = false;
+
+/* ═══════════════════════════════════════════════
+   FULLSCREEN TOGGLE
+═══════════════════════════════════════════════ */
+function toggleFullscreen() {
+  isFullscreen = !isFullscreen;
+  const box = document.getElementById('camBox');
+  const fsIconExpand   = document.getElementById('fsIconExpand');
+  const fsIconCompress = document.getElementById('fsIconCompress');
+
+  if (isFullscreen) {
+    box.classList.add('fullscreen-mode');
+    fsIconExpand.style.display   = 'none';
+    fsIconCompress.style.display = '';
+    document.body.style.overflow = 'hidden';
+  } else {
+    box.classList.remove('fullscreen-mode');
+    fsIconExpand.style.display   = '';
+    fsIconCompress.style.display = 'none';
+    document.body.style.overflow = '';
+    // hide fs overlay when exiting fullscreen
+    document.getElementById('fsQuoteOverlay').style.display = 'none';
+  }
+}
+
+/* ESC key exits fullscreen */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && isFullscreen) toggleFullscreen();
+});
+
+/* ═══════════════════════════════════════════════
+   MODEL LOADING
+═══════════════════════════════════════════════ */
 async function loadModels(){
   try{
     await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
@@ -441,6 +555,9 @@ async function loadDescriptors(){
 
 async function reloadDescriptors(){await loadDescriptors();}
 
+/* ═══════════════════════════════════════════════
+   CAMERA START / STOP
+═══════════════════════════════════════════════ */
 async function startRecogCamera(){
   if(!faceMatcher)return showAlert('No trained faces. Register faces first.','warning');
   try{
@@ -453,10 +570,10 @@ async function startRecogCamera(){
     document.getElementById('scanOverlay').style.display='block';
     document.getElementById('startBtn').disabled=true;
     document.getElementById('stopBtn').disabled=false;
-    // hide capture panel if visible
     document.getElementById('capturePanel').style.display='none';
-    recognitionPaused = false;
-    // fetch active shift BEFORE starting loop so it's ready on first detection
+    document.getElementById('fsBtn').classList.add('visible');
+    recognitionPaused=false;
+    announcementQueue=[];
     await fetchActiveShift();
     startRecognitionLoop();
   }catch(e){showAlert('Camera access denied.','danger');}
@@ -465,7 +582,7 @@ async function startRecogCamera(){
 function stopCamera(){
   if(stream)stream.getTracks().forEach(t=>t.stop());
   if(detectionLoop)clearInterval(detectionLoop);
-  stream=null;detectionLoop=null;recognitionPaused=false;
+  stream=null;detectionLoop=null;recognitionPaused=false;announcementQueue=[];
   document.getElementById('recogVideo').style.display='none';
   document.getElementById('camPlaceholder').style.display='';
   const canvas=document.getElementById('recogCanvas');
@@ -475,11 +592,17 @@ function stopCamera(){
   document.getElementById('liveBadge').style.display='none';
   document.getElementById('fpsBadge').style.display='none';
   document.getElementById('scanOverlay').style.display='none';
+  document.getElementById('fsBtn').classList.remove('visible');
+  document.getElementById('fsQuoteOverlay').style.display='none';
   hideFaceGuideToast();
   if(typeof stopESP32Notify==='function')stopESP32Notify();
+  // exit fullscreen if active
+  if(isFullscreen)toggleFullscreen();
 }
 
-/* ── Face placement guide toast ── */
+/* ═══════════════════════════════════════════════
+   FACE GUIDE TOAST
+═══════════════════════════════════════════════ */
 let _guideToastTimer=null;
 function showFaceGuideToast(msg){
   const t=document.getElementById('faceGuideToast');
@@ -492,7 +615,6 @@ function hideFaceGuideToast(){
   document.getElementById('faceGuideToast').style.display='none';
 }
 
-/* ── Guide speech cooldown ── */
 let _lastGuideSpeech=0;
 const GUIDE_COOLDOWN_MS=5000;
 function speakGuide(msg){
@@ -506,30 +628,121 @@ function speakGuide(msg){
   window.speechSynthesis.speak(u);
 }
 
-/* ── Show the capture panel with quote ── */
-function showCapturePanel(name, confidence, quote){
-  const panel=document.getElementById('capturePanel');
-  document.getElementById('quoteAvatar').textContent=(name||'?').charAt(0).toUpperCase();
-  document.getElementById('quoteName').textContent=name||'Unknown';
-  document.getElementById('quoteConf').textContent=`Confidence: ${confidence}%`;
-  document.getElementById('quoteText').textContent=quote;
-  panel.style.display='block';
+/* ═══════════════════════════════════════════════
+   QUOTE / ANNOUNCEMENT PANEL
+═══════════════════════════════════════════════ */
+function showQuotePanel(name, confidence, quote) {
+  if (isFullscreen) {
+    // Show in-camera overlay (top-left)
+    document.getElementById('fsQuoteAvatar').textContent = (name||'?').charAt(0).toUpperCase();
+    document.getElementById('fsQuoteName').textContent   = name||'Unknown';
+    document.getElementById('fsQuoteConf').textContent   = `Confidence: ${confidence}%`;
+    document.getElementById('fsQuoteText').textContent   = quote;
+    document.getElementById('fsQuoteOverlay').style.display = 'block';
+    // hide below-camera panel while in fullscreen
+    document.getElementById('capturePanel').style.display = 'none';
+  } else {
+    // Show below-camera quote card
+    document.getElementById('fsQuoteOverlay').style.display = 'none';
+    document.getElementById('quoteAvatar').textContent  = (name||'?').charAt(0).toUpperCase();
+    document.getElementById('quoteName').textContent    = name||'Unknown';
+    document.getElementById('quoteConf').textContent    = `Confidence: ${confidence}%`;
+    document.getElementById('quoteText').textContent    = quote;
+    document.getElementById('capturePanel').style.display = 'block';
+  }
+  renderQueueChips();
 }
 
-/* ── Resume recognition after user clicks Next ── */
-function resumeRecognition(){
-  document.getElementById('capturePanel').style.display='none';
-  recognitionPaused=false;
+function hideQuotePanel() {
+  document.getElementById('capturePanel').style.display   = 'none';
+  document.getElementById('fsQuoteOverlay').style.display = 'none';
+  document.getElementById('queuePanel').style.display     = 'none';
 }
 
+function renderQueueChips() {
+  const panel = document.getElementById('queuePanel');
+  const chips  = document.getElementById('queueChips');
+  if (announcementQueue.length === 0) { panel.style.display='none'; return; }
+  panel.style.display = 'block';
+  chips.innerHTML = announcementQueue.map((item,i) =>
+    `<div class="queue-chip${i===0?' active-q':''}">${(item.name||'?').charAt(0).toUpperCase()} ${item.name}</div>`
+  ).join('');
+}
+
+/* ═══════════════════════════════════════════════
+   SPEECH QUEUE — auto-advance after each utterance
+═══════════════════════════════════════════════ */
+let _speechBusy = false;
+
+function _processNextInQueue() {
+  if (announcementQueue.length === 0) {
+    // All done — resume detection
+    recognitionPaused = false;
+    hideQuotePanel();
+    document.getElementById('scanOverlay').style.display = 'block';
+    return;
+  }
+  const item = announcementQueue[0]; // peek, don't shift yet — keep visible
+  showQuotePanel(item.name, item.confidence, item.quote);
+
+  if (!('speechSynthesis' in window)) {
+    // No TTS — auto-advance after 3s
+    announcementQueue.shift();
+    setTimeout(_processNextInQueue, 3000);
+    return;
+  }
+  _speechBusy = true;
+  window.speechSynthesis.cancel();
+  const utt = new SpeechSynthesisUtterance(`${item.name}! ${item.quote}`);
+  utt.rate = 0.95; utt.pitch = 1.05; utt.volume = 1;
+  utt.onend = () => {
+    _speechBusy = false;
+    announcementQueue.shift();     // remove announced item
+    renderQueueChips();
+    // Short pause between persons so it feels natural
+    setTimeout(_processNextInQueue, 600);
+  };
+  utt.onerror = () => {
+    _speechBusy = false;
+    announcementQueue.shift();
+    setTimeout(_processNextInQueue, 600);
+  };
+  window.speechSynthesis.speak(utt);
+}
+
+/* ─── Enqueue a person (called from recognition loop) ─── */
+function enqueueAnnouncement(name, confidence, person) {
+  const now = Date.now();
+  // Per-person cooldown check
+  if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
+  // Don't queue the same person twice while they're already in queue
+  if (announcementQueue.some(q => q.name === name)) return;
+  _announcedAt[name] = now;
+
+  const quote = _nextQuote();
+  announcementQueue.push({ name, confidence, person, quote });
+
+  // Mark attendance
+  markAttendance(person, confidence);
+
+  // If queue just started (not already running), kick it off
+  if (!recognitionPaused) {
+    recognitionPaused = true;
+    document.getElementById('scanOverlay').style.display = 'none';
+    setTimeout(_processNextInQueue, 120);
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   DETECTION LOOP
+═══════════════════════════════════════════════ */
 function startRecognitionLoop(){
-  const video=document.getElementById('recogVideo');
-  const canvas=document.getElementById('recogCanvas');
-  let _noFaceFrames=0; // consecutive frames with no face
-  let _partialFaceFrames=0; // consecutive frames with too-small / edge face
+  const video  = document.getElementById('recogVideo');
+  const canvas = document.getElementById('recogCanvas');
+  let _noFaceFrames=0;
+  let _partialFaceFrames=0;
 
   detectionLoop=setInterval(async()=>{
-    if(recognitionPaused)return; // paused — skip processing
     if(video.readyState<2)return;
     canvas.width=video.videoWidth;canvas.height=video.videoHeight;
     try{
@@ -539,16 +752,15 @@ function startRecognitionLoop(){
       const ctx=canvas.getContext('2d');
       ctx.clearRect(0,0,canvas.width,canvas.height);
 
-      /* ── face placement guidance ── */
+      /* ── face placement guidance (always active) ── */
       if(detections.length===0){
         _noFaceFrames++;_partialFaceFrames=0;
-        if(_noFaceFrames===12){// ~2.4 s with 200ms interval
+        if(_noFaceFrames===12){
           showFaceGuideToast('📷 Please place your face in front of the camera');
           speakGuide('Please place your face in front of the camera');
         }
-      } else {
+      }else{
         _noFaceFrames=0;
-        // check if face is too small or near edges
         const box=detections[0].detection.box;
         const vw=video.videoWidth,vh=video.videoHeight;
         const tooSmall=(box.width/vw)<0.15||(box.height/vh)<0.15;
@@ -556,18 +768,13 @@ function startRecognitionLoop(){
         if(tooSmall||nearEdge){
           _partialFaceFrames++;
           if(_partialFaceFrames===10){
-            const msg=tooSmall
-              ?'Please move closer to the camera'
-              :'Please centre your face in the frame';
-            showFaceGuideToast('📷 '+msg);
-            speakGuide(msg);
+            const msg=tooSmall?'Please move closer to the camera':'Please centre your face in the frame';
+            showFaceGuideToast('📷 '+msg);speakGuide(msg);
           }
-        } else {
-          _partialFaceFrames=0;
-          hideFaceGuideToast();
-        }
+        }else{_partialFaceFrames=0;hideFaceGuideToast();}
       }
 
+      /* ── Always draw boxes (even while announcing) ── */
       const recognized={};
       for(const det of resized){
         const match=faceMatcher.findBestMatch(det.descriptor);
@@ -585,27 +792,36 @@ function startRecognitionLoop(){
         if(isKnown&&confidence>40)recognized[name]={confidence,person:personMap[match.label]};
         else if(!isKnown)recognized['Unknown_'+Math.random()]={confidence:0,isUnknown:true};
       }
+
       frameCount++;
       const now=Date.now();
       if(now-lastFpsTime>1000){document.getElementById('fpsBadge').textContent=frameCount+' FPS';frameCount=0;lastFpsTime=now;}
+
       updateResultsPanel(Object.values(recognized),detections.length);
     }catch(e){}
   },200);
 }
 
+/* ═══════════════════════════════════════════════
+   RESULTS PANEL + MULTI-PERSON ENQUEUE
+═══════════════════════════════════════════════ */
 function updateResultsPanel(recognized,totalCount){
-  const known=recognized.filter(r=>!r.isUnknown);
-  const unknown=recognized.filter(r=>r.isUnknown);
+  const known   = recognized.filter(r=>!r.isUnknown);
+  const unknown = recognized.filter(r=>r.isUnknown);
+
   if(known.length>0)notifyESP32('known',known[0].person.name,known[0].confidence);
   else if(unknown.length>0)notifyESP32('unknown');
   else if(totalCount===0)notifyESP32('none');
+
   document.getElementById('totalDetected').textContent=totalCount;
   document.getElementById('totalKnown').textContent=known.length;
   document.getElementById('totalUnknown').textContent=unknown.length;
+
   if(totalCount===0){
     document.getElementById('recogResults').innerHTML='<div class="no-results"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><p>No faces detected in frame</p></div>';
     return;
   }
+
   let html='<div class="detected-list">';
   for(const r of known){
     const p=r.person||{};
@@ -624,8 +840,18 @@ function updateResultsPanel(recognized,totalCount){
   }
   html+='</div>';
   document.getElementById('recogResults').innerHTML=html;
+
+  /* ── Enqueue all newly detected known persons (multi-person support) ── */
+  for(const r of known){
+    if(r.person && r.person.name) {
+      enqueueAnnouncement(r.person.name, r.confidence, r.person);
+    }
+  }
 }
 
+/* ═══════════════════════════════════════════════
+   IMAGE UPLOAD RECOGNITION
+═══════════════════════════════════════════════ */
 async function recognizeFromImage(input){
   if(!faceMatcher)return showAlert('No trained faces. Register faces first.','warning');
   const file=input.files[0];if(!file)return;
@@ -655,6 +881,9 @@ async function recognizeFromImage(input){
   updateResultsPanel(recognized.concat(Array(unknownCount).fill({isUnknown:true})),detections.length);
 }
 
+/* ═══════════════════════════════════════════════
+   TAB / MISC
+═══════════════════════════════════════════════ */
 function switchTab(tab){
   const isCamera=tab==='camera';
   document.getElementById('tabCam').classList.toggle('active',isCamera);
@@ -674,16 +903,9 @@ function showAlert(m,t){
   document.getElementById('alertBox').innerHTML=`<div class="alert alert-${t}">${icons[t]||''} ${m}</div>`;
 }
 
-Auth.setupNav().then(()=>{});
-window.addEventListener('load',loadModels);
-
-/* ─────────────────────────────────────────────
-   ATTENDANCE AUDIO ANNOUNCEMENT SYSTEM
-   Speaks: "[Name]! [motivational quote]"
-   - 200+ quotes, shuffled, no repeat until all used
-   - Per-person cooldown: 30 seconds
-   - Queue so voices don't overlap
-───────────────────────────────────────────── */
+/* ═══════════════════════════════════════════════
+   QUOTES POOL
+═══════════════════════════════════════════════ */
 const QUOTES = [
   "You're a star — keep shining!","Every day is a new chance to be great!","You've got this — believe in yourself!",
   "Your effort today writes tomorrow's success!","Champions show up. And you just did!","Smile big — today is going to be amazing!",
@@ -733,58 +955,6 @@ const QUOTES = [
   "Each day you grow wiser, kinder, and stronger!","Think big, dream bigger, act boldest!",
   "You are exactly the hero of your own story!","Your journey is unique — embrace every step!",
   "Keep showing up — legends are built daily!","You add value just by being who you are!",
-  "Patience and persistence — your two superpowers!","Teamwork and kindness make you unstoppable!",
-  "Your success is built on days just like today!","Never doubt how amazing you truly are!",
-  "You make learning look exciting!","Great ideas start in curious minds like yours!",
-  "Your character is your greatest achievement!","Today you chose growth — that's everything!",
-  "Give your best and the rest will follow!","Your voice matters — share it with confidence!",
-  "You inspire excellence in everyone around you!","Stay humble, stay hungry, keep growing!",
-  "You are a ray of light in every room you enter!","Dedication today, distinction tomorrow!",
-  "Your goals are waiting — go get them!","Effort makes dreams come true — keep going!",
-  "You have the grit to get through anything!","Success loves those who never stop trying!",
-  "Look how far you've already come — incredible!","Every new day is a new beginning just for you!",
-  "You are brave enough to keep trying — always!","Your story is just getting to the best part!",
-  "Kindness costs nothing — but means everything!","You are gifted, guided, and going places!",
-  "Believe in your spark — it can light the world!","Keep your dreams alive by working on them daily!",
-  "You have a heart full of courage!","The world needs your brilliance — share it!",
-  "You are proof that hard work is beautiful!","Stay positive — your mindset shapes your destiny!",
-  "You are ready for more greatness than you know!","Your determination is truly inspiring!",
-  "Every challenge you face makes you stronger!","Trust the process — you are right on track!",
-  "You are a masterpiece still being created!","Excellence is a habit — and you're building it!",
-  "Your passion for learning is your superpower!","Be the change you wish to see — starting today!",
-  "You lift others up just by being positive!","The best chapters of your life are ahead!",
-  "Keep watering your potential — it will bloom!","You are more than enough, exactly as you are!",
-  "Today is your canvas — paint it with effort!","Your future self will thank today's you!",
-  "Celebrate your progress — every bit counts!","You were born ready for this!",
-  "Every great student was once where you are now!","Your dreams deserve your daily dedication!",
-  "Rise higher — you have unlimited altitude!","Cheerful hearts do the hardest work best!",
-  "You are worthy of every success ahead!","Your resilience is your real power!",
-  "Stay strong — the most beautiful things take time!","You bring energy and light wherever you go!",
-  "Learning is an adventure — and you're living it!","You are built for extraordinary things!",
-  "Your attitude today sets the tone for everything!","Every lesson mastered is a victory — celebrate it!",
-  "You grow a little more each day — that's beautiful!","Keep asking questions — that's how geniuses are made!",
-  "You are creating your legacy one day at a time!","Mistakes are stepping stones — step boldly!",
-  "You have already shown you can do hard things!","Today's focus is tomorrow's foundation!",
-  "Aim high — you are capable of hitting it!","Your enthusiasm is absolutely contagious!",
-  "Ordinary effort leads to extraordinary results!","There is greatness in you — let it out!",
-  "The classroom is your launchpad to the stars!","You show courage every time you try something new!",
-  "Hustle with heart — that combination is unbeatable!","Stay kind, stay curious, stay wonderful!",
-  "Your work ethic is building an amazing future!","You are someone worth cheering for — we cheer for you!",
-  "Every day in school is a day invested in your future!","Believe in the power of your own mind!",
-  "You are planting seeds today that will grow into wonders!","Your best ideas are still ahead of you!",
-  "Show the world what a motivated student looks like!","You face each day with courage — that's admirable!",
-  "Keep building — you're constructing something great!","Your diligence today shapes your destiny tomorrow!",
-  "You bring your whole heart to everything you do!","The journey of learning is the greatest adventure!",
-  "You are fuelled by purpose — and that's powerful!","Being yourself is your greatest strength!",
-  "You turn challenges into stepping stones effortlessly!","Today you grow, tomorrow you glow!",
-  "Your energy and spirit are truly infectious!","Never underestimate what you can achieve!",
-  "You are a future leader taking the first steps!","Each day you practise becoming your best self!",
-  "Showing up is step one — and you nailed it!","Your focus today creates your freedom tomorrow!",
-  "You are exactly what this class needed today!","Keep dreaming, keep doing, keep winning!",
-  "You have a rare combination of heart and intelligence!","The fire within you is brighter than any obstacle!",
-  "You are the author of an amazing story — write it boldly!","Stay the course — your breakthrough moment is coming!",
-  "Enthusiasm is your rocket fuel — use it!","You learn, you grow, you shine — every single day!",
-  "Your presence here today makes all the difference!","Keep believing — the best is absolutely yet to come!",
 ];
 
 let _quotePool = [];
@@ -793,44 +963,9 @@ function _nextQuote() {
   return _quotePool.pop();
 }
 
-const _announcedAt = {};
-const ANNOUNCE_COOLDOWN_MS = 30000;
-let _speechBusy = false;
-const _speechQueue = [];
-
-function _processSpeechQueue() {
-  if (_speechBusy || _speechQueue.length === 0) return;
-  _speechBusy = true;
-  const utt = new SpeechSynthesisUtterance(_speechQueue.shift());
-  utt.rate = 0.95; utt.pitch = 1.05; utt.volume = 1;
-  utt.onend = () => { _speechBusy = false; _processSpeechQueue(); };
-  utt.onerror = () => { _speechBusy = false; _processSpeechQueue(); };
-  window.speechSynthesis.speak(utt);
-}
-
-function announceAttendance(name) {
-  if (!('speechSynthesis' in window)) return;
-  const now = Date.now();
-  if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
-  _announcedAt[name] = now;
-
-  const quote = _nextQuote();
-
-  /* ── pause detection & show capture panel ── */
-  recognitionPaused = true;
-  // hide live overlays temporarily (video stays on so capture works)
-  document.getElementById('scanOverlay').style.display='none';
-
-  // small delay so the last canvas frame (with box) is visible in capture
-  setTimeout(()=>{
-    showCapturePanel(name, Math.round((_announcedAt[name] ? 65 : 65)), quote);
-    // speak
-    _speechQueue.push(`${name}! ${quote}`);
-    _processSpeechQueue();
-  }, 120);
-}
-
-/* ── Active shift (re-fetched fresh before every attendance mark) ── */
+/* ═══════════════════════════════════════════════
+   ATTENDANCE
+═══════════════════════════════════════════════ */
 let _activeShift = null;
 
 async function fetchActiveShift() {
@@ -838,76 +973,31 @@ async function fetchActiveShift() {
     const res  = await fetch('/api/attendance/shifts/active');
     const data = await res.json();
     _activeShift = data.shift || null;
-    if (_activeShift) {
-      console.log('[Attendance] Active shift:', _activeShift.name,
-                  _activeShift.start_time, '–', _activeShift.end_time);
-    } else {
-      console.warn('[Attendance] No active shift found at this time.');
-    }
   } catch(e) {
-    console.error('[Attendance] fetchActiveShift error:', e);
     _activeShift = null;
   }
 }
 
-/* ── Mark attendance via API ── */
 async function markAttendance(person, confidence) {
-  // Always re-fetch shift so we get the correct shift even if page was
-  // opened before shift started, or after a shift change.
   await fetchActiveShift();
-
-  if (!_activeShift) {
-    console.warn('[Attendance] Skipping mark — no active shift right now.');
-    return;
-  }
-
+  if (!_activeShift) return;
   try {
-    const res  = await fetch('/api/attendance/mark', {
+    await fetch('/api/attendance/mark', {
       method : 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body   : JSON.stringify({
-        person_id : person.personId,
-        shift_id  : _activeShift.id,
-        confidence: confidence
-      })
+      body   : JSON.stringify({ person_id: person.personId, shift_id: _activeShift.id, confidence })
     });
-    const data = await res.json();
-    if (data.success) {
-      console.log('[Attendance]', data.message);
-    } else {
-      console.warn('[Attendance] Mark failed:', data.message);
-    }
-  } catch(e) {
-    console.error('[Attendance] markAttendance fetch error:', e);
-  }
+  } catch(e) {}
 }
 
-/* patch updateResultsPanel — audio + attendance */
-const _origUpdateResultsPanel = updateResultsPanel;
-window.updateResultsPanel = function(recognized, totalCount) {
-  _origUpdateResultsPanel(recognized, totalCount);
-  recognized.filter(r => !r.isUnknown && r.person && r.person.name)
-            .forEach(r => {
-              if (!('speechSynthesis' in window)) return;
-              const now = Date.now();
-              const name = r.person.name;
-              if (_announcedAt[name] && now - _announcedAt[name] < ANNOUNCE_COOLDOWN_MS) return;
-              _announcedAt[name] = now;
-
-              // Mark attendance in DB
-              markAttendance(r.person, r.confidence);
-
-              const quote = _nextQuote();
-              recognitionPaused = true;
-              document.getElementById('scanOverlay').style.display='none';
-
-              setTimeout(()=>{
-                showCapturePanel(name, r.confidence, quote);
-                _speechQueue.push(`${name}! ${quote}`);
-                _processSpeechQueue();
-              }, 120);
-            });
-};
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+Auth.setupNav().then(()=>{});
+window.addEventListener('load', loadModels);
 </script>
 </body>
 </html>
+
+Done writing file. Size: 56323 bytes
+Done
