@@ -468,7 +468,7 @@ let frameCount=0,lastFpsTime=Date.now();
 let recognitionPaused = false;      // true while speaking / showing a quote
 let announcementQueue  = [];        // [{name, confidence, person, quote}]
 const _announcedAt     = {};        // name → timestamp, for per-person cooldown
-const ANNOUNCE_COOLDOWN_MS = 30000;
+const ANNOUNCE_COOLDOWN_MS = 5000;
 
 /* ── Fullscreen state ── */
 let isFullscreen = false;
@@ -682,9 +682,13 @@ let _speechBusy = false;
 
 function _processNextInQueue() {
   if (announcementQueue.length === 0) {
-    // All done — hide quote panel, then wait for person to leave frame
+    // All done — resume detection immediately
+    const canvas = document.getElementById('recogCanvas');
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    recognitionPaused = false;
     hideQuotePanel();
-    _waitForPersonToLeave();
+    document.getElementById('scanOverlay').style.display = 'block';
+    if (stream) startRecognitionLoop();
     return;
   }
 
@@ -715,36 +719,6 @@ function _processNextInQueue() {
   window.speechSynthesis.speak(utt);
 }
 
-/* ─── Wait for the recognised person to leave frame before resuming ─── */
-let _waitLoop = null;
-function _waitForPersonToLeave() {
-  const video  = document.getElementById('recogVideo');
-  const canvas = document.getElementById('recogCanvas');
-
-  // Show a calm "waiting" state on canvas — no boxes
-  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-  document.getElementById('scanOverlay').style.display = 'none';
-
-  if (_waitLoop) clearInterval(_waitLoop);
-  _waitLoop = setInterval(async () => {
-    if (!stream || video.readyState < 2) return;
-    try {
-      // Lightweight detection — just check if any face is still present
-      const detections = await faceapi.detectAllFaces(
-        video, new faceapi.SsdMobilenetv1Options({ minConfidence: 0.5 })
-      );
-      if (detections.length === 0) {
-        // Frame is clear — resume normal recognition
-        clearInterval(_waitLoop); _waitLoop = null;
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
-        recognitionPaused = false;
-        document.getElementById('scanOverlay').style.display = 'block';
-        if (stream) startRecognitionLoop();
-      }
-      // else: person still there — keep waiting, canvas stays blank
-    } catch(e) {}
-  }, 400);
-}
 
 /* ─── Enqueue a person (called from recognition loop) ─── */
 function enqueueAnnouncement(name, confidence, person) {
